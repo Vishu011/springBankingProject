@@ -1,0 +1,40 @@
+server:
+  port: 8104
+
+spring:
+  application:
+    name: beneficiary-management-service
+  datasource:
+    url: jdbc:h2:mem:beneficiary_master;DB_CLOSE_DELAY=-1;MODE=Oracle
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+  jackson:
+    serialization:
+      WRITE_DATES_AS_TIMESTAMPS: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+
+logging:
+  level:
+    root: INFO
+    com.omnibank.beneficiary: DEBUG
+
+beneficiary:
+  events:
+    topic: beneficiary.events
+  otp:
+    ttlSeconds: 300            # 5 minutes OTP validity
+  coolingOff:
+    hours: 24                  # cooling-off duration after activation

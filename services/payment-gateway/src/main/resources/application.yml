@@ -1,0 +1,62 @@
+server:
+  port: 8105
+
+spring:
+  application:
+    name: payment-gateway-service
+  datasource:
+    url: jdbc:h2:mem:payment_master;DB_CLOSE_DELAY=-1;MODE=Oracle
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+  jackson:
+    serialization:
+      WRITE_DATES_AS_TIMESTAMPS: false
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.StringOrBytesSerializer
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: when_authorized
+
+logging:
+  level:
+    root: INFO
+    com.omnibank.paymentgateway: DEBUG
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui/index.html
+  packages-to-scan: com.omnibank.paymentgateway.api
+
+payment-gateway:
+  events:
+    topic: payment.events
+  eventPublisher: logging    # switch to 'kafka' when Kafka broker is available
+  devSyncPosting: false
+  integrations:
+    customerProfile:
+      baseUrl: http://localhost:8102
+    accountManagement:
+      baseUrl: http://localhost:8103
+    beneficiaryManagement:
+      baseUrl: http://localhost:8104
+    fraudDetection:
+      baseUrl: http://localhost:8110   # placeholder for future fraud service

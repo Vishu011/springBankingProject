@@ -1,0 +1,55 @@
+server:
+  port: 8101
+
+spring:
+  application:
+    name: customer-onboarding-service
+  data:
+    mongodb:
+      database: omnibank_onboarding
+  mongodb:
+    embedded:
+      version: 6.0.5
+  jackson:
+    serialization:
+      WRITE_DATES_AS_TIMESTAMPS: false
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.StringOrBytesSerializer
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: when_authorized
+
+logging:
+  level:
+    root: INFO
+    com.omnibank.onboarding: DEBUG
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+de:
+  flapdoodle:
+    mongodb:
+      embedded:
+        version: 6.0.5
+
+onboarding:
+  events:
+    topic: onboarding.events
+  embedMongo: true         # Start embedded Mongo in dev-local (we'll wire a config class)
+  eventPublisher: logging  # default: log-only publisher; set to 'kafka' under kafka profile
+  integrations:
+    customerProfile:
+      baseUrl: http://localhost:8102

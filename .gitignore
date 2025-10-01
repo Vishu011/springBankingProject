@@ -1,0 +1,48 @@
+# Maven build
+target/
+!.mvn/wrapper/maven-wrapper.jar
+.mvn/timing.properties
+
+# IDEs and editors
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.classpath
+.project
+.settings/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+*.log.*
+hs_err_pid*
+replay_pid*
+
+# Java / build caches
+*.class
+*.jar
+*.war
+*.ear
+
+# Env/Secrets
+*.env
+*.env.*
+.envrc
+
+# Node (if any UI added later)
+node_modules/
+dist/
+build/
+
+# Coverage / reports
+coverage/
+*.lcov
+jacoco.exec
+
+# Others
+.out/

@@ -1,0 +1,286 @@
+{
+  "info": {
+    "name": "OmniBank Local E2E",
+    "_postman_id": "8cc5b2a1-5a5d-4f7a-9a0d-omnibank-local-e2e",
+    "description": "Postman collection to exercise OmniBank local microservices without Kafka/Docker. Includes synchronous and async payment flows.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "0 - Customer Profile - Dev Onboarding Approved",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "X-Correlation-Id", "value": "{{x_correlation_id}}" }
+        ],
+        "url": "{{customer_profile_base}}/api/v1/internal/dev/onboarding-approved",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"firstName\": \"Jane\",\n  \"lastName\": \"Doe\",\n  \"email\": \"jane.doe@example.com\",\n  \"mobileNumber\": \"9998887777\",\n  \"applicationId\": \"DEV-APP-1\"\n}"
+        },
+        "description": "Creates a customer profile from an approved onboarding event (dev-only)."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "try {",
+              "  const id = parseInt(pm.response.text());",
+              "  if (!isNaN(id)) {",
+              "    pm.environment.set('customer_id', id);",
+              "  }",
+              "} catch(e) {}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "1 - Account Mgmt - Create FROM account",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "X-Correlation-Id", "value": "{{x_correlation_id}}" }
+        ],
+        "url": "{{account_mgmt_base}}/api/v1/accounts",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"customerId\": {{customer_id}},\n  \"accountType\": \"SAVINGS\"\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const acc = pm.response.text().trim();",
+              "if (acc) pm.environment.set('from_account', acc);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "2 - Account Mgmt - Create TO account",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "X-Correlation-Id", "value": "{{x_correlation_id}}" }
+        ],
+        "url": "{{account_mgmt_base}}/api/v1/accounts",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"customerId\": {{customer_id}},\n  \"accountType\": \"SAVINGS\"\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const acc = pm.response.text().trim();",
+              "if (acc) pm.environment.set('to_account', acc);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "3 - Account Mgmt - Seed FROM balance (dev)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "X-Correlation-Id", "value": "{{x_correlation_id}}" }
+        ],
+        "url": "{{account_mgmt_base}}/api/v1/internal/dev/accounts/{{from_account}}/adjust-balance",
+        "body": {
+          "mode": "raw",
+          "raw": "{ \"amount\": 1000.00 }"
+        }
+      }
+    },
+    {
+      "name": "4 - Beneficiaries - Create",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "X-Correlation-Id", "value": "{{x_correlation_id}}" }
+        ],
+        "url": "{{beneficiary_mgmt_base}}/api/v1/customers/{{customer_id}}/beneficiaries",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"nickname\": \"MySavings\",\n  \"accountNumber\": \"{{to_account}}\",\n  \"bankCode\": \"OMNI\"\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "try {",
+              "  const json = pm.response.json();",
+              "  if (json.beneficiaryId) pm.environment.set('beneficiary_id', json.beneficiaryId);",
+              "  if (json.challengeId) pm.environment.set('challenge_id', json.challengeId);",
+              "  if (json.otpDevEcho) pm.environment.set('otp_code', json.otpDevEcho);",
+              "} catch(e) {}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "5 - Beneficiaries - Verify OTP",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "X-Correlation-Id", "value": "{{x_correlation_id}}" }
+        ],
+        "url": "{{beneficiary_mgmt_base}}/api/v1/beneficiaries/verify-otp",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"owningCustomerId\": {{customer_id}},\n  \"beneficiaryId\": {{beneficiary_id}},\n  \"challengeId\": {{challenge_id}},\n  \"code\": \"{{otp_code}}\"\n}"
+        }
+      }
+    },
+    {
+      "name": "6 - Beneficiaries - List for customer",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "X-Correlation-Id", "value": "{{x_correlation_id}}" }
+        ],
+        "url": "{{beneficiary_mgmt_base}}/api/v1/customers/{{customer_id}}/beneficiaries"
+      }
+    },
+    {
+      "name": "7 - Payment Gateway - Initiate Internal Transfer",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "X-Correlation-Id", "value": "{{x_correlation_id}}" }
+        ],
+        "url": "{{payment_gateway_base}}/api/v1/payments/internal-transfer",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"customerId\": {{customer_id}},\n  \"fromAccount\": \"{{from_account}}\",\n  \"toAccount\": \"{{to_account}}\",\n  \"amount\": {{amount}},\n  \"currency\": \"USD\"\n}"
+        },
+        "description": "If payment-gateway.devSyncPosting=true: status likely COMPLETED; else PROCESSING (async mode)."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "try {",
+              "  const json = pm.response.json();",
+              "  if (json.paymentId) pm.environment.set('payment_id', json.paymentId);",
+              "  if (json.status) pm.environment.set('payment_status', json.status);",
+              "} catch(e) {}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "8 - Payment Gateway - Get Payment Status",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "X-Correlation-Id", "value": "{{x_correlation_id}}" }
+        ],
+        "url": "{{payment_gateway_base}}/api/v1/payments/{{payment_id}}/status"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const status = pm.response.text().trim();",
+              "if (status) pm.environment.set('payment_status', status);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "9A - Ledger - Post Transaction (async mode only)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "X-Correlation-Id", "value": "{{x_correlation_id}}" }
+        ],
+        "url": "{{ledger_base}}/api/v1/internal/ledger/transactions",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"transactionType\": \"TRANSFER\",\n  \"entries\": [\n    { \"accountNumber\": \"{{from_account}}\", \"amount\": {{amount}}, \"direction\": \"D\" },\n    { \"accountNumber\": \"{{to_account}}\", \"amount\": {{amount}}, \"direction\": \"C\" }\n  ]\n}"
+        },
+        "description": "Use this only when payment-gateway.devSyncPosting=false."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "try {",
+              "  const json = pm.response.json();",
+              "  if (json.transactionId) pm.environment.set('ledger_transaction_id', json.transactionId);",
+              "} catch(e) {}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "9B - Account Mgmt - Apply TransactionPosted (async mode only)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "X-Correlation-Id", "value": "{{x_correlation_id}}" }
+        ],
+        "url": "{{account_mgmt_base}}/api/v1/internal/dev/ledger-events/transaction-posted",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"transactionId\": \"{{ledger_transaction_id}}\",\n  \"entries\": [\n    { \"account\": \"{{from_account}}\", \"amount\": {{amount}}, \"direction\": \"D\" },\n    { \"account\": \"{{to_account}}\", \"amount\": {{amount}}, \"direction\": \"C\" }\n  ]\n}"
+        },
+        "description": "Simulates consumption of ledger.events by account-management in dev."
+      }
+    },
+    {
+      "name": "10 - Account Mgmt - Get FROM balance",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "X-Correlation-Id", "value": "{{x_correlation_id}}" }
+        ],
+        "url": "{{account_mgmt_base}}/api/v1/accounts/{{from_account}}/balance"
+      }
+    },
+    {
+      "name": "11 - Account Mgmt - Get TO balance",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "X-Correlation-Id", "value": "{{x_correlation_id}}" }
+        ],
+        "url": "{{account_mgmt_base}}/api/v1/accounts/{{to_account}}/balance"
+      }
+    }
+  ]
+}
