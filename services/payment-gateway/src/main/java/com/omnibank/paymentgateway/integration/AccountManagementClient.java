@@ -8,6 +8,8 @@ import java.util.Map;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
 
 @Component
 public class AccountManagementClient {
@@ -20,6 +22,8 @@ public class AccountManagementClient {
     this.rest = restBuilder.build();
   }
 
+  @CircuitBreaker(name = "accountManagement")
+  @Retry(name = "accountManagement")
   public BigDecimal getBalance(String accountNumber, String correlationId) {
     String base = props.getIntegrations().getAccountManagement().getBaseUrl();
     String url = base + "/api/v1/accounts/" + accountNumber + "/balance";
@@ -35,6 +39,8 @@ public class AccountManagementClient {
    * Dev-only balance adjustment endpoint in account-management.
    * Positive amount = credit; negative amount = debit.
    */
+  @CircuitBreaker(name = "accountManagement")
+  @Retry(name = "accountManagement")
   public BigDecimal adjustBalanceDev(String accountNumber, BigDecimal amount, String correlationId) {
     String base = props.getIntegrations().getAccountManagement().getBaseUrl();
     String url = base + "/api/v1/internal/dev/accounts/" + accountNumber + "/adjust-balance";

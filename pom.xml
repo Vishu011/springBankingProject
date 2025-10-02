@@ -38,6 +38,7 @@
     <module>services/payment-gateway</module>
     <module>services/ledger</module>
     <module>services/fraud-detection</module>
+    <module>services/loan-origination</module>
   </modules>
 
   

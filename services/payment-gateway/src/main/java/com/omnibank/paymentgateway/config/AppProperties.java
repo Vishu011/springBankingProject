@@ -11,6 +11,9 @@ public class AppProperties {
   private Events events = new Events();
   private Integrations integrations = new Integrations();
   private boolean devSyncPosting = true;
+  // Dev-only: when true, gateway will call account-management to adjust balances after ledger POST succeeds.
+  // This will be disabled once async eventing is enabled end-to-end.
+  private boolean devBalanceAdjustEnabled = true;
 
   public String getEventPublisher() {
     return eventPublisher;
@@ -42,6 +45,14 @@ public class AppProperties {
 
   public void setDevSyncPosting(boolean devSyncPosting) {
     this.devSyncPosting = devSyncPosting;
+  }
+
+  public boolean isDevBalanceAdjustEnabled() {
+    return devBalanceAdjustEnabled;
+  }
+
+  public void setDevBalanceAdjustEnabled(boolean devBalanceAdjustEnabled) {
+    this.devBalanceAdjustEnabled = devBalanceAdjustEnabled;
   }
 
   public static class Events {

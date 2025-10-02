@@ -5,6 +5,8 @@ import java.net.URI;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
 
 /**
  * Minimal client used to validate a customer exists and is retrievable.
@@ -20,6 +22,8 @@ public class CustomerProfileClient {
     this.rest = restBuilder.build();
   }
 
+  @CircuitBreaker(name = "customerProfile")
+  @Retry(name = "customerProfile")
   public void assertCustomerExists(Long customerId, String correlationId) {
     String base = props.getIntegrations().getCustomerProfile().getBaseUrl();
     String url = base + "/api/v1/customers/" + customerId;

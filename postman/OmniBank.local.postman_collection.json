@@ -169,14 +169,15 @@
         "method": "POST",
         "header": [
           { "key": "Content-Type", "value": "application/json" },
-          { "key": "X-Correlation-Id", "value": "{{x_correlation_id}}" }
+          { "key": "X-Correlation-Id", "value": "{{x_correlation_id}}" },
+          { "key": "Idempotency-Key", "value": "{{idempotency_key}}" }
         ],
         "url": "{{payment_gateway_base}}/api/v1/payments/internal-transfer",
         "body": {
           "mode": "raw",
           "raw": "{\n  \"customerId\": {{customer_id}},\n  \"fromAccount\": \"{{from_account}}\",\n  \"toAccount\": \"{{to_account}}\",\n  \"amount\": {{amount}},\n  \"currency\": \"USD\"\n}"
         },
-        "description": "If payment-gateway.devSyncPosting=true: status likely COMPLETED; else PROCESSING (async mode)."
+        "description": "If payment-gateway.devSyncPosting=true: status likely COMPLETED; else PROCESSING (async mode). Uses Idempotency-Key to dedupe retries."
       },
       "event": [
         {
@@ -281,6 +282,28 @@
         ],
         "url": "{{account_mgmt_base}}/api/v1/accounts/{{to_account}}/balance"
       }
+    },
+    {
+      "name": "12 - Ledger - Account History (FROM)",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "X-Correlation-Id", "value": "{{x_correlation_id}}" }
+        ],
+        "url": "{{ledger_base}}/api/v1/accounts/{{from_account}}/history?size=50"
+      },
+      "description": "Returns recent ledger entries for FROM account (transactionId, postedAt, amount, direction)."
+    },
+    {
+      "name": "13 - Ledger - Account History (TO)",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "X-Correlation-Id", "value": "{{x_correlation_id}}" }
+        ],
+        "url": "{{ledger_base}}/api/v1/accounts/{{to_account}}/history?size=50"
+      },
+      "description": "Returns recent ledger entries for TO account (transactionId, postedAt, amount, direction)."
     }
   ]
 }

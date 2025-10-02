@@ -181,12 +181,14 @@ public class PaymentGatewayService {
               correlationId
           );
           if (postRes != null && "POSTED".equalsIgnoreCase(postRes.status)) {
-            try {
-              // Dev-only: sync adjust balances in account-management to reflect the ledger posting
-              accountManagementClient.adjustBalanceDev(pr.getFromAccount(), pr.getAmount().negate(), correlationId);
-              accountManagementClient.adjustBalanceDev(pr.getToAccount(), pr.getAmount(), correlationId);
-            } catch (Exception adjEx) {
-              // If balance updates fail, still mark completed for flow; follow-up reconciliation may be needed
+            if (props.isDevBalanceAdjustEnabled()) {
+              try {
+                // Dev-only: sync adjust balances in account-management to reflect the ledger posting
+                accountManagementClient.adjustBalanceDev(pr.getFromAccount(), pr.getAmount().negate(), correlationId);
+                accountManagementClient.adjustBalanceDev(pr.getToAccount(), pr.getAmount(), correlationId);
+              } catch (Exception adjEx) {
+                // If balance updates fail, still mark completed for flow; follow-up reconciliation may be needed
+              }
             }
             pr.setStatus(PaymentStatus.COMPLETED.name());
           } else {

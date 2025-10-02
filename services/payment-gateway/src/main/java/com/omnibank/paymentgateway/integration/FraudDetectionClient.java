@@ -8,6 +8,8 @@ import java.net.URI;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
 
 /**
  * Synchronous fraud decision client.
@@ -24,6 +26,8 @@ public class FraudDetectionClient {
     this.rest = restBuilder.build();
   }
 
+  @CircuitBreaker(name = "fraudDetection")
+  @Retry(name = "fraudDetection")
   public Decision getDecision(FraudRequest req, String correlationId) {
     String base = props.getIntegrations().getFraudDetection().getBaseUrl();
     // Placeholder internal dev path; replace when real fraud service is available

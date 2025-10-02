@@ -62,3 +62,44 @@ payment-gateway:
       baseUrl: http://localhost:8110   # placeholder for future fraud service
     ledger:
       baseUrl: http://localhost:8106
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      customerProfile:
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 5s
+      accountManagement:
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 5s
+      beneficiaryManagement:
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 5s
+      fraudDetection:
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 5s
+      ledger:
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 5s
+  retry:
+    instances:
+      customerProfile:
+        maxAttempts: 3
+        waitDuration: 200ms
+      accountManagement:
+        maxAttempts: 3
+        waitDuration: 200ms
+      beneficiaryManagement:
+        maxAttempts: 3
+        waitDuration: 200ms
+      fraudDetection:
+        maxAttempts: 2
+        waitDuration: 100ms
+      ledger:
+        maxAttempts: 2
+        waitDuration: 200ms
