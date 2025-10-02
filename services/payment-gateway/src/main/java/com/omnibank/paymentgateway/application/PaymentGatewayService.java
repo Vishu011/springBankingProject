@@ -181,7 +181,7 @@ public class PaymentGatewayService {
               correlationId
           );
           if (postRes != null && "POSTED".equalsIgnoreCase(postRes.status)) {
-            if (props.isDevBalanceAdjustEnabled()) {
+            if (props.isDevBalanceAdjustEnabled() && "logging".equalsIgnoreCase(props.getEventPublisher())) {
               try {
                 // Dev-only: sync adjust balances in account-management to reflect the ledger posting
                 accountManagementClient.adjustBalanceDev(pr.getFromAccount(), pr.getAmount().negate(), correlationId);

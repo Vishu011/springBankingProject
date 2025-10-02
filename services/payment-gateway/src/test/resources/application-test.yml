@@ -1,0 +1,30 @@
+spring:
+  application:
+    name: payment-gateway-service-test
+  jackson:
+    serialization:
+      WRITE_DATES_AS_TIMESTAMPS: false
+
+logging:
+  level:
+    root: WARN
+    com.omnibank.paymentgateway: INFO
+
+payment-gateway:
+  # Keep logging publisher in tests; no external broker required
+  eventPublisher: logging
+  # In tests, do not perform synchronous posting to ledger; return PROCESSING
+  devSyncPosting: false
+  # Ensure no dev balance adjustments are attempted in tests
+  devBalanceAdjustEnabled: false
+  integrations:
+    customerProfile:
+      baseUrl: http://localhost:8102
+    accountManagement:
+      baseUrl: http://localhost:8103
+    beneficiaryManagement:
+      baseUrl: http://localhost:8104
+    fraudDetection:
+      baseUrl: http://localhost:8110
+    ledger:
+      baseUrl: http://localhost:8106

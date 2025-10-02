@@ -202,4 +202,49 @@ class PaymentControllerIntegrationTest {
     assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
     assertThat(resp.getBody()).contains("Account not found");
   }
+
+  @Test
+  void internalTransfer_idempotencyKey_returnsSamePaymentIdAndStatus() throws Exception {
+    // Arrange mocks
+    Mockito.doNothing().when(customerProfileClient).assertCustomerExists(1L, "test-correlation-id");
+    Mockito.when(beneficiaryManagementClient.isBeneficiaryActive(1L, "AC222", "test-correlation-id"))
+        .thenReturn(true);
+    Mockito.when(accountManagementClient.getBalance("AC111", "test-correlation-id"))
+        .thenReturn(new BigDecimal("1000.00"));
+
+    String body = """
+        {
+          "customerId": 1,
+          "fromAccount": "AC111",
+          "toAccount": "AC222",
+          "amount": 100.00,
+          "currency": "USD"
+        }
+        """;
+
+    HttpHeaders h = headers();
+    h.set("Idempotency-Key", "idem-1");
+
+    ResponseEntity<String> resp1 = restTemplate.postForEntity(
+        url("/api/v1/payments/internal-transfer"),
+        new HttpEntity<>(body, h),
+        String.class
+    );
+
+    ResponseEntity<String> resp2 = restTemplate.postForEntity(
+        url("/api/v1/payments/internal-transfer"),
+        new HttpEntity<>(body, h),
+        String.class
+    );
+
+    assertThat(resp1.getStatusCode()).isEqualTo(HttpStatus.ACCEPTED);
+    assertThat(resp2.getStatusCode()).isEqualTo(HttpStatus.ACCEPTED);
+
+    JsonNode j1 = MAPPER.readTree(resp1.getBody());
+    JsonNode j2 = MAPPER.readTree(resp2.getBody());
+
+    assertThat(j1.get("paymentId").asText()).isEqualTo(j2.get("paymentId").asText());
+    assertThat(j1.get("status").asText()).isEqualTo(j2.get("status").asText());
+    assertThat(j1.get("status").asText()).isEqualTo("PROCESSING");
+  }
 }
