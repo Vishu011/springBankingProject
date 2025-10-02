@@ -317,7 +317,7 @@
         "url": "{{loan_orig_base}}/api/v1/loans/applications",
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"loanType\": \"PERSONAL\",\n  \"amount\": {{loan_amount}}\n}"
+          "raw": "{\n  \"customerId\": {{customer_id}},\n  \"loanType\": \"PERSONAL\",\n  \"amount\": {{loan_amount}}\n}"
         },
         "description": "Creates a loan application (dev-local in-memory)."
       },
@@ -452,6 +452,27 @@
           { "key": "X-Correlation-Id", "value": "{{x_correlation_id}}" }
         ],
         "url": "{{account_mgmt_base}}/api/v1/accounts/{{to_account}}/balance"
+      }
+    }
+  ,
+    {
+      "name": "18 - Loan Mgmt - Get Loans By Customer",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "X-Correlation-Id", "value": "{{x_correlation_id}}" }
+        ],
+        "url": "{{loan_mgmt_base}}/api/v1/loans/customers/{{customer_id}}"
+      }
+    },
+    {
+      "name": "19 - Loan Mgmt - Get Loan By Account",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "X-Correlation-Id", "value": "{{x_correlation_id}}" }
+        ],
+        "url": "{{loan_mgmt_base}}/api/v1/loans/{{loan_account_number}}"
       }
     }
   ]

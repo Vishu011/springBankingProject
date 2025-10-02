@@ -33,6 +33,7 @@ public class LoanOriginationService {
     Application app = new Application();
     app.applicationId = id;
     app.status = "STARTED";
+    app.customerId = params.customerId;
     app.loanType = params.loanType != null ? params.loanType.toUpperCase() : "PERSONAL";
     app.requestedAmount = params.amount;
     app.createdAt = Instant.now();
@@ -108,6 +109,7 @@ public class LoanOriginationService {
           EventTypes.LOAN_APPROVED,
           new EventPayloads.LoanApproved(
               app.applicationId,
+              app.customerId,
               app.loanType,
               app.approvedAmount,
               app.interestRate,
@@ -124,7 +126,7 @@ public class LoanOriginationService {
 
   // Params and DTO views
 
-  public record StartParams(String loanType, BigDecimal amount) {}
+  public record StartParams(Long customerId, String loanType, BigDecimal amount) {}
 
   public record DecisionParams(
       String applicationId,
@@ -166,6 +168,7 @@ public class LoanOriginationService {
 
     public record LoanApproved(
         String applicationId,
+        Long customerId,
         String loanType,
         BigDecimal approvedAmount,
         BigDecimal interestRate,
@@ -186,6 +189,7 @@ public class LoanOriginationService {
   static class Application {
     String applicationId;
     String status;           // STARTED | APPROVED | REJECTED
+    Long customerId;
     String loanType;
     BigDecimal requestedAmount;
 
@@ -221,6 +225,9 @@ public class LoanOriginationService {
 
   private static void validateStart(StartParams p) {
     if (p == null) throw new IllegalArgumentException("request is required");
+    if (p.customerId == null || p.customerId <= 0L) {
+      throw new IllegalArgumentException("customerId must be provided");
+    }
     if (p.amount == null || p.amount.compareTo(new BigDecimal("0.00")) <= 0) {
       throw new IllegalArgumentException("amount must be greater than 0");
     }

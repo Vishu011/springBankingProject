@@ -1,0 +1,46 @@
+server:
+  port: 8122
+
+spring:
+  application:
+    name: loan-management-service
+  datasource:
+    url: jdbc:h2:mem:loan_master;DB_CLOSE_DELAY=-1;MODE=Oracle
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+  jackson:
+    serialization:
+      WRITE_DATES_AS_TIMESTAMPS: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+
+logging:
+  level:
+    root: INFO
+    com.omnibank.loanmanagement: DEBUG
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui/index.html
+  packages-to-scan: com.omnibank.loanmanagement.api
+
+loan-management:
+  events:
+    loanOriginationTopic: loan.origination.events
+    ledgerTopic: ledger.events
+  kafka:
+    enabled: false  # set true via kafka profile

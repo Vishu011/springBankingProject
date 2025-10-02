@@ -40,6 +40,7 @@
     <module>services/fraud-detection</module>
     <module>services/loan-origination</module>
     <module>services/credit-scoring</module>
+    <module>services/loan-management</module>
   </modules>
 
   

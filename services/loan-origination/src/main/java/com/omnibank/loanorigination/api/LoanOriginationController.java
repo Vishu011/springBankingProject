@@ -41,7 +41,7 @@ public class LoanOriginationController {
   ) {
     String cid = ensureCorrelationId(correlationId);
     Created res = service.createApplication(
-        new StartParams(request.getLoanType(), request.getAmount()),
+        new StartParams(request.getCustomerId(), request.getLoanType(), request.getAmount()),
         cid
     );
     return ResponseEntity.accepted()
@@ -90,6 +90,9 @@ public class LoanOriginationController {
 
   @Data
   public static class StartRequest {
+    @NotNull
+    private Long customerId;
+
     @NotBlank
     private String loanType; // PERSONAL, HOME, AUTO, etc.
 
