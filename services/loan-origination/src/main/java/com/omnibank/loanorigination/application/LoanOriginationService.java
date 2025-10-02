@@ -9,6 +9,10 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import org.springframework.stereotype.Service;
+import com.omnibank.loanorigination.config.AppProperties;
+import com.omnibank.loanorigination.events.EventPublisher;
+import com.omnibank.loanorigination.events.EventTypes;
+import lombok.RequiredArgsConstructor;
 
 /**
  * Minimal in-memory implementation for dev-local (no Mongo required).
@@ -16,9 +20,12 @@ import org.springframework.stereotype.Service;
  * Later: swap to Mongo repository + event publication (LoanApplicationSubmitted / LoanApproved / LoanDisbursed).
  */
 @Service
+@RequiredArgsConstructor
 public class LoanOriginationService {
 
   private final ConcurrentMap<String, Application> store = new ConcurrentHashMap<>();
+  private final EventPublisher eventPublisher;
+  private final AppProperties props;
 
   public Created createApplication(StartParams params, String correlationId) {
     validateStart(params);
@@ -35,6 +42,19 @@ public class LoanOriginationService {
     app.underwritingHistory.add(new History("INIT", "SYSTEM", Instant.now(), "STARTED", null));
 
     store.put(id, app);
+
+    // Publish LoanApplicationSubmitted (logging by default; Kafka later)
+    publish(
+        EventTypes.LOAN_APPLICATION_SUBMITTED,
+        new EventPayloads.LoanApplicationSubmitted(
+            app.applicationId,
+            app.loanType,
+            app.requestedAmount,
+            app.createdAt
+        ),
+        correlationId
+    );
+
     return new Created(id, app.status);
   }
 
@@ -82,7 +102,24 @@ public class LoanOriginationService {
         null
     ));
 
-    // FUTURE: publish LoanApproved event when APPROVED (logging publisher by default)
+    // Publish LoanApproved when APPROVED (logging by default; Kafka later)
+    if ("APPROVED".equalsIgnoreCase(app.status)) {
+      publish(
+          EventTypes.LOAN_APPROVED,
+          new EventPayloads.LoanApproved(
+              app.applicationId,
+              app.loanType,
+              app.approvedAmount,
+              app.interestRate,
+              app.decisionBy
+          ),
+          correlationId
+      );
+    }
+  }
+
+  private void publish(String type, Object payload, String correlationId) {
+    eventPublisher.publish(props.getEvents().getTopic(), type, payload, correlationId);
   }
 
   // Params and DTO views
@@ -118,6 +155,32 @@ public class LoanOriginationService {
       String outcome,
       String details
   ) {}
+
+  public static class EventPayloads {
+    public record LoanApplicationSubmitted(
+        String applicationId,
+        String loanType,
+        BigDecimal requestedAmount,
+        Instant createdAt
+    ) {}
+
+    public record LoanApproved(
+        String applicationId,
+        String loanType,
+        BigDecimal approvedAmount,
+        BigDecimal interestRate,
+        String decisionBy
+    ) {}
+
+    public record LoanDisbursed(
+        String applicationId,
+        String loanType,
+        BigDecimal disbursedAmount,
+        String fromAccount,
+        String toAccount,
+        Instant disbursedAt
+    ) {}
+  }
 
   // Internal model
   static class Application {
