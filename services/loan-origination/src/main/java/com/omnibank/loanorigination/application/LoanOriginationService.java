@@ -1,18 +1,22 @@
 package com.omnibank.loanorigination.application;
 
+import com.omnibank.loanorigination.config.AppProperties;
+import com.omnibank.loanorigination.events.EventPublisher;
+import com.omnibank.loanorigination.events.EventTypes;
+import com.omnibank.loanorigination.integration.AccountManagementClient;
+import com.omnibank.loanorigination.integration.AccountManagementClient.AccountDto;
+import com.omnibank.loanorigination.integration.PaymentGatewayClient;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import org.springframework.stereotype.Service;
-import com.omnibank.loanorigination.config.AppProperties;
-import com.omnibank.loanorigination.events.EventPublisher;
-import com.omnibank.loanorigination.events.EventTypes;
 import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 
 /**
  * Minimal in-memory implementation for dev-local (no Mongo required).
@@ -26,6 +30,10 @@ public class LoanOriginationService {
   private final ConcurrentMap<String, Application> store = new ConcurrentHashMap<>();
   private final EventPublisher eventPublisher;
   private final AppProperties props;
+
+  // Integrations for disbursal orchestration
+  private final AccountManagementClient accountClient;
+  private final PaymentGatewayClient paymentGatewayClient;
 
   public Created createApplication(StartParams params, String correlationId) {
     validateStart(params);
@@ -67,6 +75,7 @@ public class LoanOriginationService {
   /**
    * Record a final decision. APPROVED or REJECTED.
    * If APPROVED, approvedAmount and interestRate must be provided.
+   * On APPROVED: orchestrate disbursal via payment-gateway and publish LoanDisbursed.
    */
   public void recordDecision(DecisionParams params, String correlationId) {
     validateDecision(params);
@@ -117,7 +126,79 @@ public class LoanOriginationService {
           ),
           correlationId
       );
+
+      // Disbursal orchestration (sync initiation via payment-gateway)
+      orchestrateDisbursal(app, correlationId);
     }
+  }
+
+  private void orchestrateDisbursal(Application app, String correlationId) {
+    // Resolve destination account for the customer
+    List<AccountDto> accounts = accountClient.listCustomerAccounts(app.customerId, correlationId);
+    if (accounts == null || accounts.isEmpty()) {
+      throw new IllegalStateException("No accounts found for customerId=" + app.customerId + " to disburse funds");
+    }
+
+    // Prefer ACTIVE SAVINGS, fallback to first ACTIVE, then any
+    AccountDto dest = accounts.stream()
+        .filter(a -> eq(a.status, "ACTIVE"))
+        .sorted(Comparator.comparing((AccountDto a) -> !eq(a.accountType, "SAVINGS"))) // SAVINGS first
+        .findFirst()
+        .orElse(accounts.get(0));
+
+    if (dest.accountNumber == null || dest.accountNumber.isBlank()) {
+      throw new IllegalStateException("Customer destination account invalid for disbursal");
+    }
+
+    String source = props.getIntegrations().getDisbursalSourceAccount();
+    String currency = props.getIntegrations().getDisbursalCurrency();
+    if (source == null || source.isBlank()) {
+      throw new IllegalStateException("Disbursal source account is not configured");
+    }
+    if (currency == null || currency.isBlank()) {
+      currency = "USD";
+    }
+
+    String idKey = "loan-disbursal:" + app.applicationId;
+    try {
+      var resp = paymentGatewayClient.initiateInternalTransfer(
+          app.customerId,
+          source,
+          dest.accountNumber,
+          app.approvedAmount,
+          currency,
+          correlationId,
+          idKey
+      );
+      if (resp == null || resp.paymentId == null || resp.paymentId.isBlank()) {
+        throw new IllegalStateException("Payment gateway response invalid during loan disbursal");
+      }
+
+      // Publish LoanDisbursed event (logs by default; Kafka on kafka profile)
+      publish(
+          EventTypes.LOAN_DISBURSED,
+          new EventPayloads.LoanDisbursed(
+              app.applicationId,
+              app.loanType,
+              app.approvedAmount,
+              source,
+              dest.accountNumber,
+              Instant.now()
+          ),
+          correlationId
+      );
+    } catch (Exception ex) {
+      throw new IllegalStateException("Loan disbursal failed: " + safeMsg(ex));
+    }
+  }
+
+  private static boolean eq(String a, String b) {
+    return a != null && b != null && a.equalsIgnoreCase(b);
+  }
+
+  private static String safeMsg(Exception ex) {
+    String m = ex.getMessage();
+    return (m == null || m.isBlank()) ? ex.getClass().getSimpleName() : m;
   }
 
   private void publish(String type, Object payload, String correlationId) {

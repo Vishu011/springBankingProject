@@ -50,6 +50,10 @@ public class AppProperties {
   public static class Integrations {
     // For dev-local we avoid hard dependencies; placeholders for later use
     private ServiceRef paymentGateway = new ServiceRef("http://localhost:8105");
+    private ServiceRef accountManagement = new ServiceRef("http://localhost:8103");
+    // Disbursal config: source account and currency used when orchestrating disbursals via payment-gateway
+    private String disbursalSourceAccount = "LOANPOOL01";
+    private String disbursalCurrency = "USD";
 
     public ServiceRef getPaymentGateway() {
       return paymentGateway;
@@ -57,6 +61,30 @@ public class AppProperties {
 
     public void setPaymentGateway(ServiceRef paymentGateway) {
       this.paymentGateway = paymentGateway;
+    }
+
+    public ServiceRef getAccountManagement() {
+      return accountManagement;
+    }
+
+    public void setAccountManagement(ServiceRef accountManagement) {
+      this.accountManagement = accountManagement;
+    }
+
+    public String getDisbursalSourceAccount() {
+      return disbursalSourceAccount;
+    }
+
+    public void setDisbursalSourceAccount(String disbursalSourceAccount) {
+      this.disbursalSourceAccount = disbursalSourceAccount;
+    }
+
+    public String getDisbursalCurrency() {
+      return disbursalCurrency;
+    }
+
+    public void setDisbursalCurrency(String disbursalCurrency) {
+      this.disbursalCurrency = disbursalCurrency;
     }
 
     public static class ServiceRef {
