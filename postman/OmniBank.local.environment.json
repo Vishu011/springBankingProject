@@ -25,6 +25,15 @@
     { "key": "payment_status", "value": "", "type": "default", "enabled": true },
     { "key": "ledger_transaction_id", "value": "", "type": "default", "enabled": true },
 
-    { "key": "amount", "value": "100.00", "type": "default", "enabled": true }
+    { "key": "amount", "value": "100.00", "type": "default", "enabled": true },
+
+    { "key": "idempotency_key", "value": "postman-idem-key", "type": "default", "enabled": true },
+
+    { "key": "loan_orig_base", "value": "http://localhost:8120", "type": "default", "enabled": true },
+    { "key": "loan_application_id", "value": "", "type": "default", "enabled": true },
+    { "key": "loan_amount", "value": "5000.00", "type": "default", "enabled": true },
+    { "key": "loan_interest_rate", "value": "8.5", "type": "default", "enabled": true },
+
+    { "key": "credit_scoring_base", "value": "http://localhost:8121", "type": "default", "enabled": true }
   ]
 }

@@ -2,7 +2,7 @@
   "info": {
     "name": "OmniBank Local E2E",
     "_postman_id": "8cc5b2a1-5a5d-4f7a-9a0d-omnibank-local-e2e",
-    "description": "Postman collection to exercise OmniBank local microservices without Kafka/Docker. Includes synchronous and async payment flows.",
+    "description": "Postman collection to exercise OmniBank local microservices without Kafka/Docker. Includes synchronous and async payment flows, and loan-origination MVP.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
@@ -304,6 +304,64 @@
         "url": "{{ledger_base}}/api/v1/accounts/{{to_account}}/history?size=50"
       },
       "description": "Returns recent ledger entries for TO account (transactionId, postedAt, amount, direction)."
+    },
+
+    {
+      "name": "14 - Loans - Create Application",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "X-Correlation-Id", "value": "{{x_correlation_id}}" }
+        ],
+        "url": "{{loan_orig_base}}/api/v1/loans/applications",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"loanType\": \"PERSONAL\",\n  \"amount\": {{loan_amount}}\n}"
+        },
+        "description": "Creates a loan application (dev-local in-memory)."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "try {",
+              "  const json = pm.response.json();",
+              "  if (json.applicationId) pm.environment.set('loan_application_id', json.applicationId);",
+              "} catch(e) {}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "15 - Loans - Get Application",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "X-Correlation-Id", "value": "{{x_correlation_id}}" }
+        ],
+        "url": "{{loan_orig_base}}/api/v1/loans/applications/{{loan_application_id}}"
+      },
+      "description": "Fetches current view of the loan application, including underwriting history."
+    },
+    {
+      "name": "16 - Loans - Agent Record Decision (Approve)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "X-Correlation-Id", "value": "{{x_correlation_id}}" }
+        ],
+        "url": "{{loan_orig_base}}/api/v1/loans/agent/record-decision",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"applicationId\": \"{{loan_application_id}}\",\n  \"decision\": \"APPROVED\",\n  \"approvedAmount\": {{loan_amount}},\n  \"interestRate\": {{loan_interest_rate}},\n  \"decisionBy\": \"PostmanAgent\"\n}"
+        },
+        "description": "Records the final decision for the loan application (APPROVED path)."
+      }
     }
   ]
 }
