@@ -13,10 +13,11 @@ import org.springframework.web.client.RestClient;
 public class AccountManagementClient {
 
   private final AppProperties props;
-  private final RestClient rest = RestClient.create();
+  private final RestClient rest;
 
-  public AccountManagementClient(AppProperties props) {
+  public AccountManagementClient(AppProperties props, RestClient.Builder restBuilder) {
     this.props = props;
+    this.rest = restBuilder.build();
   }
 
   public BigDecimal getBalance(String accountNumber, String correlationId) {

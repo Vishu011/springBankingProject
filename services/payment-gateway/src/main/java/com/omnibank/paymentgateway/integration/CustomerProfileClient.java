@@ -13,10 +13,11 @@ import org.springframework.web.client.RestClient;
 public class CustomerProfileClient {
 
   private final AppProperties props;
-  private final RestClient rest = RestClient.create();
+  private final RestClient rest;
 
-  public CustomerProfileClient(AppProperties props) {
+  public CustomerProfileClient(AppProperties props, RestClient.Builder restBuilder) {
     this.props = props;
+    this.rest = restBuilder.build();
   }
 
   public void assertCustomerExists(Long customerId, String correlationId) {

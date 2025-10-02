@@ -73,7 +73,10 @@ try {
 
   Step ("Initiate internal transfer {0} {1} via payment-gateway" -f $TransferAmount, $Currency)
   $payBody = @{ customerId = $customerId; fromAccount = $fromAccount; toAccount = $toAccount; amount = $TransferAmount; currency = $Currency } | ConvertTo-Json
-  $init = Invoke-RestMethod -Method Post -Uri "$PayBase/api/v1/payments/internal-transfer" -Headers $headers -Body $payBody
+  $idKey = [guid]::NewGuid().ToString()
+  $payHeaders = $headers.Clone()
+  $payHeaders["Idempotency-Key"] = $idKey
+  $init = Invoke-RestMethod -Method Post -Uri "$PayBase/api/v1/payments/internal-transfer" -Headers $payHeaders -Body $payBody
   $paymentId = $init.paymentId; $status = $init.status
   Info ("paymentId={0}; initialStatus={1}" -f $paymentId, $status)
 
@@ -83,6 +86,10 @@ try {
     $finalStatus = Invoke-RestMethod -Method Get -Uri "$PayBase/api/v1/payments/$paymentId/status" -Headers $headers
   }
   Info ("finalStatus={0}" -f $finalStatus)
+
+  Step "Initiate same transfer again with same Idempotency-Key (should dedupe, not double-charge)"
+  $init2 = Invoke-RestMethod -Method Post -Uri "$PayBase/api/v1/payments/internal-transfer" -Headers $payHeaders -Body $payBody
+  Info ("dedupe paymentId={0}; status={1}" -f $init2.paymentId, $init2.status)
 
   Step "Read balances after transfer"
   $balFrom = Invoke-RestMethod -Method Get -Uri "$AccBase/api/v1/accounts/$fromAccount/balance" -Headers $headers

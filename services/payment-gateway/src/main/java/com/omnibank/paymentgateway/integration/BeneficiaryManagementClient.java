@@ -15,10 +15,11 @@ import org.springframework.web.client.RestClient;
 public class BeneficiaryManagementClient {
 
   private final AppProperties props;
-  private final RestClient rest = RestClient.create();
+  private final RestClient rest;
 
-  public BeneficiaryManagementClient(AppProperties props) {
+  public BeneficiaryManagementClient(AppProperties props, RestClient.Builder restBuilder) {
     this.props = props;
+    this.rest = restBuilder.build();
   }
 
   /**

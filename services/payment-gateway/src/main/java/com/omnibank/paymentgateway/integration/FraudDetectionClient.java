@@ -17,10 +17,11 @@ import org.springframework.web.client.RestClient;
 public class FraudDetectionClient {
 
   private final AppProperties props;
-  private final RestClient rest = RestClient.create();
+  private final RestClient rest;
 
-  public FraudDetectionClient(AppProperties props) {
+  public FraudDetectionClient(AppProperties props, RestClient.Builder restBuilder) {
     this.props = props;
+    this.rest = restBuilder.build();
   }
 
   public Decision getDecision(FraudRequest req, String correlationId) {
