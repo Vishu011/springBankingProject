@@ -50,7 +50,7 @@ payment-gateway:
   events:
     topic: payment.events
   eventPublisher: logging    # switch to 'kafka' when Kafka broker is available
-  devSyncPosting: false
+  devSyncPosting: true
   integrations:
     customerProfile:
       baseUrl: http://localhost:8102
@@ -60,3 +60,5 @@ payment-gateway:
       baseUrl: http://localhost:8104
     fraudDetection:
       baseUrl: http://localhost:8110   # placeholder for future fraud service
+    ledger:
+      baseUrl: http://localhost:8106
