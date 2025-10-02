@@ -362,6 +362,97 @@
         },
         "description": "Records the final decision for the loan application (APPROVED path)."
       }
+    },
+    {
+      "name": "17 - Credit Scoring - Calculate (Mock)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "X-Correlation-Id", "value": "{{x_correlation_id}}" }
+        ],
+        "url": "{{credit_scoring_base}}/api/v1/internal/scoring/calculate",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"applicantId\": \"{{customer_id}}\"\n}"
+        },
+        "description": "Returns mock creditScore, probabilityOfDefault, keyFactors, and bureauData for applicantId."
+      }
+    }
+  ,
+    {
+      "name": "7K - Payments (Kafka) - Initiate Internal Transfer",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "X-Correlation-Id", "value": "{{x_correlation_id}}" },
+          { "key": "Idempotency-Key", "value": "{{idempotency_key}}" }
+        ],
+        "url": "{{payment_gateway_base}}/api/v1/payments/internal-transfer",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"customerId\": {{customer_id}},\n  \"fromAccount\": \"{{from_account}}\",\n  \"toAccount\": \"{{to_account}}\",\n  \"amount\": {{amount}},\n  \"currency\": \"USD\"\n}"
+        },
+        "description": "Kafka mode: eventPublisher=kafka; devSyncPosting=false. Publishes PaymentApprovedForProcessing -> ledger consumes and posts -> TransactionPosted -> account-management updates balances."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "try {",
+              "  const json = pm.response.json();",
+              "  if (json.paymentId) pm.environment.set('payment_id', json.paymentId);",
+              "  if (json.status) pm.environment.set('payment_status', json.status);",
+              "} catch(e) {}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "8K - Payments (Kafka) - Poll Payment Status",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "X-Correlation-Id", "value": "{{x_correlation_id}}" }
+        ],
+        "url": "{{payment_gateway_base}}/api/v1/payments/{{payment_id}}/status"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const status = pm.response.text().trim();",
+              "if (status) pm.environment.set('payment_status', status);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "10K - Account Mgmt - Get FROM balance (Kafka)",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "X-Correlation-Id", "value": "{{x_correlation_id}}" }
+        ],
+        "url": "{{account_mgmt_base}}/api/v1/accounts/{{from_account}}/balance"
+      }
+    },
+    {
+      "name": "11K - Account Mgmt - Get TO balance (Kafka)",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "X-Correlation-Id", "value": "{{x_correlation_id}}" }
+        ],
+        "url": "{{account_mgmt_base}}/api/v1/accounts/{{to_account}}/balance"
+      }
     }
   ]
 }
