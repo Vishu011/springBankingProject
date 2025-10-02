@@ -32,6 +32,9 @@ public class PaymentRequest {
   @Column(name = "PAYMENT_UUID", nullable = false, length = 36, unique = true)
   private String paymentUuid;
 
+  @Column(name = "IDEMPOTENCY_KEY", length = 64, unique = true)
+  private String idempotencyKey;
+
   @Column(name = "CUSTOMER_ID", nullable = false)
   private Long customerId;
 

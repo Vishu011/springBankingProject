@@ -20,16 +20,18 @@ import org.springframework.web.bind.annotation.*;
 public class PaymentController {
 
   public static final String HDR_CORRELATION_ID = "X-Correlation-Id";
+  public static final String HDR_IDEMPOTENCY_KEY = "Idempotency-Key";
 
   private final PaymentGatewayService service;
 
   @PostMapping("/internal-transfer")
   public ResponseEntity<InitiatePaymentResponse> internalTransfer(
       @RequestHeader(value = HDR_CORRELATION_ID, required = false) String correlationId,
+      @RequestHeader(value = HDR_IDEMPOTENCY_KEY, required = false) String idempotencyKey,
       @Valid @RequestBody InternalTransferRequest request
   ) {
     String cid = ensureCorrelationId(correlationId);
-    var result = service.initiateInternalTransfer(request, cid);
+    var result = service.initiateInternalTransfer(request, cid, idempotencyKey);
     return ResponseEntity.accepted()
         .header(HDR_CORRELATION_ID, cid)
         .body(new InitiatePaymentResponse(result.paymentId(), result.status()));

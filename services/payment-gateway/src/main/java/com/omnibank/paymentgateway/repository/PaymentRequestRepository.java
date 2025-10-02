@@ -6,4 +6,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface PaymentRequestRepository extends JpaRepository<PaymentRequest, Long> {
   Optional<PaymentRequest> findByPaymentUuid(String paymentUuid);
+  Optional<PaymentRequest> findByIdempotencyKey(String idempotencyKey);
 }

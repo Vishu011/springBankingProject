@@ -34,6 +34,31 @@ public class PaymentGatewayService {
   private final FraudDetectionClient fraudDetectionClient;
   private final LedgerClient ledgerClient;
 
+  // Idempotent variant: uses optional Idempotency-Key header to dedupe client retries
+  @Transactional
+  public InitiationResult initiateInternalTransfer(InternalTransferRequest req, String correlationId, String idempotencyKey) {
+    String idKey = (idempotencyKey != null && !idempotencyKey.isBlank()) ? idempotencyKey : null;
+
+    if (idKey != null) {
+      var existing = repository.findByIdempotencyKey(idKey);
+      if (existing.isPresent()) {
+        var pr = existing.get();
+        return new InitiationResult(pr.getPaymentUuid(), pr.getStatus());
+      }
+    }
+
+    var result = initiateInternalTransfer(req, correlationId);
+
+    if (idKey != null) {
+      repository.findByPaymentUuid(result.paymentId()).ifPresent(pr -> {
+        pr.setIdempotencyKey(idKey);
+        repository.save(pr);
+      });
+    }
+
+    return result;
+  }
+
   /**
    * Initiate internal transfer. Returns paymentId and status (PROCESSING | MFA_CHALLENGE_REQUIRED | BLOCKED).
    */
