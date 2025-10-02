@@ -22,9 +22,9 @@ public class KafkaEventPublisher implements EventPublisher {
   private final KafkaTemplate<String, String> kafkaTemplate;
   private final ObjectMapper mapper;
 
-  public KafkaEventPublisher(KafkaTemplate<String, String> kafkaTemplate) {
+  public KafkaEventPublisher(KafkaTemplate<String, String> kafkaTemplate, ObjectMapper mapper) {
     this.kafkaTemplate = kafkaTemplate;
-    this.mapper = new ObjectMapper();
+    this.mapper = mapper;
   }
 
   @Override

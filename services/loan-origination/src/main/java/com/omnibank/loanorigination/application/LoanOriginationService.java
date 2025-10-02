@@ -121,7 +121,12 @@ public class LoanOriginationService {
   }
 
   private void publish(String type, Object payload, String correlationId) {
-    eventPublisher.publish(props.getEvents().getTopic(), type, payload, correlationId);
+    try {
+      eventPublisher.publish(props.getEvents().getTopic(), type, payload, correlationId);
+    } catch (Exception ex) {
+      // Surface a controlled error (handled as 409 by GlobalExceptionHandler) instead of 500 NPEs
+      throw new IllegalStateException("Failed to publish event '" + type + "': " + ex.getMessage());
+    }
   }
 
   // Params and DTO views
