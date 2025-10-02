@@ -19,6 +19,13 @@ spring:
   jackson:
     serialization:
       WRITE_DATES_AS_TIMESTAMPS: false
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:}
+    consumer:
+      group-id: account-management
+      auto-offset-reset: latest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
 
 management:
   endpoints:
@@ -31,6 +38,10 @@ logging:
     root: INFO
     com.omnibank.accountmanagement: DEBUG
 
+# Feature flags and topics for eventing
 account:
+  kafka:
+    enabled: false   # set to true to enable Kafka consumer for ledger.events
   events:
     topic: account.events
+    ledgerTopic: ledger.events
