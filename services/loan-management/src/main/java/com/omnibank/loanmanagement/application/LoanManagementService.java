@@ -1,10 +1,19 @@
 package com.omnibank.loanmanagement.application;
 
 import com.omnibank.loanmanagement.domain.LoanAccount;
+import com.omnibank.loanmanagement.domain.LoanEmiApplied;
+import com.omnibank.loanmanagement.domain.LoanSchedule;
 import com.omnibank.loanmanagement.repository.LoanAccountRepository;
+import com.omnibank.loanmanagement.repository.LoanEmiAppliedRepository;
+import com.omnibank.loanmanagement.repository.LoanScheduleRepository;
 import jakarta.transaction.Transactional;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.security.SecureRandom;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Random;
@@ -17,14 +26,19 @@ import org.springframework.stereotype.Service;
 public class LoanManagementService {
 
   private final LoanAccountRepository loanRepo;
+  private final LoanScheduleRepository scheduleRepo;
+  private final LoanEmiAppliedRepository emiAppliedRepo;
+
   private static final Random RAND = new SecureRandom();
+
+  // Default tenure for MVP if not provided by origination (months)
+  private static final int DEFAULT_TENURE_MONTHS = 12;
 
   @Transactional
   public void handleLoanApproved(LoanApprovedPayload payload, String correlationId) {
     if (payload == null) return;
-    // Idempotency: one loan account per origination applicationId
     if (loanRepo.findByApplicationId(payload.applicationId()).isPresent()) {
-      return;
+      return; // idempotent
     }
     String loanAccNo = generateLoanAccountNumber();
     BigDecimal principal = nvl(payload.approvedAmount(), BigDecimal.ZERO);
@@ -36,13 +50,15 @@ public class LoanManagementService {
         .customerId(payload.customerId())
         .loanType(upper(payload.loanType()))
         .principalDisbursed(principal)
-        .currentBalance(principal) // initial balance equals principal at disbursal
+        .currentBalance(principal)
         .interestRate(rate)
         .status("ACTIVE")
         .build();
 
-    loanRepo.save(acc);
-    // FUTURE: generate amortization schedule rows and persist
+    acc = loanRepo.save(acc);
+
+    // Generate a basic amortization schedule for MVP (equal EMI over DEFAULT_TENURE_MONTHS)
+    generateSchedule(acc, principal, rate, DEFAULT_TENURE_MONTHS);
   }
 
   @Transactional
@@ -59,6 +75,100 @@ public class LoanManagementService {
         .collect(Collectors.toList());
   }
 
+  @Transactional
+  public List<LoanScheduleView> getScheduleByLoanAccount(String loanAccountNumber) {
+    LoanAccount a = loanRepo.findByLoanAccountNumber(loanAccountNumber)
+        .orElseThrow(() -> new IllegalArgumentException("Loan account not found: " + loanAccountNumber));
+    return scheduleRepo.findByLoanAccountOrderBySeqNoAsc(a).stream()
+        .sorted(Comparator.comparing(LoanSchedule::getSeqNo))
+        .map(this::toScheduleView)
+        .collect(Collectors.toList());
+  }
+
+  // Apply EMI against a loan from a ledger TransactionPosted (idempotent by txId)
+  @Transactional
+  public void applyEmiPayment(String transactionId, String loanAccountNumber, BigDecimal amount) {
+    if (transactionId == null || transactionId.isBlank() || loanAccountNumber == null || amount == null) {
+      throw new IllegalArgumentException("Invalid EMI application input");
+    }
+    if (emiAppliedRepo.existsByTransactionId(transactionId)) {
+      return; // idempotent
+    }
+    LoanAccount acc = loanRepo.findByLoanAccountNumber(loanAccountNumber)
+        .orElseThrow(() -> new IllegalArgumentException("Loan account not found: " + loanAccountNumber));
+
+    // Find next pending schedule
+    List<LoanSchedule> all = scheduleRepo.findByLoanAccountOrderBySeqNoAsc(acc);
+    LoanSchedule pending = all.stream()
+        .filter(s -> "PENDING".equalsIgnoreCase(s.getPaymentStatus()))
+        .min(Comparator.comparing(LoanSchedule::getSeqNo))
+        .orElse(null);
+
+    if (pending == null) {
+      // No pending schedule; just reduce balance by amount
+      acc.setCurrentBalance(acc.getCurrentBalance().subtract(amount).max(BigDecimal.ZERO));
+      loanRepo.save(acc);
+    } else {
+      // Mark schedule paid if amount >= EMI amount (MVP: no partials)
+      if (amount.compareTo(pending.getEmiAmount()) >= 0) {
+        pending.setPaymentStatus("PAID");
+        pending.setPaidAt(Instant.now());
+        scheduleRepo.save(pending);
+        acc.setCurrentBalance(acc.getCurrentBalance().subtract(pending.getPrincipalComponent()).max(BigDecimal.ZERO));
+        loanRepo.save(acc);
+      } else {
+        // Partial: reduce balance by amount and keep schedule pending (MVP simplification)
+        acc.setCurrentBalance(acc.getCurrentBalance().subtract(amount).max(BigDecimal.ZERO));
+        loanRepo.save(acc);
+      }
+    }
+
+    emiAppliedRepo.save(LoanEmiApplied.builder()
+        .transactionId(transactionId)
+        .loanAccountNumber(loanAccountNumber)
+        .build());
+  }
+
+  private void generateSchedule(LoanAccount acc, BigDecimal principal, BigDecimal annualRatePct, int months) {
+    // EMI formula with monthly rate r: EMI = P * r * (1+r)^n / ((1+r)^n - 1)
+    BigDecimal r = annualRatePct
+        .divide(BigDecimal.valueOf(12), 10, RoundingMode.HALF_UP)
+        .divide(BigDecimal.valueOf(100), 10, RoundingMode.HALF_UP); // monthly rate in decimal
+    BigDecimal onePlusRPowerN = (BigDecimal.ONE.add(r)).pow(months);
+    BigDecimal numerator = principal.multiply(r).multiply(onePlusRPowerN);
+    BigDecimal denominator = onePlusRPowerN.subtract(BigDecimal.ONE);
+    BigDecimal emi = denominator.compareTo(BigDecimal.ZERO) == 0
+        ? principal.divide(BigDecimal.valueOf(months), 2, RoundingMode.HALF_UP)
+        : numerator.divide(denominator, 2, RoundingMode.HALF_UP);
+
+    BigDecimal balance = principal;
+    LocalDate start = LocalDate.now(ZoneOffset.UTC).plusMonths(1);
+
+    for (int i = 1; i <= months; i++) {
+      BigDecimal interestComponent = balance.multiply(r).setScale(2, RoundingMode.HALF_UP);
+      BigDecimal principalComponent = emi.subtract(interestComponent).setScale(2, RoundingMode.HALF_UP);
+      if (i == months) {
+        // adjust final principal to clear rounding
+        principalComponent = balance;
+        emi = principalComponent.add(interestComponent);
+      }
+
+      LoanSchedule sch = LoanSchedule.builder()
+          .loanAccount(acc)
+          .seqNo(i)
+          .dueDate(start.plusMonths(i - 1).atStartOfDay().toInstant(ZoneOffset.UTC))
+          .emiAmount(emi)
+          .principalComponent(principalComponent)
+          .interestComponent(interestComponent)
+          .paymentStatus("PENDING")
+          .build();
+      scheduleRepo.save(sch);
+
+      balance = balance.subtract(principalComponent);
+      if (balance.compareTo(BigDecimal.ZERO) < 0) balance = BigDecimal.ZERO;
+    }
+  }
+
   private LoanAccountView toView(LoanAccount a) {
     return new LoanAccountView(
         a.getLoanAccountNumber(),
@@ -73,8 +183,19 @@ public class LoanManagementService {
     );
   }
 
+  private LoanScheduleView toScheduleView(LoanSchedule s) {
+    return new LoanScheduleView(
+        s.getSeqNo(),
+        s.getDueDate(),
+        s.getEmiAmount(),
+        s.getPrincipalComponent(),
+        s.getInterestComponent(),
+        s.getPaymentStatus(),
+        s.getPaidAt()
+    );
+  }
+
   private static String generateLoanAccountNumber() {
-    // Simple dev-local generator: LN + 12 digits
     StringBuilder sb = new StringBuilder("LN");
     for (int i = 0; i < 12; i++) {
       sb.append(RAND.nextInt(10));
@@ -100,7 +221,7 @@ public class LoanManagementService {
       String decisionBy
   ) {}
 
-  // Query view DTO
+  // Query views
   public record LoanAccountView(
       String loanAccountNumber,
       String applicationId,
@@ -111,5 +232,15 @@ public class LoanManagementService {
       BigDecimal interestRate,
       String status,
       java.time.Instant createdAt
+  ) {}
+
+  public record LoanScheduleView(
+      Integer seqNo,
+      java.time.Instant dueDate,
+      BigDecimal emiAmount,
+      BigDecimal principalComponent,
+      BigDecimal interestComponent,
+      String paymentStatus,
+      java.time.Instant paidAt
   ) {}
 }
