@@ -41,6 +41,13 @@ public class LoanSchedule {
   @Column(name = "INTEREST_COMPONENT", precision = 19, scale = 4, nullable = false)
   private BigDecimal interestComponent;
 
+  // Amounts paid against this schedule (track partials)
+  @Column(name = "INTEREST_PAID", precision = 19, scale = 4, nullable = false)
+  private BigDecimal interestPaid;
+
+  @Column(name = "PRINCIPAL_PAID", precision = 19, scale = 4, nullable = false)
+  private BigDecimal principalPaid;
+
   @Column(name = "PAYMENT_STATUS", length = 20, nullable = false)
   private String paymentStatus; // PENDING | PAID
 

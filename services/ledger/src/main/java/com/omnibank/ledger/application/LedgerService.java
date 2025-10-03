@@ -41,6 +41,14 @@ public class LedgerService {
   public PostResult postTransaction(@NotBlank String transactionType,
                                     @NotNull List<Entry> entries,
                                     String correlationId) {
+    return postTransaction(transactionType, entries, correlationId, null);
+  }
+
+  @Transactional
+  public PostResult postTransaction(@NotBlank String transactionType,
+                                    @NotNull List<Entry> entries,
+                                    String correlationId,
+                                    java.util.Map<String, String> metadata) {
     validate(transactionType, entries);
 
     String txUuid = UUID.randomUUID().toString();
@@ -79,7 +87,8 @@ public class LedgerService {
                     e.getAmount(),
                     Character.toUpperCase(e.getDirection())
                 ))
-                .toList()
+                .toList(),
+            metadata
         ),
         correlationId
     );
@@ -139,6 +148,7 @@ public class LedgerService {
   public static class EventPayload {
     String transactionId;
     List<PostedEntry> entries;
+    java.util.Map<String, String> metadata;
 
     @Value
     public static class PostedEntry {

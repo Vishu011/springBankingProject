@@ -69,18 +69,43 @@ public class LoanLedgerEventsConsumer {
         return;
       }
 
-      for (JsonNode e : entries) {
-        String account = text(e, "account");
-        BigDecimal amount = decimal(e, "amount");
-        if (account == null || account.isBlank() || amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
-          continue;
+      // Prefer explicit metadata mapping if available
+      String loanAccMeta = text(payload.path("metadata"), "loanAccountNumber");
+      if (loanAccMeta != null && !loanAccMeta.isBlank()) {
+        BigDecimal matchedAmt = null;
+        for (JsonNode e : entries) {
+          String account = text(e, "account");
+          if (loanAccMeta.equalsIgnoreCase(account)) {
+            matchedAmt = decimal(e, "amount");
+            break;
+          }
         }
+        if (matchedAmt != null && matchedAmt.compareTo(BigDecimal.ZERO) > 0) {
+          try {
+            service.applyEmiPayment(txId, loanAccMeta, matchedAmt);
+          } catch (IllegalArgumentException notLoanAcc) {
+            // If metadata maps to a non-loan account, fall back to heuristic
+            loanAccMeta = null;
+          }
+        } else {
+          // Fallback to heuristic if amount not found
+          loanAccMeta = null;
+        }
+      }
 
-        // Heuristic: loan accounts start with "LN" but we accept any that exist in repo inside service
-        try {
-          service.applyEmiPayment(txId, account, amount);
-        } catch (IllegalArgumentException notLoanAcc) {
-          // Not a loan account; ignore
+      if (loanAccMeta == null || loanAccMeta.isBlank()) {
+        // Heuristic fallback: apply for any entry that corresponds to a known loan account
+        for (JsonNode e : entries) {
+          String account = text(e, "account");
+          BigDecimal amount = decimal(e, "amount");
+          if (account == null || account.isBlank() || amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            continue;
+          }
+          try {
+            service.applyEmiPayment(txId, account, amount);
+          } catch (IllegalArgumentException notLoanAcc) {
+            // Not a loan account; ignore
+          }
         }
       }
 

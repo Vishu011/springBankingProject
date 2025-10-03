@@ -10,6 +10,7 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -38,7 +39,8 @@ public class LedgerController {
     PostResult result = ledgerService.postTransaction(
         request.getTransactionType(),
         request.toEntries(),
-        cid
+        cid,
+        request.getMetadata()
     );
     return ResponseEntity.ok()
         .header(HDR_CORRELATION_ID, cid)
@@ -56,6 +58,9 @@ public class LedgerController {
 
     @NotEmpty
     private List<PostEntry> entries;
+
+    // Optional metadata to flow into TransactionPosted (e.g., {"loanAccountNumber":"LN123..."})
+    private Map<String, String> metadata;
 
     public List<Entry> toEntries() {
       return entries.stream()

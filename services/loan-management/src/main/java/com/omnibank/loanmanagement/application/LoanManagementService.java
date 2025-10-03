@@ -105,20 +105,49 @@ public class LoanManagementService {
         .orElse(null);
 
     if (pending == null) {
-      // No pending schedule; just reduce balance by amount
+      // No pending schedule; treat entire amount as principal reduction
       acc.setCurrentBalance(acc.getCurrentBalance().subtract(amount).max(BigDecimal.ZERO));
       loanRepo.save(acc);
     } else {
-      // Mark schedule paid if amount >= EMI amount (MVP: no partials)
-      if (amount.compareTo(pending.getEmiAmount()) >= 0) {
+      // Apply against interest first, then principal (track partials)
+      BigDecimal remaining = amount;
+
+      BigDecimal curInterestPaid = nvl(pending.getInterestPaid(), BigDecimal.ZERO);
+      BigDecimal curPrincipalPaid = nvl(pending.getPrincipalPaid(), BigDecimal.ZERO);
+
+      BigDecimal interestRemain = pending.getInterestComponent().subtract(curInterestPaid);
+      if (interestRemain.compareTo(BigDecimal.ZERO) < 0) interestRemain = BigDecimal.ZERO;
+
+      BigDecimal payInterest = remaining.min(interestRemain);
+      if (payInterest.compareTo(BigDecimal.ZERO) > 0) {
+        pending.setInterestPaid(curInterestPaid.add(payInterest));
+        remaining = remaining.subtract(payInterest);
+      }
+
+      BigDecimal principalRemain = pending.getPrincipalComponent().subtract(curPrincipalPaid);
+      if (principalRemain.compareTo(BigDecimal.ZERO) < 0) principalRemain = BigDecimal.ZERO;
+
+      BigDecimal payPrincipal = remaining.min(principalRemain);
+      if (payPrincipal.compareTo(BigDecimal.ZERO) > 0) {
+        pending.setPrincipalPaid(curPrincipalPaid.add(payPrincipal));
+        remaining = remaining.subtract(payPrincipal);
+        // Only principal payments reduce outstanding balance
+        acc.setCurrentBalance(acc.getCurrentBalance().subtract(payPrincipal).max(BigDecimal.ZERO));
+      }
+
+      // Mark schedule completed if both components fully paid
+      if (pending.getInterestComponent().compareTo(nvl(pending.getInterestPaid(), BigDecimal.ZERO)) <= 0
+          && pending.getPrincipalComponent().compareTo(nvl(pending.getPrincipalPaid(), BigDecimal.ZERO)) <= 0) {
         pending.setPaymentStatus("PAID");
         pending.setPaidAt(Instant.now());
-        scheduleRepo.save(pending);
-        acc.setCurrentBalance(acc.getCurrentBalance().subtract(pending.getPrincipalComponent()).max(BigDecimal.ZERO));
-        loanRepo.save(acc);
-      } else {
-        // Partial: reduce balance by amount and keep schedule pending (MVP simplification)
-        acc.setCurrentBalance(acc.getCurrentBalance().subtract(amount).max(BigDecimal.ZERO));
+      }
+
+      scheduleRepo.save(pending);
+      loanRepo.save(acc);
+
+      // If any remainder exists (e.g., overpayment), reduce balance further
+      if (remaining.compareTo(BigDecimal.ZERO) > 0) {
+        acc.setCurrentBalance(acc.getCurrentBalance().subtract(remaining).max(BigDecimal.ZERO));
         loanRepo.save(acc);
       }
     }
@@ -160,6 +189,8 @@ public class LoanManagementService {
           .emiAmount(emi)
           .principalComponent(principalComponent)
           .interestComponent(interestComponent)
+          .interestPaid(BigDecimal.ZERO)
+          .principalPaid(BigDecimal.ZERO)
           .paymentStatus("PENDING")
           .build();
       scheduleRepo.save(sch);
