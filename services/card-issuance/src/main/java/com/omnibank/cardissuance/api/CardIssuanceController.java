@@ -1,0 +1,81 @@
+package com.omnibank.cardissuance.api;
+
+import com.omnibank.cardissuance.application.CardIssuanceService;
+import com.omnibank.cardissuance.application.CardIssuanceService.ApplicationView;
+import com.omnibank.cardissuance.application.CardIssuanceService.Created;
+import com.omnibank.cardissuance.application.CardIssuanceService.SubmitRequest;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.util.StringUtils;
+import org.springframework.web.bind.annotation.*;
+
+/**
+ * Card Issuance APIs (dev-open)
+ * - POST /api/v1/cards/issuance/applications
+ * - GET  /api/v1/cards/issuance/applications/{id}
+ * - POST /api/v1/cards/issuance/applications/{id}/eligibility-check
+ * - POST /api/v1/cards/issuance/applications/{id}/approve
+ */
+@RestController
+@RequestMapping("/api/v1/cards/issuance")
+@RequiredArgsConstructor
+public class CardIssuanceController {
+
+  public static final String HDR_CORRELATION_ID = "X-Correlation-Id";
+
+  private final CardIssuanceService service;
+
+  @PostMapping("/applications")
+  public ResponseEntity<Created> submit(
+      @RequestHeader(value = HDR_CORRELATION_ID, required = false) String correlationId,
+      @Valid @RequestBody SubmitRequest request
+  ) {
+    String cid = ensureCorrelationId(correlationId);
+    Created res = service.submit(request, cid);
+    return ResponseEntity.accepted()
+        .header(HDR_CORRELATION_ID, cid)
+        .body(res);
+  }
+
+  @GetMapping("/applications/{id}")
+  public ResponseEntity<ApplicationView> get(
+      @RequestHeader(value = HDR_CORRELATION_ID, required = false) String correlationId,
+      @PathVariable("id") @NotBlank String applicationId
+  ) {
+    String cid = ensureCorrelationId(correlationId);
+    ApplicationView view = service.get(applicationId);
+    return ResponseEntity.ok()
+        .header(HDR_CORRELATION_ID, cid)
+        .body(view);
+  }
+
+  @PostMapping("/applications/{id}/eligibility-check")
+  public ResponseEntity<ApplicationView> eligibilityCheck(
+      @RequestHeader(value = HDR_CORRELATION_ID, required = false) String correlationId,
+      @PathVariable("id") @NotBlank String applicationId
+  ) {
+    String cid = ensureCorrelationId(correlationId);
+    ApplicationView view = service.eligibilityCheck(applicationId, cid);
+    return ResponseEntity.ok()
+        .header(HDR_CORRELATION_ID, cid)
+        .body(view);
+  }
+
+  @PostMapping("/applications/{id}/approve")
+  public ResponseEntity<ApplicationView> approve(
+      @RequestHeader(value = HDR_CORRELATION_ID, required = false) String correlationId,
+      @PathVariable("id") @NotBlank String applicationId
+  ) {
+    String cid = ensureCorrelationId(correlationId);
+    ApplicationView view = service.approve(applicationId, cid);
+    return ResponseEntity.ok()
+        .header(HDR_CORRELATION_ID, cid)
+        .body(view);
+  }
+
+  private static String ensureCorrelationId(String headerValue) {
+    return StringUtils.hasText(headerValue) ? headerValue : java.util.UUID.randomUUID().toString();
+  }
+}

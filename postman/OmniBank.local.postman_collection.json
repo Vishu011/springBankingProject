@@ -501,6 +501,52 @@
         }
       },
       "description": "Dev-only helper to simulate EMI application using a ledger transactionId."
+    },
+    {
+      "name": "22 - Ledger - Apply EMI (dev-open via ledger)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "X-Correlation-Id", "value": "{{x_correlation_id}}" }
+        ],
+        "url": "{{ledger_base}}/api/v1/internal/ledger/loans/{{loan_account_number}}/apply-emi",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"fromAccount\": \"{{from_account}}\",\n  \"amount\": {{amount}}\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "try {",
+              "  const json = pm.response.json();",
+              "  if (json.transactionId) pm.environment.set('ledger_transaction_id', json.transactionId);",
+              "} catch(e) {}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "description": "Posts LOAN_EMI via ledger (debit from_account, credit loan_account_number) and sets ledger_transaction_id."
+    },
+    {
+      "name": "23 - Account Mgmt - Apply LOAN_EMI (dev)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "X-Correlation-Id", "value": "{{x_correlation_id}}" }
+        ],
+        "url": "{{account_mgmt_base}}/api/v1/internal/dev/ledger-events/transaction-posted",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"transactionId\": \"{{ledger_transaction_id}}\",\n  \"entries\": [\n    { \"account\": \"{{from_account}}\", \"amount\": {{amount}}, \"direction\": \"D\" },\n    { \"account\": \"{{loan_account_number}}\", \"amount\": {{amount}}, \"direction\": \"C\" }\n  ]\n}"
+        }
+      },
+      "description": "Dev-open: applies the LOAN_EMI ledger posting to account balances (debit deposit, credit loan)."
     }
   ]
 }

@@ -14,6 +14,7 @@ import java.util.Map;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import java.util.HashMap;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
@@ -42,6 +43,35 @@ public class LedgerController {
         cid,
         request.getMetadata()
     );
+    return ResponseEntity.ok()
+        .header(HDR_CORRELATION_ID, cid)
+        .body(result);
+  }
+
+  @PostMapping("/loans/{loanAccount}/apply-emi")
+  public ResponseEntity<PostResult> applyEmiViaLedger(
+      @RequestHeader(value = HDR_CORRELATION_ID, required = false) String correlationId,
+      @PathVariable("loanAccount") @NotBlank String loanAccount,
+      @Valid @RequestBody ApplyEmiRequest request
+  ) {
+    String cid = ensureCorrelationId(correlationId);
+
+    // Build double-entry: debit customer's deposit account, credit loan account
+    List<Entry> entries = List.of(
+        new Entry(request.getFromAccount(), request.getAmount(), 'D'),
+        new Entry(loanAccount, request.getAmount(), 'C')
+    );
+
+    Map<String, String> metadata = new HashMap<>();
+    metadata.put("loanAccountNumber", loanAccount);
+
+    PostResult result = ledgerService.postTransaction(
+        "LOAN_EMI",
+        entries,
+        cid,
+        metadata
+    );
+
     return ResponseEntity.ok()
         .header(HDR_CORRELATION_ID, cid)
         .body(result);
@@ -81,5 +111,15 @@ public class LedgerController {
     // Must be 'D' or 'C'
     @NotNull
     private Character direction;
+  }
+
+  @Data
+  public static class ApplyEmiRequest {
+    @NotBlank
+    private String fromAccount;
+
+    @NotNull
+    @DecimalMin(value = "0.01", message = "amount must be > 0")
+    private BigDecimal amount;
   }
 }

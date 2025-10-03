@@ -1,0 +1,29 @@
+server:
+  port: 8130
+
+spring:
+  application:
+    name: card-issuance-service
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+
+logging:
+  level:
+    root: INFO
+    com.omnibank.cardissuance: DEBUG
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui/index.html
+  packages-to-scan: com.omnibank.cardissuance.api
+
+card-issuance:
+  eventPublisher: logging  # switch to 'kafka' when Kafka broker is available
+  events:
+    topic: card.issuance.events
