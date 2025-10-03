@@ -103,3 +103,20 @@ resilience4j:
       ledger:
         maxAttempts: 2
         waitDuration: 200ms
+  bulkhead:
+    instances:
+      customerProfile:
+        maxConcurrentCalls: 20
+        maxWaitDuration: 0
+      accountManagement:
+        maxConcurrentCalls: 50
+        maxWaitDuration: 0
+      beneficiaryManagement:
+        maxConcurrentCalls: 20
+        maxWaitDuration: 0
+      fraudDetection:
+        maxConcurrentCalls: 10
+        maxWaitDuration: 0
+      ledger:
+        maxConcurrentCalls: 20
+        maxWaitDuration: 0

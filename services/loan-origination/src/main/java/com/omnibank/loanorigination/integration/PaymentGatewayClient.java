@@ -6,6 +6,7 @@ import java.net.URI;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
+import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 
 @Component
 public class PaymentGatewayClient {
@@ -18,6 +19,7 @@ public class PaymentGatewayClient {
     this.rest = restBuilder.build();
   }
 
+  @Bulkhead(name = "paymentGateway")
   public InitiateResponse initiateInternalTransfer(
       Long customerId,
       String fromAccount,

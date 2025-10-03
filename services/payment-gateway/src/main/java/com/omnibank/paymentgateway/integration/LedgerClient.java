@@ -9,6 +9,7 @@ import java.util.List;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
+import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 
 /**
  * Dev-first client for the ledger-service internal posting endpoint.
@@ -18,12 +19,14 @@ import org.springframework.web.client.RestClient;
 public class LedgerClient {
 
   private final AppProperties props;
-  private final RestClient rest = RestClient.create();
+  private final RestClient rest;
 
-  public LedgerClient(AppProperties props) {
+  public LedgerClient(AppProperties props, RestClient.Builder restBuilder) {
     this.props = props;
+    this.rest = restBuilder.build();
   }
 
+  @Bulkhead(name = "ledger")
   public PostResult postTransfer(String fromAccount,
                                  String toAccount,
                                  BigDecimal amount,

@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
+import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 
 /**
  * Synchronous fraud decision client.
@@ -28,6 +29,7 @@ public class FraudDetectionClient {
 
   @CircuitBreaker(name = "fraudDetection")
   @Retry(name = "fraudDetection")
+  @Bulkhead(name = "fraudDetection")
   public Decision getDecision(FraudRequest req, String correlationId) {
     String base = props.getIntegrations().getFraudDetection().getBaseUrl();
     // Placeholder internal dev path; replace when real fraud service is available

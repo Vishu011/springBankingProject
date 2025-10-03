@@ -32,3 +32,24 @@ loan-origination:
   events:
     topic: loan.origination.events
   eventPublisher: logging  # switch to 'kafka' when Kafka broker is available
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      accountManagement:
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 5s
+  retry:
+    instances:
+      accountManagement:
+        maxAttempts: 3
+        waitDuration: 200ms
+  bulkhead:
+    instances:
+      accountManagement:
+        maxConcurrentCalls: 30
+        maxWaitDuration: 0
+      paymentGateway:
+        maxConcurrentCalls: 10
+        maxWaitDuration: 0

@@ -8,6 +8,8 @@ import com.omnibank.paymentgateway.events.EventPublisher;
 import com.omnibank.paymentgateway.integration.AccountManagementClient;
 import com.omnibank.paymentgateway.integration.BeneficiaryManagementClient;
 import com.omnibank.paymentgateway.integration.CustomerProfileClient;
+import com.omnibank.paymentgateway.integration.FraudDetectionClient;
+import org.junit.jupiter.api.BeforeEach;
 import java.math.BigDecimal;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -40,6 +42,9 @@ class PaymentControllerIntegrationTest {
   private BeneficiaryManagementClient beneficiaryManagementClient;
 
   @MockBean
+  private FraudDetectionClient fraudDetectionClient;
+
+  @MockBean
   private EventPublisher eventPublisher;
 
   private static final ObjectMapper MAPPER = new ObjectMapper();
@@ -53,6 +58,12 @@ class PaymentControllerIntegrationTest {
     h.setContentType(MediaType.APPLICATION_JSON);
     h.set("X-Correlation-Id", "test-correlation-id");
     return h;
+  }
+
+  @BeforeEach
+  void defaultFraudAllow() {
+    Mockito.when(fraudDetectionClient.getDecision(Mockito.any(), Mockito.anyString()))
+        .thenReturn(new FraudDetectionClient.Decision("ALLOW", new BigDecimal("0.00")));
   }
 
   @Test
@@ -246,5 +257,67 @@ class PaymentControllerIntegrationTest {
     assertThat(j1.get("paymentId").asText()).isEqualTo(j2.get("paymentId").asText());
     assertThat(j1.get("status").asText()).isEqualTo(j2.get("status").asText());
     assertThat(j1.get("status").asText()).isEqualTo("PROCESSING");
+  }
+
+  @Test
+  void internalTransfer_fraudBlock_returnsBlocked() throws Exception {
+    Mockito.doNothing().when(customerProfileClient).assertCustomerExists(1L, "test-correlation-id");
+    Mockito.when(beneficiaryManagementClient.isBeneficiaryActive(1L, "AC222", "test-correlation-id"))
+        .thenReturn(true);
+    Mockito.when(accountManagementClient.getBalance("AC111", "test-correlation-id"))
+        .thenReturn(new BigDecimal("1000.00"));
+    Mockito.when(fraudDetectionClient.getDecision(Mockito.any(), Mockito.eq("test-correlation-id")))
+        .thenReturn(new FraudDetectionClient.Decision("BLOCK", new BigDecimal("0.95")));
+
+    String body = """
+        {
+          "customerId": 1,
+          "fromAccount": "AC111",
+          "toAccount": "AC222",
+          "amount": 100.00,
+          "currency": "USD"
+        }
+        """;
+
+    ResponseEntity<String> resp = restTemplate.postForEntity(
+        url("/api/v1/payments/internal-transfer"),
+        new HttpEntity<>(body, headers()),
+        String.class
+    );
+
+    assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.ACCEPTED);
+    JsonNode json = MAPPER.readTree(resp.getBody());
+    assertThat(json.get("status").asText()).isEqualTo("BLOCKED");
+  }
+
+  @Test
+  void internalTransfer_fraudChallenge_returnsMfaRequired() throws Exception {
+    Mockito.doNothing().when(customerProfileClient).assertCustomerExists(1L, "test-correlation-id");
+    Mockito.when(beneficiaryManagementClient.isBeneficiaryActive(1L, "AC222", "test-correlation-id"))
+        .thenReturn(true);
+    Mockito.when(accountManagementClient.getBalance("AC111", "test-correlation-id"))
+        .thenReturn(new BigDecimal("1000.00"));
+    Mockito.when(fraudDetectionClient.getDecision(Mockito.any(), Mockito.eq("test-correlation-id")))
+        .thenReturn(new FraudDetectionClient.Decision("CHALLENGE", new BigDecimal("0.60")));
+
+    String body = """
+        {
+          "customerId": 1,
+          "fromAccount": "AC111",
+          "toAccount": "AC222",
+          "amount": 100.00,
+          "currency": "USD"
+        }
+        """;
+
+    ResponseEntity<String> resp = restTemplate.postForEntity(
+        url("/api/v1/payments/internal-transfer"),
+        new HttpEntity<>(body, headers()),
+        String.class
+    );
+
+    assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.ACCEPTED);
+    JsonNode json = MAPPER.readTree(resp.getBody());
+    assertThat(json.get("status").asText()).isEqualTo("MFA_CHALLENGE_REQUIRED");
   }
 }
