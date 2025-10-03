@@ -21,6 +21,7 @@ public class PaymentController {
 
   public static final String HDR_CORRELATION_ID = "X-Correlation-Id";
   public static final String HDR_IDEMPOTENCY_KEY = "Idempotency-Key";
+  public static final String HDR_PAYMENT_INTENT = "X-Payment-Intent";
 
   private final PaymentGatewayService service;
 
@@ -28,10 +29,11 @@ public class PaymentController {
   public ResponseEntity<InitiatePaymentResponse> internalTransfer(
       @RequestHeader(value = HDR_CORRELATION_ID, required = false) String correlationId,
       @RequestHeader(value = HDR_IDEMPOTENCY_KEY, required = false) String idempotencyKey,
+      @RequestHeader(value = HDR_PAYMENT_INTENT, required = false) String paymentIntent,
       @Valid @RequestBody InternalTransferRequest request
   ) {
     String cid = ensureCorrelationId(correlationId);
-    var result = service.initiateInternalTransfer(request, cid, idempotencyKey);
+    var result = service.initiateInternalTransfer(request, cid, idempotencyKey, paymentIntent);
     return ResponseEntity.accepted()
         .header(HDR_CORRELATION_ID, cid)
         .body(new InitiatePaymentResponse(result.paymentId(), result.status()));

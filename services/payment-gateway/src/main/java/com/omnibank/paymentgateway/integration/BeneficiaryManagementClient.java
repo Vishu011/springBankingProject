@@ -7,6 +7,9 @@ import java.util.Objects;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
+import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 
 /**
  * Minimal client to validate a beneficiary is present and active for a given customer.
@@ -27,6 +30,9 @@ public class BeneficiaryManagementClient {
    * Strategy: call /api/v1/customers/{customerId}/beneficiaries and verify a record matches the toAccount with status ACTIVE.
    * Note: In a future iteration, switch to a specific endpoint if available.
    */
+  @CircuitBreaker(name = "beneficiaryManagement")
+  @Retry(name = "beneficiaryManagement")
+  @Bulkhead(name = "beneficiaryManagement")
   public boolean isBeneficiaryActive(Long customerId, String toAccount, String correlationId) {
     String base = props.getIntegrations().getBeneficiaryManagement().getBaseUrl();
     String url = base + "/api/v1/customers/" + customerId + "/beneficiaries";

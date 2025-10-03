@@ -474,6 +474,33 @@
         ],
         "url": "{{loan_mgmt_base}}/api/v1/loans/{{loan_account_number}}"
       }
+    },
+    {
+      "name": "20 - Loan Mgmt - Get Loan Schedule",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "X-Correlation-Id", "value": "{{x_correlation_id}}" }
+        ],
+        "url": "{{loan_mgmt_base}}/api/v1/loans/{{loan_account_number}}/schedule"
+      },
+      "description": "Retrieves amortization schedule for a loan account."
+    },
+    {
+      "name": "21 - Loan Mgmt - Apply EMI (dev)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "X-Correlation-Id", "value": "{{x_correlation_id}}" }
+        ],
+        "url": "{{loan_mgmt_base}}/api/v1/loans/internal/dev/loans/{{loan_account_number}}/apply-emi",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"transactionId\": \"{{ledger_transaction_id}}\",\n  \"amount\": {{amount}}\n}"
+        }
+      },
+      "description": "Dev-only helper to simulate EMI application using a ledger transactionId."
     }
   ]
 }

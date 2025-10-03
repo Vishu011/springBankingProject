@@ -14,6 +14,8 @@ public class AppProperties {
   // Dev-only: when true, gateway will call account-management to adjust balances after ledger POST succeeds.
   // This will be disabled once async eventing is enabled end-to-end.
   private boolean devBalanceAdjustEnabled = true;
+  // Policy flags controlling conditional validations/behaviors
+  private Policy policy = new Policy();
 
   public String getEventPublisher() {
     return eventPublisher;
@@ -55,6 +57,14 @@ public class AppProperties {
     this.devBalanceAdjustEnabled = devBalanceAdjustEnabled;
   }
 
+  public Policy getPolicy() {
+    return policy;
+  }
+
+  public void setPolicy(Policy policy) {
+    this.policy = policy;
+  }
+
   public static class Events {
     private String topic = "payment.events";
 
@@ -64,6 +74,19 @@ public class AppProperties {
 
     public void setTopic(String topic) {
       this.topic = topic;
+    }
+  }
+
+  public static class Policy {
+    // When true, gateway will bypass beneficiary check for DISBURSAL intent calls (dev-local only)
+    private boolean allowDisbursalWithoutBeneficiary = true;
+
+    public boolean isAllowDisbursalWithoutBeneficiary() {
+      return allowDisbursalWithoutBeneficiary;
+    }
+
+    public void setAllowDisbursalWithoutBeneficiary(boolean allowDisbursalWithoutBeneficiary) {
+      this.allowDisbursalWithoutBeneficiary = allowDisbursalWithoutBeneficiary;
     }
   }
 

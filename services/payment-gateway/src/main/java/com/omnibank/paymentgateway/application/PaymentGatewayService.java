@@ -15,6 +15,8 @@ import com.omnibank.paymentgateway.integration.LedgerClient;
 import com.omnibank.paymentgateway.repository.PaymentRequestRepository;
 import java.math.BigDecimal;
 import java.util.UUID;
+import java.util.Map;
+import java.util.HashMap;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,7 +38,7 @@ public class PaymentGatewayService {
 
   // Idempotent variant: uses optional Idempotency-Key header to dedupe client retries
   @Transactional
-  public InitiationResult initiateInternalTransfer(InternalTransferRequest req, String correlationId, String idempotencyKey) {
+  public InitiationResult initiateInternalTransfer(InternalTransferRequest req, String correlationId, String idempotencyKey, String paymentIntent) {
     String idKey = (idempotencyKey != null && !idempotencyKey.isBlank()) ? idempotencyKey : null;
 
     if (idKey != null) {
@@ -47,7 +49,7 @@ public class PaymentGatewayService {
       }
     }
 
-    var result = initiateInternalTransfer(req, correlationId);
+    var result = initiateInternalTransfer(req, correlationId, paymentIntent);
 
     if (idKey != null) {
       repository.findByPaymentUuid(result.paymentId()).ifPresent(pr -> {
@@ -63,7 +65,7 @@ public class PaymentGatewayService {
    * Initiate internal transfer. Returns paymentId and status (PROCESSING | MFA_CHALLENGE_REQUIRED | BLOCKED).
    */
   @Transactional
-  public InitiationResult initiateInternalTransfer(InternalTransferRequest req, String correlationId) {
+  public InitiationResult initiateInternalTransfer(InternalTransferRequest req, String correlationId, String paymentIntent) {
     validateBasic(req);
 
     // Ensure customer exists
@@ -77,30 +79,37 @@ public class PaymentGatewayService {
       }
     }
 
-    // Ensure beneficiary exists and is ACTIVE for this customer
-    final boolean active;
-    try {
-      active = beneficiaryManagementClient.isBeneficiaryActive(req.getCustomerId(), req.getToAccount(), correlationId);
-    } catch (RestClientResponseException ex) {
-      throw new IllegalStateException("Beneficiary check failed: HTTP " + ex.getRawStatusCode());
-    }
-    if (!active) {
-      throw new IllegalStateException("Beneficiary not active or not found for customer");
-    }
-
-    // Funds check
-    final BigDecimal balance;
-    try {
-      balance = accountManagementClient.getBalance(req.getFromAccount(), correlationId);
-    } catch (RestClientResponseException ex) {
-      if (ex.getRawStatusCode() == 404) {
-        throw new ResourceNotFoundException("Account not found: " + req.getFromAccount());
-      } else {
-        throw new IllegalStateException("Account balance check failed: HTTP " + ex.getRawStatusCode());
+    // Determine intent and conditional beneficiary policy
+    boolean isDisbursal = paymentIntent != null && paymentIntent.equalsIgnoreCase("DISBURSAL");
+    boolean skipBeneficiary = isDisbursal && props.getPolicy().isAllowDisbursalWithoutBeneficiary();
+    if (!skipBeneficiary) {
+      // Ensure beneficiary exists and is ACTIVE for this customer
+      final boolean active;
+      try {
+        active = beneficiaryManagementClient.isBeneficiaryActive(req.getCustomerId(), req.getToAccount(), correlationId);
+      } catch (RestClientResponseException ex) {
+        throw new IllegalStateException("Beneficiary check failed: HTTP " + ex.getRawStatusCode());
+      }
+      if (!active) {
+        throw new IllegalStateException("Beneficiary not active or not found for customer");
       }
     }
-    if (balance == null || balance.compareTo(req.getAmount()) < 0) {
-      throw new IllegalStateException("Insufficient funds");
+
+    // Funds check (skip for DISBURSAL intent since source may be a bank pool account not modeled in account-management)
+    if (!(paymentIntent != null && paymentIntent.equalsIgnoreCase("DISBURSAL"))) {
+      final BigDecimal balance;
+      try {
+        balance = accountManagementClient.getBalance(req.getFromAccount(), correlationId);
+      } catch (RestClientResponseException ex) {
+        if (ex.getRawStatusCode() == 404) {
+          throw new ResourceNotFoundException("Account not found: " + req.getFromAccount());
+        } else {
+          throw new IllegalStateException("Account balance check failed: HTTP " + ex.getRawStatusCode());
+        }
+      }
+      if (balance == null || balance.compareTo(req.getAmount()) < 0) {
+        throw new IllegalStateException("Insufficient funds");
+      }
     }
 
     // Fraud hook (synchronous). Default ALLOW in dev if service unavailable.
@@ -155,6 +164,10 @@ public class PaymentGatewayService {
         // ALLOW -> proceed to processing and emit orchestration event
         pr.setStatus(PaymentStatus.PROCESSING.name());
         repository.save(pr);
+        Map<String, String> metadata = new HashMap<>();
+        if (paymentIntent != null && !paymentIntent.isBlank()) {
+          metadata.put("intent", paymentIntent.toUpperCase());
+        }
         publish(EventTypes.PAYMENT_APPROVED_FOR_PROCESSING,
             new EventPayloads.PaymentApprovedForProcessing(
                 pr.getPaymentUuid(),
@@ -162,7 +175,8 @@ public class PaymentGatewayService {
                 pr.getFromAccount(),
                 pr.getToAccount(),
                 pr.getAmount(),
-                pr.getCurrency()
+                pr.getCurrency(),
+                metadata
             ),
             correlationId);
 
@@ -184,8 +198,14 @@ public class PaymentGatewayService {
             if (props.isDevBalanceAdjustEnabled() && "logging".equalsIgnoreCase(props.getEventPublisher())) {
               try {
                 // Dev-only: sync adjust balances in account-management to reflect the ledger posting
-                accountManagementClient.adjustBalanceDev(pr.getFromAccount(), pr.getAmount().negate(), correlationId);
-                accountManagementClient.adjustBalanceDev(pr.getToAccount(), pr.getAmount(), correlationId);
+                if (paymentIntent != null && paymentIntent.equalsIgnoreCase("DISBURSAL")) {
+                  // For disbursal, only credit the customer's destination account in dev-open
+                  accountManagementClient.adjustBalanceDev(pr.getToAccount(), pr.getAmount(), correlationId);
+                } else {
+                  // Regular internal transfer adjust both sides
+                  accountManagementClient.adjustBalanceDev(pr.getFromAccount(), pr.getAmount().negate(), correlationId);
+                  accountManagementClient.adjustBalanceDev(pr.getToAccount(), pr.getAmount(), correlationId);
+                }
               } catch (Exception adjEx) {
                 // If balance updates fail, still mark completed for flow; follow-up reconciliation may be needed
               }
@@ -250,7 +270,8 @@ public class PaymentGatewayService {
         String fromAccount,
         String toAccount,
         java.math.BigDecimal amount,
-        String currency
+        String currency,
+        java.util.Map<String, String> metadata
     ) {}
     public record FraudulentTransactionBlocked(
         String paymentUuid,

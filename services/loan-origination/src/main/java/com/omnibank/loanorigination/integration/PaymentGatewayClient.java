@@ -42,6 +42,7 @@ public class PaymentGatewayClient {
         .uri(URI.create(url))
         .header("X-Correlation-Id", correlationId != null ? correlationId : "")
         .header("Idempotency-Key", idempotencyKey != null ? idempotencyKey : "")
+        .header("X-Payment-Intent", "DISBURSAL")
         .contentType(MediaType.APPLICATION_JSON)
         .body(body)
         .retrieve()

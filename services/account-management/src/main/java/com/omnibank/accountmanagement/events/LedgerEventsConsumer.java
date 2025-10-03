@@ -82,8 +82,12 @@ public class LedgerEventsConsumer {
           throw new IllegalArgumentException("Invalid entry in TransactionPosted: " + e);
         }
 
-        Account account = accountRepository.findById(accountNo)
-            .orElseThrow(() -> new IllegalArgumentException("Account not found: " + accountNo));
+        var accountOpt = accountRepository.findById(accountNo);
+        if (accountOpt.isEmpty()) {
+          log.debug("Account not found for ledger entry account={}, skipping", accountNo);
+          continue;
+        }
+        Account account = accountOpt.get();
         BigDecimal delta = (direction == 'D') ? amount.negate() : amount;
         account.setBalance(account.getBalance().add(delta));
         accountRepository.save(account);
