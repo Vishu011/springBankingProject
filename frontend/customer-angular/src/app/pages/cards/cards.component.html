@@ -1,4 +1,114 @@
 <h2>Cards</h2>
+
 <div class="card">
-  <p>Card issuance and management flows will appear here.</p>
+  <h3>Issuance (dev-open)</h3>
+  <form [formGroup]="issuanceForm" (ngSubmit)="submitIssuance()">
+    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+      <label>
+        Customer ID
+        <input type="number" formControlName="customerId" placeholder="e.g. 1001" />
+      </label>
+      <label>
+        Product Type
+        <select formControlName="productType">
+          <option value="CREDIT_CARD">CREDIT_CARD</option>
+          <option value="DEBIT_CARD">DEBIT_CARD</option>
+        </select>
+      </label>
+      <button type="submit" [disabled]="busy || issuanceForm.invalid">Submit</button>
+    </div>
+  </form>
+
+  <div style="margin-top:8px;">
+    <button (click)="runEligibility()" [disabled]="busy || !issuanceAppId">Run Eligibility</button>
+    <button (click)="approveIssuance()" [disabled]="busy || !issuanceAppId">Approve</button>
+    <button (click)="getCardByIssuanceApp()" [disabled]="busy || !issuanceAppId">Fetch Card (Kafka)</button>
+  </div>
+
+  <div style="margin-top:8px;">
+    <div>applicationId: <b>{{ issuanceAppId || '-' }}</b></div>
+    <div>status: <b>{{ issuanceStatus || '-' }}</b></div>
+    <pre *ngIf="issuanceView" style="white-space:pre-wrap; background:#0b1220; padding:8px; border-radius:6px;">{{ issuanceView | json }}</pre>
+  </div>
+</div>
+
+<div class="card">
+  <h3>Management (dev-open)</h3>
+  <form [formGroup]="createDevForm" (ngSubmit)="createCardDev()">
+    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+      <label>
+        Customer ID
+        <input type="number" formControlName="customerId" placeholder="e.g. 1001" />
+      </label>
+      <label>
+        Product Type
+        <select formControlName="productType">
+          <option value="CREDIT_CARD">CREDIT_CARD</option>
+          <option value="DEBIT_CARD">DEBIT_CARD</option>
+        </select>
+      </label>
+      <label>
+        Initial Limit
+        <input type="number" formControlName="initialLimit" placeholder="5000" />
+      </label>
+      <button type="submit" [disabled]="busy || createDevForm.invalid">Create Dev Card</button>
+    </div>
+  </form>
+
+  <div style="margin-top:8px;">
+    <form [formGroup]="manageForm" (ngSubmit)="$event.preventDefault()">
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <label>
+          Card ID
+          <input type="text" formControlName="cardId" placeholder="Paste Card ID" />
+        </label>
+        <label>
+          Limit
+          <input type="number" formControlName="limit" placeholder="9000" />
+        </label>
+        <label>
+          Status
+          <select formControlName="status">
+            <option value="BLOCK">BLOCK</option>
+            <option value="UNBLOCK">UNBLOCK</option>
+          </select>
+        </label>
+      </div>
+      <div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap;">
+        <button type="button" (click)="getCard()" [disabled]="busy || !manageForm.value.cardId">Get</button>
+        <button type="button" (click)="activateCard()" [disabled]="busy || !manageForm.value.cardId">Activate</button>
+        <button type="button" (click)="setLimits()" [disabled]="busy || !manageForm.value.cardId">Set Limits</button>
+        <button type="button" (click)="updateStatus()" [disabled]="busy || !manageForm.value.cardId">Update Status</button>
+      </div>
+    </form>
+  </div>
+
+  <div style="margin-top:8px;">
+    <div>created: <b *ngIf="createdCard as c">{{ c.cardId }} ({{ c.status }})</b><span *ngIf="!createdCard">-</span></div>
+    <pre *ngIf="fetchedCard" style="white-space:pre-wrap; background:#0b1220; padding:8px; border-radius:6px;">{{ fetchedCard | json }}</pre>
+  </div>
+</div>
+
+<div class="card">
+  <h3>List By Customer</h3>
+  <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+    <label>
+      Customer ID
+      <input type="number" [value]="createDevForm.value.customerId || ''" (input)="createDevForm.patchValue({customerId: $any($event.target).valueAsNumber})" />
+    </label>
+    <button (click)="listByCustomer()" [disabled]="busy || !createDevForm.value.customerId">List</button>
+  </div>
+  <div style="margin-top:8px;">
+    <div *ngIf="customerCards?.length === 0">No cards</div>
+    <ul *ngIf="customerCards?.length">
+      <li *ngFor="let k of customerCards">
+        {{ k.cardId }} — {{ k.status }} — {{ k.productType }} — limit={{ k.spendLimit }}
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="card" *ngIf="busy">Working...</div>
+<div class="card" *ngIf="errorMsg" style="border:1px solid #7f1d1d; background:#1b0b0b;">
+  <b>Error:</b> {{ errorMsg }}
 </div>

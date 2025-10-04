@@ -12,6 +12,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
+import java.util.List;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 /**
  * Card Management APIs (dev-open)
@@ -24,6 +27,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1/cards")
 @RequiredArgsConstructor
+@Tag(name = "Card Management")
 public class CardManagementController {
 
   public static final String HDR_CORRELATION_ID = "X-Correlation-Id";
@@ -32,6 +36,7 @@ public class CardManagementController {
 
   // Dev-only: create a card record directly
   @PostMapping("/dev/create")
+  @Operation(summary = "Dev-only create card record")
   public ResponseEntity<Created> createDev(
       @RequestHeader(value = HDR_CORRELATION_ID, required = false) String correlationId,
       @Valid @RequestBody CreateCardRequest request
@@ -44,6 +49,7 @@ public class CardManagementController {
   }
 
   @GetMapping("/{cardId}")
+  @Operation(summary = "Get card by id")
   public ResponseEntity<CardView> get(
       @RequestHeader(value = HDR_CORRELATION_ID, required = false) String correlationId,
       @PathVariable("cardId") @NotBlank String cardId
@@ -56,6 +62,7 @@ public class CardManagementController {
   }
 
   @PostMapping("/{cardId}/activate")
+  @Operation(summary = "Activate card")
   public ResponseEntity<CardView> activate(
       @RequestHeader(value = HDR_CORRELATION_ID, required = false) String correlationId,
       @PathVariable("cardId") @NotBlank String cardId
@@ -68,6 +75,7 @@ public class CardManagementController {
   }
 
   @PostMapping("/{cardId}/status")
+  @Operation(summary = "Update status (BLOCK|UNBLOCK)")
   public ResponseEntity<CardView> updateStatus(
       @RequestHeader(value = HDR_CORRELATION_ID, required = false) String correlationId,
       @PathVariable("cardId") @NotBlank String cardId,
@@ -81,6 +89,7 @@ public class CardManagementController {
   }
 
   @PostMapping("/{cardId}/limits")
+  @Operation(summary = "Update limits")
   public ResponseEntity<CardView> updateLimits(
       @RequestHeader(value = HDR_CORRELATION_ID, required = false) String correlationId,
       @PathVariable("cardId") @NotBlank String cardId,
@@ -88,6 +97,32 @@ public class CardManagementController {
   ) {
     String cid = ensureCorrelationId(correlationId);
     CardView view = service.updateLimits(cardId, request, cid);
+    return ResponseEntity.ok()
+        .header(HDR_CORRELATION_ID, cid)
+        .body(view);
+  }
+
+  @GetMapping("/customers/{customerId}")
+  @Operation(summary = "List cards by customer")
+  public ResponseEntity<List<CardView>> listByCustomer(
+      @RequestHeader(value = HDR_CORRELATION_ID, required = false) String correlationId,
+      @PathVariable("customerId") Long customerId
+  ) {
+    String cid = ensureCorrelationId(correlationId);
+    List<CardView> cards = service.listByCustomer(customerId);
+    return ResponseEntity.ok()
+        .header(HDR_CORRELATION_ID, cid)
+        .body(cards);
+  }
+
+  @GetMapping("/issuance/{applicationId}")
+  @Operation(summary = "Get card by issuance applicationId")
+  public ResponseEntity<CardView> getByIssuanceApplication(
+      @RequestHeader(value = HDR_CORRELATION_ID, required = false) String correlationId,
+      @PathVariable("applicationId") @NotBlank String applicationId
+  ) {
+    String cid = ensureCorrelationId(correlationId);
+    CardView view = service.getByIssuanceApplication(applicationId);
     return ResponseEntity.ok()
         .header(HDR_CORRELATION_ID, cid)
         .body(view);
