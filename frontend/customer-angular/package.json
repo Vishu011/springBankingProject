@@ -1,0 +1,30 @@
+{
+  "name": "omnibank-customer-angular",
+  "version": "0.1.0",
+  "private": true,
+  "description": "OmniBank Customer Web App (Angular). Core flows: Accounts, Payments, Beneficiaries, Loans, Cards. Works against dev-open initially, secure later.",
+  "scripts": {
+    "start": "ng serve --port 5173 --open=false",
+    "build": "ng build",
+    "test": "ng test",
+    "lint": "ng lint"
+  },
+  "dependencies": {
+    "@angular/animations": "^17.3.0",
+    "@angular/common": "^17.3.0",
+    "@angular/compiler": "^17.3.0",
+    "@angular/core": "^17.3.0",
+    "@angular/forms": "^17.3.0",
+    "@angular/platform-browser": "^17.3.0",
+    "@angular/platform-browser-dynamic": "^17.3.0",
+    "@angular/router": "^17.3.0",
+    "rxjs": "^7.8.1",
+    "zone.js": "~0.14.2"
+  },
+  "devDependencies": {
+    "@angular-devkit/build-angular": "^17.3.0",
+    "@angular/cli": "^17.3.0",
+    "@angular/compiler-cli": "^17.3.0",
+    "typescript": "~5.3.3"
+  }
+}

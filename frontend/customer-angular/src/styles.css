@@ -1,0 +1,12 @@
+:root { --primary: #0f766e; --bg: #0b1020; --text: #e5e7eb; }
+body { font-family: Arial, sans-serif; margin: 0; background: var(--bg); color: var(--text); }
+a { color: #93c5fd; text-decoration: none; }
+.nav { background: #111827; padding: 12px 16px; display:flex; gap: 12px; align-items:center; }
+.nav a { padding: 6px 10px; border-radius: 6px; }
+.nav a.active, .nav a:hover { background: #1f2937; }
+.container { padding: 16px; }
+.card { background:#111827; border:1px solid #1f2937; border-radius:8px; padding:16px; margin-bottom:12px; }
+h1,h2,h3{ color: #f3f4f6; }
+input, select, button { padding:8px; border-radius:6px; border:1px solid #374151; background:#0b1220; color:#e5e7eb; }
+button { background:#0f766e; border:none; cursor:pointer; }
+button:hover { background:#115e59; }
