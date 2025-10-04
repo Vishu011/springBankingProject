@@ -1,0 +1,103 @@
+.toast-container {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.toast {
+  min-width: 280px;
+  max-width: 520px;
+  border-radius: 6px;
+  padding: 10px 12px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+  color: #122025;
+  background: #f3f7f8;
+  border-left: 6px solid #4aa3c0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+}
+
+.toast-info {
+  background: #eef6fb;
+  border-left-color: #2b91c1;
+}
+
+.toast-success {
+  background: #eefbf0;
+  border-left-color: #2ca24f;
+}
+
+.toast-error {
+  background: #fbefef;
+  border-left-color: #d24a4a;
+}
+
+.toast-content {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.toast-message {
+  font-size: 14px;
+  line-height: 1.35;
+  font-weight: 500;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+}
+
+.toast-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #4d6570;
+}
+
+.cid-label {
+  font-weight: 600;
+}
+
+.cid-value {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  background: rgba(0,0,0,0.05);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.cid-copy {
+  border: none;
+  outline: none;
+  padding: 3px 7px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  color: #0e5f7c;
+  background: #e1f1f7;
+}
+
+.cid-copy:hover {
+  background: #d3e9f3;
+}
+
+.toast-close {
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 14px;
+  color: #5c717a;
+  cursor: pointer;
+  padding: 2px;
+  margin-left: 8px;
+}
+
+.toast-close:hover {
+  color: #2e3c41;
+}

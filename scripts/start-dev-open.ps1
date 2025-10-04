@@ -8,7 +8,8 @@
 
 param(
   [switch]$Kafka = $false,
-  [switch]$WithFrontend = $false
+  [switch]$WithFrontend = $false,
+  [string]$KafkaBootstrap = "localhost:9092"
 )
 
 $ErrorActionPreference = "Stop"
@@ -26,7 +27,7 @@ if (-not (Test-Path $pwsh)) {
 function StartServiceWindow($title, $modulePath, [string]$profile = "") {
   $cmd = "mvn -q -pl $modulePath spring-boot:run"
   if ($profile -ne "") {
-    $cmd = "\$env:SPRING_PROFILES_ACTIVE='$profile'; $cmd"
+    $cmd = "\$env:SPRING_PROFILES_ACTIVE='$profile'; \$env:KAFKA_BOOTSTRAP_SERVERS='$KafkaBootstrap'; $cmd"
   }
   $args = @(
     "-NoExit",
@@ -50,7 +51,7 @@ StartServiceWindow "loan-management (8122)"       "services/loan-management"
 
 # Cards
 if ($Kafka) {
-  Info "Kafka mode requested: starting card services with SPRING_PROFILES_ACTIVE=kafka"
+  Info ("Kafka mode requested: starting card services with SPRING_PROFILES_ACTIVE=kafka and KAFKA_BOOTSTRAP_SERVERS={0}" -f $KafkaBootstrap)
   StartServiceWindow "card-issuance (8130,kafka)"  "services/card-issuance"   "kafka"
   StartServiceWindow "card-management (8131,kafka)" "services/card-management" "kafka"
 } else {

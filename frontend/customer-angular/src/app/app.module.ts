@@ -10,6 +10,8 @@ import { BeneficiariesComponent } from "./pages/beneficiaries/beneficiaries.comp
 import { LoansComponent } from "./pages/loans/loans.component";
 import { CardsComponent } from "./pages/cards/cards.component";
 import { CorrelationIdInterceptor } from "./interceptors/correlation-id.interceptor";
+import { ErrorHandlerInterceptor } from "./interceptors/error-handler.interceptor";
+import { ToastContainerComponent } from "./shared/toast/toast.component";
 
 @NgModule({
   declarations: [
@@ -18,10 +20,14 @@ import { CorrelationIdInterceptor } from "./interceptors/correlation-id.intercep
     PaymentsComponent,
     BeneficiariesComponent,
     LoansComponent,
-    CardsComponent
+    CardsComponent,
+    ToastContainerComponent
   ],
   imports: [BrowserModule, HttpClientModule, FormsModule, ReactiveFormsModule, AppRoutingModule],
-  providers: [{ provide: HTTP_INTERCEPTORS, useClass: CorrelationIdInterceptor, multi: true }],
+  providers: [
+    { provide: HTTP_INTERCEPTORS, useClass: CorrelationIdInterceptor, multi: true },
+    { provide: HTTP_INTERCEPTORS, useClass: ErrorHandlerInterceptor, multi: true }
+  ],
   bootstrap: [AppComponent]
 })
 export class AppModule {}

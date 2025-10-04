@@ -1,6 +1,7 @@
 import { Component } from "@angular/core";
 import { FormBuilder, FormGroup, Validators } from "@angular/forms";
 import { ApiClientService } from "../../services/api-client.service";
+import { ToastService } from "../../services/toast.service";
 
 @Component({
   selector: "app-payments",
@@ -18,7 +19,7 @@ export class PaymentsComponent {
   busy = false;
   errorMsg: string | null = null;
 
-  constructor(private api: ApiClientService, fb: FormBuilder) {
+  constructor(private api: ApiClientService, private toast: ToastService, fb: FormBuilder) {
     this.transferForm = fb.group({
       customerId: [null, [Validators.required, Validators.min(1)]],
       fromAccount: ["", [Validators.required]],
@@ -55,6 +56,11 @@ export class PaymentsComponent {
         this.paymentId = res.paymentId || null;
         this.status = res.status || null;
         this.busy = false;
+        if (this.status === "COMPLETED") {
+          this.toast.success("Transfer completed");
+        } else if (this.status) {
+          this.toast.info(`Payment initiated: ${this.status}`);
+        }
       },
       error: (e) => this.handleError(e)
     });
@@ -66,8 +72,12 @@ export class PaymentsComponent {
     this.busy = true;
     this.api.getPaymentStatus(this.paymentId).subscribe({
       next: (s) => {
+        const prev = this.status;
         this.status = typeof s === "string" ? s : (s as any)?.status || this.status;
         this.busy = false;
+        if (this.status === "COMPLETED" && prev !== "COMPLETED") {
+          this.toast.success("Transfer completed");
+        }
       },
       error: (e) => this.handleError(e)
     });

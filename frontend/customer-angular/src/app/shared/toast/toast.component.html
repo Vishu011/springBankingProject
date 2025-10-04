@@ -1,0 +1,18 @@
+<div class="toast-container" *ngIf="(toasts$ | async) as toasts">
+  <div
+    class="toast"
+    *ngFor="let t of toasts; trackBy: trackById"
+    [class.toast-info]="t.type === 'info'"
+    [class.toast-success]="t.type === 'success'"
+    [class.toast-error]="t.type === 'error'">
+    <div class="toast-content">
+      <div class="toast-message">{{ t.message }}</div>
+      <div class="toast-meta" *ngIf="t.correlationId">
+        <span class="cid-label">cid:</span>
+        <span class="cid-value">{{ t.correlationId }}</span>
+        <button class="cid-copy" (click)="copy(t.correlationId)" title="Copy Correlation Id">Copy</button>
+      </div>
+    </div>
+    <button class="toast-close" (click)="remove(t.id)" title="Dismiss">✕</button>
+  </div>
+</div>
