@@ -3,6 +3,7 @@ package com.omnibank.loanmanagement.api;
 import com.omnibank.loanmanagement.application.LoanManagementService;
 import com.omnibank.loanmanagement.application.LoanManagementService.LoanAccountView;
 import com.omnibank.loanmanagement.application.LoanManagementService.LoanScheduleView;
+import com.omnibank.loanmanagement.application.LoanManagementService.LoanSummaryView;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
  * - GET  /api/v1/loans/{loanAccountNumber}
  * - GET  /api/v1/loans/customers/{customerId}
  * - GET  /api/v1/loans/{loanAccountNumber}/schedule
+ * - GET  /api/v1/loans/{loanAccountNumber}/summary
  * - POST /api/v1/internal/dev/loans/{loanAccountNumber}/apply-emi (dev)
  */
 @RestController
@@ -64,6 +66,18 @@ public class LoanController {
     return ResponseEntity.ok()
         .header(HDR_CORRELATION_ID, cid)
         .body(list);
+  }
+
+  @GetMapping("/{loanAccountNumber}/summary")
+  public ResponseEntity<LoanSummaryView> getSummary(
+      @RequestHeader(value = HDR_CORRELATION_ID, required = false) String correlationId,
+      @PathVariable("loanAccountNumber") @NotBlank String loanAccountNumber
+  ) {
+    String cid = ensureCorrelationId(correlationId);
+    LoanSummaryView view = service.getLoanSummary(loanAccountNumber);
+    return ResponseEntity.ok()
+        .header(HDR_CORRELATION_ID, cid)
+        .body(view);
   }
 
   // Dev-only: simulate EMI application tied to a ledger transaction

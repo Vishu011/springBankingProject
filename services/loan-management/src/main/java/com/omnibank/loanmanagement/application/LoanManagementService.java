@@ -85,6 +85,33 @@ public class LoanManagementService {
         .collect(Collectors.toList());
   }
 
+  @Transactional
+  public LoanSummaryView getLoanSummary(String loanAccountNumber) {
+    if (loanAccountNumber == null || loanAccountNumber.isBlank()) {
+      throw new IllegalArgumentException("loanAccountNumber is required");
+    }
+    LoanAccount a = loanRepo.findByLoanAccountNumber(loanAccountNumber)
+        .orElseThrow(() -> new IllegalArgumentException("Loan account not found: " + loanAccountNumber));
+    BigDecimal outstanding = nvl(a.getCurrentBalance(), BigDecimal.ZERO);
+    List<LoanSchedule> all = scheduleRepo.findByLoanAccountOrderBySeqNoAsc(a);
+    LoanSchedule next = all.stream()
+        .filter(s -> "PENDING".equalsIgnoreCase(s.getPaymentStatus()))
+        .min(Comparator.comparing(LoanSchedule::getSeqNo))
+        .orElse(null);
+    BigDecimal nextEmi = next != null ? nvl(next.getEmiAmount(), BigDecimal.ZERO) : BigDecimal.ZERO;
+    java.time.Instant nextDueDate = next != null ? next.getDueDate() : null;
+    Integer nextSeqNo = next != null ? next.getSeqNo() : null;
+    String status = outstanding.compareTo(BigDecimal.ZERO) > 0 ? "ACTIVE" : "PAID_OFF";
+    return new LoanSummaryView(
+        a.getLoanAccountNumber(),
+        outstanding,
+        nextEmi,
+        nextDueDate,
+        nextSeqNo,
+        status
+    );
+  }
+
   // Apply EMI against a loan from a ledger TransactionPosted (idempotent by txId)
   @Transactional
   public void applyEmiPayment(String transactionId, String loanAccountNumber, BigDecimal amount) {
@@ -273,5 +300,14 @@ public class LoanManagementService {
       BigDecimal interestComponent,
       String paymentStatus,
       java.time.Instant paidAt
+  ) {}
+
+  public record LoanSummaryView(
+      String loanAccountNumber,
+      BigDecimal outstandingPrincipal,
+      BigDecimal nextEmiAmount,
+      java.time.Instant nextDueDate,
+      Integer nextSeqNo,
+      String status
   ) {}
 }
