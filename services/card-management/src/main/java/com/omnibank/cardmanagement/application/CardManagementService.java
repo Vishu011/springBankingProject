@@ -66,6 +66,9 @@ public class CardManagementService {
 
   public CardView activate(String cardId, String correlationId) {
     Card c = required(cardId);
+    if ("BLOCKED".equalsIgnoreCase(c.getStatus())) {
+      throw new IllegalStateException("Cannot activate a blocked card; unblock first");
+    }
     if (!"ACTIVE".equalsIgnoreCase(c.getStatus())) {
       c.setStatus("ACTIVE");
       c.setActivatedAt(Instant.now());
@@ -161,6 +164,27 @@ public class CardManagementService {
   }
 
   // Helpers
+
+  private static void validateCreate(CreateCardRequest r) {
+    if (r == null) throw new IllegalArgumentException("request is required");
+    if (r.customerId == null || r.customerId <= 0) throw new IllegalArgumentException("customerId must be provided");
+    if (r.initialLimit != null && r.initialLimit.compareTo(new BigDecimal("0.00")) <= 0) {
+      throw new IllegalArgumentException("initialLimit must be > 0");
+    }
+  }
+
+  private static CardView toView(Card c) {
+    return new CardView(
+        c.getCardId(),
+        c.getCustomerId(),
+        c.getProductType(),
+        c.getStatus(),
+        c.getLast4(),
+        c.getSpendLimit(),
+        c.getCreatedAt(),
+        c.getActivatedAt()
+    );
+  }
 
   private Card required(String id) {
     Card c = store.get(id);
