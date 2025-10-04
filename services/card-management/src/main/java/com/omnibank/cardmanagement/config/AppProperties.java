@@ -28,6 +28,7 @@ public class AppProperties {
 
   public static class Events {
     private String topic = "card.management.events";
+    private String issuanceTopic = "card.issuance.events";
 
     public String getTopic() {
       return topic;
@@ -35,6 +36,14 @@ public class AppProperties {
 
     public void setTopic(String topic) {
       this.topic = topic;
+    }
+
+    public String getIssuanceTopic() {
+      return issuanceTopic;
+    }
+
+    public void setIssuanceTopic(String issuanceTopic) {
+      this.issuanceTopic = issuanceTopic;
     }
   }
 }

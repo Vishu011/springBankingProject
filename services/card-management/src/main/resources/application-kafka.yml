@@ -1,0 +1,20 @@
+spring:
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      group-id: card-management
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      auto-offset-reset: latest
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.StringOrBytesSerializer
+
+card-management:
+  kafka:
+    enabled: true
+  # Publisher can remain logging in dev-open; switch to kafka if desired
+  eventPublisher: logging
+  events:
+    topic: card.management.events
+    issuanceTopic: card.issuance.events

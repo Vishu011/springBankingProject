@@ -28,6 +28,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class CardManagementService {
 
   private final ConcurrentHashMap<String, Card> store = new ConcurrentHashMap<>();
+  private final ConcurrentHashMap<String, String> issuanceMarkers = new ConcurrentHashMap<>();
   private final EventPublisher eventPublisher;
   private final AppProperties props;
 
@@ -109,6 +110,25 @@ public class CardManagementService {
         "limit", c.getSpendLimit()
     ), correlationId);
     return toView(c);
+  }
+
+  public CardView createFromIssuanceApproval(String applicationId, Long customerId, String productType, String correlationId) {
+    if (applicationId == null || applicationId.isBlank()) {
+      throw new IllegalArgumentException("applicationId is required");
+    }
+    if (customerId == null || customerId <= 0) {
+      throw new IllegalArgumentException("customerId must be provided");
+    }
+    String existingCardId = issuanceMarkers.get(applicationId);
+    if (existingCardId != null) {
+      return toView(required(existingCardId));
+    }
+    CreateCardRequest req = new CreateCardRequest();
+    req.customerId = customerId;
+    req.productType = productType;
+    Created created = createDev(req, correlationId);
+    issuanceMarkers.putIfAbsent(applicationId, created.cardId());
+    return get(created.cardId());
   }
 
   // DTOs
