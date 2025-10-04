@@ -685,5 +685,58 @@
         }
       }
     }
+  ,
+    {
+      "name": "C2K - Card Mgmt (Kafka) - Get Card by Issuance Application",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "X-Correlation-Id", "value": "{{x_correlation_id}}" }
+        ],
+        "url": "{{card_mgmt_base}}/api/v1/cards/issuance/{{card_app_id}}",
+        "description": "After approving a card-issuance application in kafka profile, use this to fetch the auto-created card."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "try {",
+              "  const json = pm.response.json();",
+              "  if (json.cardId) pm.environment.set('card_id', json.cardId);",
+              "} catch (e) {}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "C2K2 - Card Mgmt (Kafka) - List Cards by Customer",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "X-Correlation-Id", "value": "{{x_correlation_id}}" }
+        ],
+        "url": "{{card_mgmt_base}}/api/v1/cards/customers/{{customer_id}}",
+        "description": "Lists cards for a customer. Useful to verify auto-created cards in kafka profile."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "try {",
+              "  const json = pm.response.json();",
+              "  if (Array.isArray(json) && json.length > 0 && json[0].cardId) {",
+              "    pm.environment.set('card_id', json[0].cardId);",
+              "  }",
+              "} catch (e) {}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    }
   ]
 }
