@@ -548,5 +548,142 @@
       },
       "description": "Dev-open: applies the LOAN_EMI ledger posting to account balances (debit deposit, credit loan)."
     }
+    ,
+    {
+      "name": "C1 - Card Issuance - Submit Application",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "X-Correlation-Id", "value": "{{x_correlation_id}}" }
+        ],
+        "url": "{{card_issuance_base}}/api/v1/cards/issuance/applications",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"customerId\": {{customer_id}},\n  \"productType\": \"CREDIT_CARD\"\n}"
+        },
+        "description": "Submits a new card issuance application."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "try {",
+              "  const json = pm.response.json();",
+              "  if (json.applicationId) pm.environment.set('card_app_id', json.applicationId);",
+              "} catch(e) {}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "C2 - Card Issuance - Eligibility Check",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "X-Correlation-Id", "value": "{{x_correlation_id}}" }
+        ],
+        "url": "{{card_issuance_base}}/api/v1/cards/issuance/applications/{{card_app_id}}/eligibility-check"
+      }
+    },
+    {
+      "name": "C3 - Card Issuance - Approve",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "X-Correlation-Id", "value": "{{x_correlation_id}}" }
+        ],
+        "url": "{{card_issuance_base}}/api/v1/cards/issuance/applications/{{card_app_id}}/approve",
+        "description": "Approves card application and publishes CardApplicationApproved (logging in dev-open)."
+      }
+    },
+    {
+      "name": "C4 - Card Mgmt - Dev Create Card",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "X-Correlation-Id", "value": "{{x_correlation_id}}" }
+        ],
+        "url": "{{card_mgmt_base}}/api/v1/cards/dev/create",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"customerId\": {{customer_id}},\n  \"productType\": \"CREDIT_CARD\",\n  \"initialLimit\": 5000.00\n}"
+        },
+        "description": "Dev-only direct creation of a card record."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "try {",
+              "  const json = pm.response.json();",
+              "  if (json.cardId) pm.environment.set('card_id', json.cardId);",
+              "} catch(e) {}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "C5 - Card Mgmt - Activate",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "X-Correlation-Id", "value": "{{x_correlation_id}}" }
+        ],
+        "url": "{{card_mgmt_base}}/api/v1/cards/{{card_id}}/activate"
+      }
+    },
+    {
+      "name": "C6 - Card Mgmt - Set Limits",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "X-Correlation-Id", "value": "{{x_correlation_id}}" }
+        ],
+        "url": "{{card_mgmt_base}}/api/v1/cards/{{card_id}}/limits",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"limit\": 9000.00\n}"
+        }
+      }
+    },
+    {
+      "name": "C7 - Card Mgmt - Block",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "X-Correlation-Id", "value": "{{x_correlation_id}}" }
+        ],
+        "url": "{{card_mgmt_base}}/api/v1/cards/{{card_id}}/status",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"status\": \"BLOCK\"\n}"
+        }
+      }
+    },
+    {
+      "name": "C8 - Card Mgmt - Unblock",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "X-Correlation-Id", "value": "{{x_correlation_id}}" }
+        ],
+        "url": "{{card_mgmt_base}}/api/v1/cards/{{card_id}}/status",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"status\": \"UNBLOCK\"\n}"
+        }
+      }
+    }
   ]
 }

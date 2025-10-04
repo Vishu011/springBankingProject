@@ -14,6 +14,10 @@ export class ApiClientService {
     return this.http.get<number>(`${this.ep.accountMgmtBase}/api/v1/accounts/${accountNumber}/balance`);
   }
 
+  getLedgerHistory(accountNumber: string, size: number = 50): Observable<any[]> {
+    return this.http.get<any[]>(`${this.ep.ledgerBase}/api/v1/accounts/${accountNumber}/history?size=${size}`);
+  }
+
   // ========== Payments (internal transfer) ==========
   initiateInternalTransfer(body: {
     customerId: number;
@@ -54,6 +58,10 @@ export class ApiClientService {
   }
 
   // ========== Loans ==========
+  listLoansByCustomer(customerId: number): Observable<any[]> {
+    return this.http.get<any[]>(`${this.ep.loanMgmtBase}/api/v1/loans/customers/${customerId}`);
+  }
+
   getLoanSchedule(loanAccountNumber: string): Observable<any[]> {
     return this.http.get<any[]>(`${this.ep.loanMgmtBase}/api/v1/loans/${loanAccountNumber}/schedule`);
   }

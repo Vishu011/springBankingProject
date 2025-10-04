@@ -1,4 +1,120 @@
 <h2>Loans</h2>
+
 <div class="card">
-  <p>Loan application status, schedule and summary will be shown here.</p>
+  <h3>Find Loans by Customer</h3>
+  <form [formGroup]="customerForm" (ngSubmit)="listLoans()">
+    <div style="display:flex; gap:12px; flex-wrap:wrap;">
+      <label>
+        Customer ID
+        <input type="number" formControlName="customerId" placeholder="e.g. 1001" />
+      </label>
+      <button type="submit" [disabled]="busy || customerForm.invalid">List Loans</button>
+    </div>
+  </form>
+
+  <div style="margin-top:10px;">
+    <div *ngIf="!loans?.length">No loans for this customer.</div>
+    <table *ngIf="loans?.length" style="width:100%; border-collapse:collapse;">
+      <thead>
+        <tr style="text-align:left;">
+          <th>Loan Account</th>
+          <th>Type</th>
+          <th>Principal</th>
+          <th>Current Balance</th>
+          <th>Interest Rate</th>
+          <th>Status</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let l of loans">
+          <td>{{ l.loanAccountNumber }}</td>
+          <td>{{ l.loanType }}</td>
+          <td>{{ l.principalDisbursed }}</td>
+          <td>{{ l.currentBalance }}</td>
+          <td>{{ l.interestRate }}%</td>
+          <td>{{ l.status }}</td>
+          <td><button type="button" (click)="pickLoan(l.loanAccountNumber)">Open</button></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="card">
+  <h3>Selected Loan</h3>
+  <form [formGroup]="loanForm" (ngSubmit)="$event.preventDefault()">
+    <div style="display:flex; gap:12px; flex-wrap:wrap;">
+      <label>
+        Loan Account Number
+        <input type="text" formControlName="loanAccountNumber" placeholder="Loan account number" />
+      </label>
+      <button type="button" (click)="readSummary()" [disabled]="busy || loanForm.invalid">Refresh Summary</button>
+      <button type="button" (click)="readSchedule()" [disabled]="busy || loanForm.invalid">Refresh Schedule</button>
+    </div>
+  </form>
+
+  <div style="margin-top:10px;">
+    <h4>Summary</h4>
+    <div *ngIf="!summary">No summary yet.</div>
+    <div *ngIf="summary">
+      <div>Account: <b>{{ summary.loanAccountNumber }}</b></div>
+      <div>Outstanding Principal: <b>{{ summary.outstandingPrincipal }}</b></div>
+      <div>Next EMI Amount: <b>{{ summary.nextEmiAmount }}</b></div>
+      <div>Next Due Date: <b>{{ summary.nextDueDate || '-' }}</b></div>
+      <div>Next Seq No: <b>{{ summary.nextSeqNo || '-' }}</b></div>
+      <div>Status: <b>{{ summary.status }}</b></div>
+    </div>
+  </div>
+
+  <div style="margin-top:10px;">
+    <h4>Schedule</h4>
+    <div *ngIf="!schedule?.length">No schedule loaded.</div>
+    <table *ngIf="schedule?.length" style="width:100%; border-collapse:collapse;">
+      <thead>
+        <tr style="text-align:left;">
+          <th>#</th>
+          <th>Due Date</th>
+          <th>EMI</th>
+          <th>Principal</th>
+          <th>Interest</th>
+          <th>Status</th>
+          <th>Paid At</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let s of schedule">
+          <td>{{ s.seqNo }}</td>
+          <td>{{ s.dueDate }}</td>
+          <td>{{ s.emiAmount }}</td>
+          <td>{{ s.principalComponent }}</td>
+          <td>{{ s.interestComponent }}</td>
+          <td>{{ s.paymentStatus }}</td>
+          <td>{{ s.paidAt || '-' }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="card">
+  <h3>Apply EMI (dev)</h3>
+  <form [formGroup]="emiForm" (ngSubmit)="applyEmi()">
+    <div style="display:flex; gap:12px; flex-wrap:wrap;">
+      <label>
+        Transaction ID
+        <input type="text" formControlName="transactionId" />
+      </label>
+      <label>
+        Amount
+        <input type="number" step="0.01" formControlName="amount" />
+      </label>
+      <button type="submit" [disabled]="busy || emiForm.invalid || loanForm.invalid">Apply EMI</button>
+    </div>
+  </form>
+</div>
+
+<div class="card" *ngIf="busy">Working...</div>
+<div class="card" *ngIf="errorMsg" style="border:1px solid #7f1d1d; background:#1b0b0b;">
+  <b>Error:</b> {{ errorMsg }}
 </div>

@@ -36,6 +36,10 @@
 
     { "key": "credit_scoring_base", "value": "http://localhost:8121", "type": "default", "enabled": true },
     { "key": "loan_mgmt_base", "value": "http://localhost:8122", "type": "default", "enabled": true },
-    { "key": "loan_account_number", "value": "", "type": "default", "enabled": true }
+    { "key": "loan_account_number", "value": "", "type": "default", "enabled": true },
+
+    { "key": "card_issuance_base", "value": "http://localhost:8130", "type": "default", "enabled": true },
+    { "key": "card_mgmt_base", "value": "http://localhost:8131", "type": "default", "enabled": true },
+    { "key": "card_id", "value": "", "type": "default", "enabled": true }
   ]
 }

@@ -14,6 +14,8 @@ import java.math.BigDecimal;
 import java.security.SecureRandom;
 import java.time.Instant;
 import java.util.Map;
+import java.util.List;
+import java.util.stream.Collectors;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -129,6 +131,27 @@ public class CardManagementService {
     Created created = createDev(req, correlationId);
     issuanceMarkers.putIfAbsent(applicationId, created.cardId());
     return get(created.cardId());
+  }
+
+  public List<CardView> listByCustomer(Long customerId) {
+    if (customerId == null || customerId <= 0) {
+      throw new IllegalArgumentException("customerId must be provided");
+    }
+    return store.values().stream()
+        .filter(c -> customerId.equals(c.getCustomerId()))
+        .map(CardManagementService::toView)
+        .collect(Collectors.toList());
+  }
+
+  public CardView getByIssuanceApplication(String applicationId) {
+    if (applicationId == null || applicationId.isBlank()) {
+      throw new IllegalArgumentException("applicationId is required");
+    }
+    String cardId = issuanceMarkers.get(applicationId);
+    if (cardId == null) {
+      throw new IllegalArgumentException("No card found for applicationId: " + applicationId);
+    }
+    return toView(required(cardId));
   }
 
   // DTOs

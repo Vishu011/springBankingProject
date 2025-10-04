@@ -1,339 +1,314 @@
-# OmniBank — End-to-End Delivery Plan (Updated Master Plan)
+# OmniBank — Delivery Plan (vNext to Completion)
 
-Status: Active  
-Branching: feature branches + PRs (current: faizal03hussain-feature-branch)  
-Profiles: dev-open (default), kafka (async/evented), secure (later)  
-Environments: local-first (no Docker), later staging/prod-ready
+Status: Active
+Profiles: dev-open (default), kafka (async/evented), secure (OAuth2/JWT)
+Principles: Backward compatibility, feature flags, idempotency, consistent contracts, zero-downtime, CI quality gates
 
-This plan replaces the previous Next Plan and defines a complete, seamless path to deliver all domains: Core/Payments, Lending, Cards, Investments, Admin BFF, Reporting, Security, Observability, and (later) AI integrations. It is implementation-ready, precise, and avoids breaking services by using feature flags, backward-compatible contracts, and a consistent idempotent/event-driven architecture.
-
----
-
-## 0. Guiding Principles and Engineering Golden Paths
-
-- Architecture: Microservices, event-driven with Kafka, API-first, idempotent consumers, consistent event envelope.
-- Feature Flags: All risky/optional paths behind properties; services must be runnable without Kafka (dev-open) and with Kafka (kafka).
-- Profiles:
-  - dev-open: in-memory/H2 + logging events (no external brokers)
-  - kafka: enables Kafka producers/consumers and disables dev shortcuts
-  - secure: OAuth2/Keycloak enforcement
-- Contracts:
-  - HTTP: URI versioned /api/v1/..., consistent error shape, X-Correlation-Id propagation end-to-end
-  - Events: Envelope { topic, type, timestamp, correlationId, payload }, version-friendly payloads
-- Idempotency:
-  - External write APIs expect Idempotency-Key (gateway, disbursal, payments)
-  - Consumers use marker tables keyed on natural identifiers (e.g., txId, paymentUuid) to avoid reprocessing
-- Testing Pyramid: unit > service integration > contract tests > E2E (Postman)
-- Non-Functional: clear SLOs, timeouts, circuit breakers, retries, bulkheads; structured logging; metrics; tracing (later)
-- Postman: Keep OmniBank.local collection/environment current with each feature
+This plan replaces prior versions. It is prescriptive, end-to-end, and sequenced to ensure each increment is runnable and never breaks existing flows. All risky behavior is feature-flagged and/or profile-gated. The plan leverages our current baseline below.
 
 ---
 
-## 1. Current Baseline (Completed/In Place)
+## 1) Baseline (What Exists Today)
 
-- Payments async over Kafka end-to-end (local):
-  - payment-gateway publishes PaymentApprovedForProcessing
-  - ledger consumes, posts double-entry, publishes TransactionPosted
-  - account-management consumes TransactionPosted idempotently and updates balances
-- Payments hardening:
-  - Idempotency at gateway; dev balance adjust disabled under kafka; timeouts and CB/Retry on outbound clients
-- Lending MVP-I:
-  - loan-origination: in-memory app lifecycle; publishes LoanApplicationSubmitted / LoanApproved; kafka profile available
-  - loan-management: creates loan account on LoanApproved; query APIs for loans by customer and account
-- Lending MVP-II (in progress, partially delivered):
-  - loan-origination: orchestrates disbursal on APPROVED via payment-gateway; publishes LoanDisbursed
-  - loan-management: generates schedule; scaffolding to apply EMIs idempotently (via ledger TransactionPosted)
-
----
-
-## 2. Immediate Next Steps (Fast Track)
-
-2.1 Payments Hardening (Complete polish)
-- Add Resilience4j Bulkhead to all outbound clients (gateway + origination):
-  - Configure thread/semaphore isolation per client with sensible limits
-  - Verify timeouts match bulkhead and retry windows
-- Tests:
-  - payment-gateway: unit tests for FRAUD BLOCK/CHALLENGE orchestration branches
-  - ledger: unit tests for double-entry invariants and rounding cases
-  - account-management: consumer idempotency test (existsByTransactionId flows)
-- Load Test (local baseline):
-  - JMeter/Gatling-lite to validate p95/p99 on gateway under kafka profile
-- Postman:
-  - Add negative tests (insufficient funds, inactive beneficiary, fraud-block)
-
-2.2 Lending MVP-II Completion
-- loan-origination:
-  - Beneficiary policy: add secure internal flag/property to bypass beneficiary check for bank-to-customer disbursal only (later in gateway) OR pre-create bank-to-customer mapping (SAFE DEFAULT: keep beneficiary requirement, document a bank-disbursal bypass to be added in secure profile)
-  - Ensure disbursal idempotency keyed by applicationId cannot double debit on retries
-- loan-management:
-  - Complete EMI application path:
-    - Replace loan-account heuristic with metadata mapping when available (see 4.3 ledger metadata)
-    - Ensure partial payment handling improves schedule logic (carry-forward pending principal and mark payment proportionally in next iterations)
-- Postman:
-  - Add “Loan Schedule” retrieval
-  - Add “Apply EMI (dev)” to simulate repayments
-
-Acceptance:
-- Payments pass E2E in kafka profile and dev-open without breakage
-- Lending: Approve -> disburse -> view updated balances -> view loan and schedule -> simulate EMI debit via ledger event; balances and schedule reflect payment
+- Core services runnable locally (dev-open): customer-profile (8102), account-management (8103), beneficiary-management (8104), payment-gateway (8105), ledger (8106), loan-management (8122), card-issuance (8130), card-management (8131).
+- Error envelope and correlationId echo standardized in most services.
+- Cards
+  - Dev-open issuance workflow (submit → eligibility → approve) with Logging publisher.
+  - Dev-open card management (create dev card, activate, limits, block/unblock).
+  - Kafka scaffolding: card-issuance Kafka publisher, card-management Kafka consumer for CardApplicationApproved with idempotency markers.
+  - New query endpoints: get by issuance applicationId, list by customer.
+  - Postman base flows; add-on for Kafka verification.
+- Lending
+  - Loan summary endpoint (outstanding principal, next EMI) + tests for schedule and EMI idempotency; schedule generation implemented.
+- Angular Frontend (frontend/customer-angular on 5174)
+  - Pages implemented: Cards, Payments, Beneficiaries, Loans, Accounts (balance/history).
+  - CorrelationId interceptor, API client wired to dev-open ports.
 
 ---
 
-## 3. Lending — Productization Phase
+## 2) Global Engineering Guardrails
 
-3.1 loan-origination (persist and enrichment)
-- Persistence: swap in-memory store to Mongo (dev-friendly profile retains in-memory)
-  - application document schema with history/attachments placeholder
-- Credit Scoring Integration (mock to real flow)
-  - call credit-scoring-service for applicantId, attach result to underwriting history
-  - guard with timeouts/CB/Retry/Bulkhead
-- Event evolution:
-  - LoanApproved payload includes tenure/months and EMI characteristics (so schedule can be generated consistently)
-- Disbursal:
-  - Add “internal-disbursal” flag to bypass beneficiary checks in gateway (secure profile only); dev/kafka keep current behavior
-  - Error handling: disbursal failure produces 409 with details; no LoanDisbursed published; allow re-attempt with same Idempotency-Key
+- Architecture
+  - Microservices communicating via HTTP + Kafka (kafka profile); logging publisher in dev-open.
+  - Bounded contexts: payments, lending, cards, investments, admin/reporting, fraud/security.
 
-3.2 loan-management
-- Schedule:
-  - Generate schedule from approved tenure and rate; support custom start date
-  - Store amortization schedule; expose GET /api/v1/loans/{loanAccount}/schedule (already added)
-- EMI Application:
-  - Introduce mapping:
-    - ledger TransactionPosted payload includes “metadata.loanAccountNumber” (see 4.3)
-    - consumer uses metadata to apply EMI instead of account heuristic
-  - Partial payments:
-    - Apply payment against interest first, then principal; split schedule entry if partial; track arrears
-  - Close loan when balance <= threshold; publish LoanClosed (loan.management.events, later)
-- APIs:
-  - GET /api/v1/loans/{loanAccountNumber}
-  - GET /api/v1/loans/customers/{customerId}
-  - GET /api/v1/loans/{loanAccountNumber}/schedule
+- Profiles & Feature Flags
+  - dev-open: H2/in-memory, logging event publishers, dev-only endpoints, permissive CORS.
+  - kafka: enables Kafka producers/consumers; dev shortcuts disabled; retries and idempotency in consumers.
+  - secure: JWT/OAuth2 (Keycloak or SAS); RBAC at BFF/gateway and resource servers.
+  - All toggles via properties with documented defaults and migration runbooks.
 
-Acceptance:
-- End-to-end loan: create -> approve (+scoring) -> disburse -> schedule generated -> apply EMIs via ledger -> balances/schedule consistent
+- Contracts
+  - HTTP error body: { timestamp, status, error, message, correlationId, path }.
+  - Events: { topic, type, timestamp, correlationId, payload } with versioned payload schema.
+
+- Idempotency
+  - HTTP POST writes accept Idempotency-Key where relevant (e.g., payment-gateway).
+  - Kafka consumers use marker tables keyed by natural identifiers (paymentUuid, transactionId, applicationId).
+  - Retry-safe consumers; throw to trigger retry in Kafka profile.
+
+- Non-Functional
+  - Resilience4j: timeouts, retries, circuit breakers; thread pools bulkheading where needed.
+  - Logging includes correlationId; metrics via Micrometer/Prometheus; traces via OTEL (later).
+
+- CI/CD
+  - Build/test/coverage gates enforced; OWASP dependency check; conventional PRs.
 
 ---
 
-## 4. Core/Platform Enhancements
+## 3) Environments & Runbooks
 
-4.1 Security (Phase A local-open + Phase B secure)
-- Phase A (dev-open retained):
-  - Consistent CORS, minimal security config for local development
-- Phase B (secure profile):
-  - Keycloak realm, clients, roles/scopes
-  - API Gateway validates JWTs, enforces RBAC (admin/customer roles)
-  - Resource servers on all services (Spring Security + OAuth2)
-  - Secrets via env/properties (no hardcoded secrets)
-- Admin flows protected with admin scopes
-
-4.2 Observability
-- Logging:
-  - Structured JSON logs; correlationId propagation already in place
-- Metrics:
-  - Micrometer/Prometheus enabled for all services
-  - Dashboards:
-    - Gateway latency, error rates; business KPIs (payments/min, approvals/min)
-    - Lending dashboards (approvals/day, outstanding balance, EMIs due/paid)
-- Tracing (later when OTEL agent available):
-  - Configure OTLP exporter; Jaeger in dev-opt in (disabled by default)
-
-4.3 Eventing/Envelope consistency & metadata
-- Standardize envelope object across all publishers (already consistent)
-- Metadata:
-  - Augment relevant events with metadata fields:
-    - TransactionPosted.payload.metadata.loanAccountNumber (when applicable)
-    - PaymentApprovedForProcessing.payload.metadata.intent (e.g., DISBURSAL|TRANSFER)
-- Topic naming and retention:
-  - payment.events, ledger.events, loan.origination.events, account.events (if needed)
-  - Document retention and compaction policies (later infra)
-
-4.4 Resilience & Performance
-- Resilience4j: unify CB/Retry/Bulkhead timeouts and thresholds per client
-- Connection pooling tuning (Hikari) for H2/Oracle later
-- Load test suites: gateway and card authorization paths (later)
+- Local dev without Docker; scripts/start-dev-open.ps1 launches core services (with -Kafka).
+- Postman: OmniBank.local.postman_collection.json and OmniBank.cards.kafka.addon.json.
+- Angular: frontend/customer-angular on 5174.
+- Profiles: dev-open default; kafka toggled per service; secure later with Keycloak.
 
 ---
 
-## 5. Cards Domain (MVP)
+## 4) Roadmap by Tracks (Executable Increments)
 
-5.1 card-issuance-service (dev-local)
-- In-memory workflow: SUBMITTED -> ELIGIBILITY_CHECKED -> APPROVED
-- Publish CardApplicationApproved (card.issuance.events)
-- API: submit application; get status
+Each track lists near-term increments (N), then medium-term (M), then long-term (L). Each increment ends in a runnable, tested state.
 
-5.2 card-management-service
-- Domain: Card master (hash, last4, status)
-- APIs:
-  - GET /api/v1/cards/{cardId}
-  - POST /api/v1/cards/{cardId}/activate
-  - POST /api/v1/cards/{cardId}/status (BLOCK/UNBLOCK)
-  - POST /api/v1/cards/{cardId}/limits
-- Events: CardCreated, CardStatusUpdated, CardLimitsChanged
-- Consumes CardApplicationApproved to create card
+### Track A — Cards (Issuance/Management)
 
-5.3 card-authorization-service (MVP)
-- Internal auth endpoint: POST /api/v1/internal/card/authorize
-- Cache (in-memory; Redis later) of card status/limits
-- Fraud sync call to fraud-detection-service (mock -> AI later)
-- SLA target: p99 < 100ms (local)
-- Subscribes to card-management events to refresh cache
+A1 (N): Kafka E2E completion (Current Sprint)
+- Ensure end-to-end: issuance approves → publish CardApplicationApproved → management consumer auto-creates card idempotently.
+- Merge Kafka card flow into main Postman collection (not only add-on).
+- OpenAPI annotations for new endpoints; docs on topics and payload schema with versioning.
+- Acceptance: Kafka profile E2E green; duplicate event replay yields 1 record; Postman and logs validated.
 
-Postman:
-- Submit card app -> approve -> create card -> activate -> set limits -> test authorization decisions
+A2 (N): Validations and hardening
+- Business rules: cannot activate BLOCKED card (done); limits validation and error shapes (done).
+- Secure-profile-only rule: require reason for BLOCK; return 400 without reason in secure profile.
+- Acceptance: dev-open unaffected; secure profile enforces reason; tests passing.
 
-Acceptance:
-- Card lifecycle with self-service APIs; authorization returns APPROVE/DECLINE correctly
+A3 (M): Observability for Cards
+- Prometheus metrics: approvals/min, status-changes/min; structured logs with event type and correlationId.
+- Grafana dashboards JSON shipped in repo.
+- Acceptance: metrics counters visible; dashboards render; Cross-service correlation by correlationId.
 
----
+A4 (L): Card event versioning, migrations, and persistence plan
+- Draft event schema versioning (type+version), migration notes; optional outbox consideration later.
+- Persistence migration (H2 -> Postgres) behind flag (optional stage).
 
-## 6. Investments Domain (MVP)
+### Track B — Core Payments
 
-6.1 investment-onboarding-service (dev-local); publish InvestmentProfileActivated
-6.2 product-catalog-service (H2 + cache)
-- Seed product data; search/filter; daily NAV mock; events ProductNAVsUpdated
+B1 (N): UI + Postman alignment
+- Angular Payments: already implemented; finalize UX and form validation; ensure error envelope surfaced with correlationId.
+- Postman flows mirror UI precisely; document Idempotency-Key usage.
 
-6.3 order-management-service (OMS)
-- Validate investment profile
-- Orchestrate payment debit via gateway; simulate exchange execution; publish InvestmentOrderExecuted
+B2 (N): Resilience & Idempotency verification
+- Verify idempotency gate on payment-gateway (same Idempotency-Key yields same result).
+- Standardize correlationId propagation across gateway → ledger → account-management (dev-open).
+- Acceptance: tests and E2E passing; logs show correlationId chain.
 
-6.4 portfolio-management-service (H2)
-- Consume InvestmentOrderExecuted; maintain holdings
-- Revalue holdings on ProductNAVsUpdated
+B3 (M): Kafka pathway validation (optional)
+- If gateway publishes processing events in kafka profile: verify ledger consumption & account updates.
+- Acceptance: kafka profile shows equivalent results as dev-open sync path.
 
-Postman:
-- Activate profile -> search products -> place buy -> simulate execution -> view holdings
+### Track C — Lending
 
-Acceptance:
-- Buy flow functional; portfolio reflects holdings; valuations update on NAV
+C1 (N): Finalize endpoints & tests (done/ongoing)
+- Loan summary endpoint (done) + test coverage.
+- Ensure ledger event metadata for LOAN_EMI references loanAccountNumber in kafka profile (ledger config).
+- Acceptance: schedule sum equals principal; EMI idempotent by transactionId; summary reflects changes after EMI.
 
----
+C2 (N): UI completion
+- Angular Loans page (done): list loans by customer, show schedule, summary, and Apply EMI (dev).
+- Acceptance: UI and API in sync; dev-open flows green.
 
-## 7. Admin BFF + Reporting
+C3 (M): Admin & UX hooks (optional)
+- Admin-only “manual re-disbursal” endpoint with idempotency guard (secure profile); UI reachable only to admin role.
+- Acceptance: protected endpoint; Postman and UI (admin area) verified under secure profile.
 
-7.1 Admin BFF (Spring WebFlux)
-- Aggregate customer 360 (profile/accounts/cards/loans/portfolio)
-- Admin flows: freeze customer, block card, approve address changes
-- RBAC via OAuth2 scopes
-- APIs tailored for admin portal
+### Track D — Frontend (Angular)
 
-7.2 Reporting service
-- Phase A: Read-only OLTP joins/exports (CSV/PDF) from reporting DB (later)
-- Phase B (later): CDC via Debezium/Kafka Connect to OLAP schema; high performance analytics
+D1 (N): Complete MVP flows
+- Cards, Payments, Beneficiaries, Loans, Accounts (done).
+- Add toast/alert surface for standardized error messages + correlationId.
+- Acceptance: All pages operate against dev-open; errors show readable message and correlationId.
 
-Acceptance:
-- Two operational reports; 360 API functional with RBAC in secure profile
+D2 (N): UX/Polish
+- Basic form validations; loading states; copy-to-clipboard correlationId; minimal layout polish.
+- Acceptance: no “stuck” loading; validation errors user-friendly.
 
----
+D3 (M): Security integration prep
+- Token storage and HttpInterceptor adaptation for bearer tokens (disabled by default).
+- Feature flag to switch to secure profile later.
 
-## 8. Security & Platform Hardening (Secure Profile)
+### Track E — Observability
 
-- Configure Keycloak realm, clients, roles
-- Gateway enforces JWT, roles/scopes; services as resource servers
-- Rate limiting/throttling at gateway
-- Secrets/config management, profile separation
-- Scanning: SonarQube (SAST), OWASP deps
-- Audit logging for sensitive actions
+E1 (N): Metrics & Logs consistency
+- Enable/verify metrics on all services; consistent logger format (json with correlationId).
+- Acceptance: /actuator/prometheus exposes expected metrics; common labels configured.
 
-Acceptance:
-- Secure profile blocks unauthenticated calls; roles enforced; audit trails created
+E2 (M): Dashboards & Tracing
+- Provide Grafana JSON: payments/min, cards approvals/min, loan EMIs/day, outstanding loan book.
+- Configure OTEL exporters for local tracing (optional) and document setup.
 
----
+### Track F — Security (Secure Profile)
 
-## 9. Observability & SRE (Operationalization)
+F1 (M): Identity provider
+- Keycloak (or Spring Authorization Server) local config: realm, clients, roles (admin, customer).
+- Resource servers: payment-gateway, cards, loans, investments, admin BFF.
+- BFF/Gateway: route + RBAC enforcement; forward user context.
 
-- OpenTelemetry tracing (optional in dev)
-- Prometheus/Grafana dashboards (business + technical)
-- Alerts configured (latency, error rates, SLO budgets)
+F2 (M): Angular wiring
+- Login flow; token acquisition; http interceptor adds Authorization header when secure profile is active.
 
-Acceptance:
-- E2E traces visible; dashboards confirm KPIs; alert workflow validated
+F3 (L): RBAC enforcement & sensitive endpoints
+- Admin flows (e.g., card block with reason) enforced by role; customer-facing flows restricted accordingly.
+- Acceptance: unauthorized blocked; error shape consistent; Postman includes token flows.
 
----
+### Track G — CI/CD
 
-## 10. AI Integrations (Later Phases)
+G1 (N): Pipelines
+- GitHub Actions: Maven build/test with JaCoCo report; Angular lint/build; OWASP dependency-check.
+- Gates: coverage thresholds; block PRs with high-severity OWASP findings.
 
-- Fraud Detection AI Agent replaces heuristics in fraud-detection-service; returns explainable decision + score
-- KYC/Address Verification AI Agents for onboarding/profile updates (OCR, liveness, AML/watchlists)
-- Robo-Advisory: recommendations, allocation, rebalancing suggestions via events
+G2 (M): SonarQube (optional)
+- Static analysis and maintainability gates; baseline coverage thresholds.
 
-Acceptance:
-- AI-enhanced outcomes integrated; Postman demos updated
+### Track H — Investments
 
----
+H1 (M): Investments MVP (dev-open)
+- investment-onboarding-service: activate investment profile; publish InvestmentProfileActivated (logging).
+- product-catalog-service (H2 + cache): seed products; search/filter; mock NAV updates & ProductNAVsUpdated.
 
-## 11. Developer Workflow, Runbooks, and Contracts
+H2 (M): OMS and Portfolio
+- order-management-service: validate profile; orchestrate debit via payment-gateway; publish InvestmentOrderExecuted.
+- portfolio-management-service: consume orders; maintain holdings; revalue on NAV updates.
 
-11.1 Developer workflow
-- Profiles:
-  - dev-open: fastest inner loop
-  - kafka: async flows; disable dev shortcuts
-  - secure: Keycloak/JWT required
-- Properties pattern:
-  - ${SERVICE}.eventPublisher=logging|kafka
-  - account.kafka.enabled=true|false
-  - ledger.events.topic=ledger.events
-  - payment-gateway.devSyncPosting=true|false
-  - loan-origination.integrations.disbursalSourceAccount=...
-- Error Contract (HTTP):
-  - { timestamp, status, error, message, correlationId, path }
-- Event Envelope (Kafka/logging):
-  - { topic, type, timestamp, correlationId, payload }
-- Idempotency:
-  - Gateway expects Idempotency-Key on POST write APIs
-  - Marker tables in consumers: processedPayment, ledgerApplied, loanEmiApplied
-- Postman:
-  - Keep OmniBank.local collection/environment updated after each change set (IDs, base URLs, new endpoints)
+H3 (L): Kafka profile enablement
+- Producers/consumers with idempotency markers; Postman flows.
 
-11.2 Runbook (Kafka)
-- Ensure $env:KAFKA_BOOTSTRAP_SERVERS set
-- Start services with $env:SPRING_PROFILES_ACTIVE="kafka"
-- Create topics if auto-create disabled:
-  - payment.events, ledger.events, loan.origination.events
-- Funding and beneficiary setup for disbursal
+### Track I — Admin BFF & Reporting
 
----
+I1 (M): Admin BFF (Spring WebFlux)
+- 360 view across customer/accounts/cards/loans/portfolio; admin actions (freeze customer, block card, approve changes).
+- Secure profile with RBAC.
 
-## 12. Sprint-Level Milestones (Indicative)
+I2 (M/L): Reporting
+- Read-only endpoints to export CSV/PDF (transactions, portfolio summary).
+- Future: CDC to OLAP store (optional).
 
-- Sprint A (Done): Payments async + idempotency + baseline tests
-- Sprint B (Done/Partial): Lending MVP I (events + scoring mock), MVP II disbursal orchestration
-- Sprint C: Lending MVP II (loan-management schedule + EMI application via ledger metadata; Postman drill)
-- Sprint D: Cards MVP I (issuance/management)
-- Sprint E: Cards MVP II (authorization + metrics)
-- Sprint F: Investments MVP I (onboarding/catalog)
-- Sprint G: Investments MVP II (OMS/portfolio)
-- Sprint H: Admin BFF + Reporting Phase A
-- Sprint I: Security & Observability hardening (secure profile, tracing, dashboards)
-- Sprint J: AI Integrations Phase I
+### Track J — Data Persistence & Migration
 
-Definition of Done:
-- Code merged with tests; coverage targets met
-- Postman updated
-- OpenAPI and event payload docs updated
-- Feature behind property flag if applicable
-- E2E verified locally in dev-open and kafka profiles
+J1 (L): Persistence beyond H2
+- Targeted services (e.g., card-management, loan-management) migrate to Postgres behind feature flag.
+- Flyway scripts; rollback plan.
+
+J2 (L): Backward compatibility
+- dev-open remains on H2; migrations feature-flagged; documented runbooks.
+
+### Track K — AI Integrations
+
+K1 (L): Fraud Detection AI
+- Replace heuristics in fraud-detection-service with AI decisioning; fallback to rules; expose score + explanation.
+
+K2 (L): KYC/Address & Advisory
+- Integrations for OCR/liveness/AML; advisory recommendations and rebalancing suggestions via events.
 
 ---
 
-## 13. Risks and Mitigations
+## 5) Sprint Plan (Sequenced, Executable)
 
-- Kafka unavailability in local: fallback logging publishers; graceful 409s on publish failure
-- Disbursal beneficiary policy: keep strict in dev/kafka to avoid security gaps; add secure-flag bypass later
-- Partial EMI complexity: MVP simplifies; plan includes follow-up for proportional application
-- Security integration: staged in secure profile; services remain dev-open runnable
-- Data migration to persistent stores (Oracle/Mongo) later; H2 retained for local dev
+Sprint S+1 (Current)
+- Cards N2: Kafka E2E finalize; merge main Postman flows; OpenAPI complete.
+- Angular: finalize error toasts; minor UX polish; complete Accounts/Loans/Beneficiaries integrations (done).
+- Observability baseline: confirm metrics/logs; add Grafana JSON skeletons.
+- Deliverable: PRs [cards-n2-kafka], [frontend-mvp], [observability-baseline-1]; All services runnable in dev-open and cards in kafka profile.
+
+Sprint S+2
+- CI/CD pipelines (Maven+Angular+OWASP); coverage gates; badge in README.
+- Kafka documentation (topics, payload schema versions).
+- Angular minor enhancements and docs; developer runbook updates.
+- Deliverable: PRs [ci-cd-quality], [kafka-docs], [docs-runbooks].
+
+Sprint S+3
+- Security POC: Keycloak, one service as resource server (e.g., card-management) under secure profile; admin endpoint protection.
+- Angular token wiring behind a flag; Postman token flows added.
+- Deliverable: PRs [secure-profile-poc], [postman-secure].
+
+Sprint S+4
+- Investments MVP (onboarding/catalog); events logging; basic Postman flows.
+- Admin BFF scaffolding (read 360 view with stubs).
+- Deliverable: PRs [investments-i1], [admin-bff-scaffold].
+
+Sprint S+5
+- OMS/Portfolio (investments i2) with debit orchestration; portfolio revaluation; tests; Postman flows.
+- Observability dashboards iteration.
+- Deliverable: PRs [investments-i2], [dashboards-v2].
+
+Sprint S+6+
+- Kafka enablement for investments (i3).
+- Reporting service phase A (OLTP CSV/PDF).
+- Persistence migrations planning & optional execution behind flags.
+- Security hardening, SRE alerts/runbooks, tracing enablement (as capacity allows).
+- AI integrations scheduled post-production readiness.
 
 ---
 
-## 14. Next Actions (Actionable To-Do)
+## 6) Acceptance Criteria & DoD (Per Increment)
 
-- Payments: Add Bulkhead configs and tests (BLOCK/CHALLENGE, ledger invariants, idempotent consumers)
-- Lending: 
-  - Finish schedule/EMI metadata mapping; improve partial EMI logic
-  - Add Postman items for schedule + dev EMI apply
-- Cards: Scaffold issuance/management; card-management events; tests
-- Observability: Metrics dashboards; initial alerts
-- Security: Prepare secure profile placeholders (properties, gateway filter stubs)
-- CI: Add Sonar and coverage gates to CI; enforce quality gate on PRs
+- Backward compatible; feature-flagged/profile-gated.
+- Unit/integration tests pass; coverage meets gate.
+- OpenAPI up to date; event schema docs versioned.
+- Postman and/or Angular E2E verified in dev-open (and kafka when applicable).
+- Metrics and logs present; correlationId propagated.
 
-This plan ensures continued fast development without breaking services, with profiles and flags controlling feature exposure and reliable E2E through Kafka and REST. It keeps dev-open runnable at all times, and incrementally hardens toward secure, observable, and production-ready deployments.
+---
+
+## 7) Risk Register & Mitigations
+
+- Kafka availability: dev-open uses logging publishers; kafka profile optional; retries/idempotency guard replays.
+- Data consistency: idempotency markers and retries; consider outbox later for critical publications.
+- Security scope creep: stage secure behind flags; small POC → incremental; dev-open remains for velocity.
+- EMI/Amortization complexity: we support partials and interest-first; future arrears handling noted for follow-up.
+- Migration risks: feature flags; rollback plans; tested in staging before toggling.
+
+---
+
+## 8) Topics & Payloads (Reference)
+
+- Topics (kafka profile): payment.events, ledger.events, loan.origination.events, loan.management.events, card.issuance.events, card.management.events, investment.events.
+- Envelope: { topic, type, timestamp, correlationId, payload }.
+- Contract versioning: payloads carry version; document evolution in /docs/events/ with examples.
+
+---
+
+## 9) Runbooks (Short)
+
+- Start dev-open: pwsh -File scripts/start-dev-open.ps1
+- Start with kafka for cards: pwsh -File scripts/start-dev-open.ps1 -Kafka
+- Angular: cd frontend/customer-angular && npx ng serve --port 5174 --host localhost
+- Seed & smoke: pwsh -File scripts/e2e-smoke.ps1 (creates customer, accounts, seed balance, adds/verify beneficiary, initiates transfer).
+
+---
+
+## 10) Documentation & Communication
+
+- README updated with run commands, profiles, ports.
+- /docs/ (to be added): OpenAPI snapshots, event schemas, Grafana dashboard JSON, secure profile setup, CI overview, migration runbooks.
+- Changelog per sprint with flags toggled and migrations (if any).
+
+---
+
+## 11) Definition of “Seamless and Perfect”
+
+- Every merge maintains green local dev-open flows and quality gates.
+- Kafka flows never break dev-open; enablement only increases capability.
+- Secure profile introduced incrementally; UI toggles and Postman flows exist for both.
+- Idempotency and retries proven by tests and Postman; replays do not duplicate side effects.
+- Observability sufficient to debug: correlationId, metrics counters, dashboards.
+
+---
+
+## 12) Ownership & Labels
+
+- Use labels on PRs: [cards], [payments], [lending], [frontend], [kafka], [security], [observability], [ci], [docs], [investments], [admin-bff], [reporting].
+- Feature branches per track; small, frequent merges.
+
+---
+
+End of Plan.

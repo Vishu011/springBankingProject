@@ -1,4 +1,86 @@
 <h2>Beneficiaries</h2>
+
 <div class="card">
-  <p>Manage beneficiaries: add, verify OTP, list.</p>
+  <h3>Create Beneficiary</h3>
+  <form [formGroup]="createForm" (ngSubmit)="create()">
+    <div style="display:flex; gap:12px; flex-wrap:wrap;">
+      <label>
+        Customer ID
+        <input type="number" formControlName="customerId" placeholder="e.g. 1001" />
+      </label>
+      <label>
+        Nickname
+        <input type="text" formControlName="nickname" placeholder="MySavings" />
+      </label>
+      <label>
+        Account Number
+        <input type="text" formControlName="accountNumber" placeholder="TO account number" />
+      </label>
+      <label>
+        Bank Code
+        <input type="text" formControlName="bankCode" placeholder="OMNI" />
+      </label>
+      <button type="submit" [disabled]="busy || createForm.invalid">Create</button>
+    </div>
+  </form>
+
+  <div style="margin-top:10px;" *ngIf="created">
+    <div>beneficiaryId: <b>{{ created.beneficiaryId }}</b></div>
+    <div>challengeId: <b>{{ created.challengeId }}</b></div>
+    <div *ngIf="created.otpDevEcho">otpDevEcho (dev): <b>{{ created.otpDevEcho }}</b></div>
+  </div>
+</div>
+
+<div class="card">
+  <h3>Verify OTP</h3>
+  <form [formGroup]="verifyForm" (ngSubmit)="verify()">
+    <div style="display:flex; gap:12px; flex-wrap:wrap;">
+      <label>
+        Owning Customer ID
+        <input type="number" formControlName="owningCustomerId" placeholder="customerId" />
+      </label>
+      <label>
+        Beneficiary ID
+        <input type="number" formControlName="beneficiaryId" placeholder="beneficiaryId" />
+      </label>
+      <label>
+        Challenge ID
+        <input type="number" formControlName="challengeId" placeholder="challengeId" />
+      </label>
+      <label>
+        OTP Code
+        <input type="text" formControlName="code" placeholder="OTP" />
+      </label>
+      <button type="submit" [disabled]="busy || verifyForm.invalid">Verify</button>
+      <button type="button" (click)="listAll()" [disabled]="busy">List All</button>
+    </div>
+  </form>
+</div>
+
+<div class="card">
+  <h3>Beneficiaries List</h3>
+  <div *ngIf="!list?.length">No beneficiaries</div>
+  <table *ngIf="list?.length" style="width:100%; border-collapse:collapse;">
+    <thead>
+      <tr style="text-align:left;">
+        <th>Beneficiary ID</th>
+        <th>Nickname</th>
+        <th>Account Number</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let b of list">
+        <td>{{ b.beneficiaryId }}</td>
+        <td>{{ b.nickname }}</td>
+        <td>{{ b.accountNumber }}</td>
+        <td>{{ b.status || '-' }}</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="card" *ngIf="busy">Working...</div>
+<div class="card" *ngIf="errorMsg" style="border:1px solid #7f1d1d; background:#1b0b0b;">
+  <b>Error:</b> {{ errorMsg }}
 </div>

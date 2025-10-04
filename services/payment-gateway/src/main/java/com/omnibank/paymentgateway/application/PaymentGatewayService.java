@@ -49,14 +49,7 @@ public class PaymentGatewayService {
       }
     }
 
-    var result = initiateInternalTransfer(req, correlationId, paymentIntent);
-
-    if (idKey != null) {
-      repository.findByPaymentUuid(result.paymentId()).ifPresent(pr -> {
-        pr.setIdempotencyKey(idKey);
-        repository.save(pr);
-      });
-    }
+    var result = doInitiateInternalTransfer(req, correlationId, idKey, paymentIntent);
 
     return result;
   }
@@ -64,8 +57,7 @@ public class PaymentGatewayService {
   /**
    * Initiate internal transfer. Returns paymentId and status (PROCESSING | MFA_CHALLENGE_REQUIRED | BLOCKED).
    */
-  @Transactional
-  public InitiationResult initiateInternalTransfer(InternalTransferRequest req, String correlationId, String paymentIntent) {
+  private InitiationResult doInitiateInternalTransfer(InternalTransferRequest req, String correlationId, String idempotencyKey, String paymentIntent) {
     validateBasic(req);
 
     // Ensure customer exists
@@ -125,6 +117,7 @@ public class PaymentGatewayService {
     String paymentUuid = UUID.randomUUID().toString();
     PaymentRequest pr = PaymentRequest.builder()
         .paymentUuid(paymentUuid)
+        .idempotencyKey(idempotencyKey)
         .customerId(req.getCustomerId())
         .fromAccount(req.getFromAccount())
         .toAccount(req.getToAccount())
