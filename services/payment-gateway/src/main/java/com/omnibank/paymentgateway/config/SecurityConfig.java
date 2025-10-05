@@ -2,15 +2,17 @@ package com.omnibank.paymentgateway.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.SecurityFilterChain;
 
 /**
- * Temporary permissive security for dev-local to unblock core functionality.
- * TODO: Switch to OAuth2 Resource Server (Keycloak) when security stack is ready.
+ * Dev-open/default security: permit everything (no auth).
+ * Active when profile is NOT 'secure' and NOT 'secure-keycloak'.
  */
 @Configuration
+@Profile("!secure & !secure-keycloak")
 public class SecurityConfig {
 
   @Bean
