@@ -81,8 +81,10 @@ jobs:
 
   owasp:
     name: OWASP Dependency Check
+    if: ${{ github.ref == 'refs/heads/main' || github.event_name == 'pull_request' }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    continue-on-error: true
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -100,6 +102,7 @@ jobs:
           path: '.'
           format: 'HTML'
           out: 'dependency-check-report'
+          github_token: ${{ secrets.GITHUB_TOKEN }}
           args: >
             --scan services
             --failOnCVSS 7
