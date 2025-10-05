@@ -1,0 +1,34 @@
+spring:
+  application:
+    name: card-management-service
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          # Configure either issuer-uri (preferred) or jwk-set-uri based on your Keycloak setup.
+          # For local Keycloak default, issuer usually looks like: http://localhost:8080/realms/omnibank
+          issuer-uri: ${JWT_ISSUER_URI:http://localhost:8080/realms/omnibank}
+          # jwk-set-uri: ${JWT_JWKS_URI:}
+
+# Enforce reason for BLOCK in secure profiles (Keycloak)
+card-management:
+  requireBlockReason: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+
+logging:
+  level:
+    root: INFO
+    com.omnibank.cardmanagement: DEBUG
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui/index.html
+  packages-to-scan: com.omnibank.cardmanagement.api
