@@ -92,6 +92,12 @@ public class CardManagementService {
     if (!normalized.equals("BLOCK") && !normalized.equals("UNBLOCK")) {
       throw new IllegalArgumentException("status must be BLOCK or UNBLOCK");
     }
+    // Secure-profile rule: require reason for BLOCK when enabled
+    if (normalized.equals("BLOCK") && props.isRequireBlockReason()) {
+      if (req.reason == null || req.reason.isBlank()) {
+        throw new IllegalArgumentException("reason required to BLOCK in secure profile");
+      }
+    }
     Card c = required(cardId);
     c.setStatus(normalized.equals("BLOCK") ? "BLOCKED" : "ACTIVE");
     publish(EventTypes.CARD_STATUS_UPDATED, Map.of(
@@ -170,6 +176,7 @@ public class CardManagementService {
   public static class UpdateStatusRequest {
     @NotBlank
     public String status; // BLOCK|UNBLOCK
+    public String reason; // optional in dev-open; required for BLOCK in secure profile
   }
 
   @Data

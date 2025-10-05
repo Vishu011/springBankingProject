@@ -1,0 +1,30 @@
+spring:
+  application:
+    name: card-management-service
+  main:
+    allow-bean-definition-overriding: true
+
+# Secure profile knobs (picked up by AppProperties under profile 'secure')
+card-management:
+  requireBlockReason: true
+  security:
+    # Default dev admin token for local usage; override via env ADMIN_BEARER_TOKEN
+    adminBearerToken: ${ADMIN_BEARER_TOKEN:admin-token-dev}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+
+logging:
+  level:
+    root: INFO
+    com.omnibank.cardmanagement: DEBUG
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui/index.html
+  packages-to-scan: com.omnibank.cardmanagement.api

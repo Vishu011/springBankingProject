@@ -9,6 +9,8 @@ public class AppProperties {
 
   private String eventPublisher = "logging"; // logging | kafka
   private Events events = new Events();
+  // Secure-profile knobs
+  private boolean requireBlockReason = false;
 
   public String getEventPublisher() {
     return eventPublisher;
@@ -24,6 +26,14 @@ public class AppProperties {
 
   public void setEvents(Events events) {
     this.events = events;
+  }
+
+  public boolean isRequireBlockReason() {
+    return requireBlockReason;
+  }
+
+  public void setRequireBlockReason(boolean requireBlockReason) {
+    this.requireBlockReason = requireBlockReason;
   }
 
   public static class Events {
