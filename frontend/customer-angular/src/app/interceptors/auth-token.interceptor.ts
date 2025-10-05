@@ -15,8 +15,22 @@ import { environment } from "../../environments/environment";
 @Injectable()
 export class AuthTokenInterceptor implements HttpInterceptor {
   intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
-    const secureCfg = (environment as any).secure as { useAuthToken?: boolean; bearerToken?: string } | undefined;
-    if (!secureCfg || !secureCfg.useAuthToken || !secureCfg.bearerToken) {
+    // Source 1: environment.secure (compile-time)
+    let useAuthToken: boolean | undefined;
+    let bearerToken: string | undefined;
+    const envSecure = (environment as any).secure as { useAuthToken?: boolean; bearerToken?: string } | undefined;
+    if (envSecure) {
+      useAuthToken = envSecure.useAuthToken;
+      bearerToken = envSecure.bearerToken;
+    }
+    // Source 2: localStorage (runtime toggle from Settings page)
+    try {
+      const lsUse = localStorage.getItem("secure.useAuthToken");
+      const lsToken = localStorage.getItem("secure.bearerToken");
+      if (lsUse !== null) useAuthToken = lsUse === "true";
+      if (lsToken !== null && lsToken.trim().length > 0) bearerToken = lsToken;
+    } catch {}
+    if (!useAuthToken || !bearerToken) {
       return next.handle(req);
     }
     // Attach only if not already present
@@ -25,7 +39,7 @@ export class AuthTokenInterceptor implements HttpInterceptor {
     }
     const cloned = req.clone({
       setHeaders: {
-        Authorization: `Bearer ${secureCfg.bearerToken}`
+        Authorization: `Bearer ${bearerToken}`
       }
     });
     return next.handle(cloned);

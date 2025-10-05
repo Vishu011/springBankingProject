@@ -1,0 +1,28 @@
+<div class="settings">
+  <h2>Developer Settings</h2>
+
+  <div class="field">
+    <label>
+      <input type="checkbox" [(ngModel)]="useAuthToken" />
+      Attach Authorization Bearer Token to API calls
+    </label>
+  </div>
+
+  <div class="field">
+    <label for="token">Bearer Token</label>
+    <textarea id="token" [(ngModel)]="bearerToken" rows="4" placeholder="Paste dev token or Keycloak JWT here"></textarea>
+  </div>
+
+  <div class="actions">
+    <button type="button" (click)="save()">Save</button>
+    <button type="button" class="secondary" (click)="clear()">Clear</button>
+  </div>
+
+  <p class="hint">
+    Tips:
+    <ul>
+      <li>For secure (dev token), use: admin-token-dev (default)</li>
+      <li>For secure-keycloak, paste a valid JWT from your Keycloak realm</li>
+    </ul>
+  </p>
+</div>

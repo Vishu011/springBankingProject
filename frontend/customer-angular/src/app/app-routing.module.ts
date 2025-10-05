@@ -5,6 +5,7 @@ import { PaymentsComponent } from "./pages/payments/payments.component";
 import { BeneficiariesComponent } from "./pages/beneficiaries/beneficiaries.component";
 import { LoansComponent } from "./pages/loans/loans.component";
 import { CardsComponent } from "./pages/cards/cards.component";
+import { SettingsComponent } from "./pages/settings/settings.component";
 
 const routes: Routes = [
   { path: "", redirectTo: "accounts", pathMatch: "full" },
@@ -13,6 +14,7 @@ const routes: Routes = [
   { path: "beneficiaries", component: BeneficiariesComponent },
   { path: "loans", component: LoansComponent },
   { path: "cards", component: CardsComponent },
+  { path: "settings", component: SettingsComponent },
   { path: "**", redirectTo: "accounts" }
 ];
 

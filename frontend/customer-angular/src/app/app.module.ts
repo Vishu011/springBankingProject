@@ -15,6 +15,7 @@ import { ToastContainerComponent } from "./shared/toast/toast.component";
 import { LoadingInterceptor } from "./interceptors/loading.interceptor";
 import { LoadingOverlayComponent } from "./shared/loading/loading.component";
 import { AuthTokenInterceptor } from "./interceptors/auth-token.interceptor";
+import { SettingsComponent } from "./pages/settings/settings.component";
 
 @NgModule({
   declarations: [
@@ -25,7 +26,8 @@ import { AuthTokenInterceptor } from "./interceptors/auth-token.interceptor";
     LoansComponent,
     CardsComponent,
     ToastContainerComponent,
-    LoadingOverlayComponent
+    LoadingOverlayComponent,
+    SettingsComponent
   ],
   imports: [BrowserModule, HttpClientModule, FormsModule, ReactiveFormsModule, AppRoutingModule],
   providers: [
