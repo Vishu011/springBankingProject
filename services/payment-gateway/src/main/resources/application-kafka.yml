@@ -4,6 +4,10 @@ spring:
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.StringOrBytesSerializer
+    consumer:
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      auto-offset-reset: latest
 
 payment-gateway:
   # Enable Kafka publisher and async orchestration
@@ -12,3 +16,7 @@ payment-gateway:
   devSyncPosting: false
   # Disable any dev balance adjustments; balances will update via ledger.events
   devBalanceAdjustEnabled: false
+  kafka:
+    enabled: true
+  events:
+    ledgerTopic: ledger.events

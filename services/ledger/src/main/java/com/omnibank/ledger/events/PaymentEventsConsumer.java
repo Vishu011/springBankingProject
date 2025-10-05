@@ -74,7 +74,7 @@ public class PaymentEventsConsumer {
           new Entry(toAccount, amount, 'C')
       );
 
-      var postRes = ledgerService.postTransaction("TRANSFER", entries, correlationId);
+      var postRes = ledgerService.postTransaction("TRANSFER", entries, correlationId, java.util.Map.of("paymentUuid", paymentUuid));
       processedRepo.save(ProcessedPayment.builder().paymentUuid(paymentUuid).build());
 
       log.info("Processed payment event -> ledger posted txId={} paymentUuid={} (topic={}, key={}, offset={})",
