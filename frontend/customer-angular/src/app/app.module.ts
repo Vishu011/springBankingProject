@@ -12,6 +12,8 @@ import { CardsComponent } from "./pages/cards/cards.component";
 import { CorrelationIdInterceptor } from "./interceptors/correlation-id.interceptor";
 import { ErrorHandlerInterceptor } from "./interceptors/error-handler.interceptor";
 import { ToastContainerComponent } from "./shared/toast/toast.component";
+import { LoadingInterceptor } from "./interceptors/loading.interceptor";
+import { LoadingOverlayComponent } from "./shared/loading/loading.component";
 
 @NgModule({
   declarations: [
@@ -21,10 +23,12 @@ import { ToastContainerComponent } from "./shared/toast/toast.component";
     BeneficiariesComponent,
     LoansComponent,
     CardsComponent,
-    ToastContainerComponent
+    ToastContainerComponent,
+    LoadingOverlayComponent
   ],
   imports: [BrowserModule, HttpClientModule, FormsModule, ReactiveFormsModule, AppRoutingModule],
   providers: [
+    { provide: HTTP_INTERCEPTORS, useClass: LoadingInterceptor, multi: true },
     { provide: HTTP_INTERCEPTORS, useClass: CorrelationIdInterceptor, multi: true },
     { provide: HTTP_INTERCEPTORS, useClass: ErrorHandlerInterceptor, multi: true }
   ],
