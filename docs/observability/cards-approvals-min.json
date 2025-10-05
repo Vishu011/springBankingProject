@@ -1,0 +1,5 @@
+{
+  "title": "cards/approvals/min",
+  "description": "Baseline dashboard: card approvals per minute, consumer lag, error rate. CorrelationId for tracing.",
+  "panels": []
+}

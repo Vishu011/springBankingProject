@@ -1,0 +1,5 @@
+{
+  "title": "payments/min",
+  "description": "Baseline dashboard: payments per minute, error rate, processing latency. Correlate by MDC correlationId.",
+  "panels": []
+}

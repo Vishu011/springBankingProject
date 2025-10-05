@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+  <springProperty scope="context" name="LOG_LEVEL_ROOT" source="logging.level.root" defaultValue="INFO"/>
+  <springProperty scope="context" name="LOG_LEVEL_OMNIBANK" source="logging.level.com.omnibank" defaultValue="DEBUG"/>
+
+  <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+      <pattern>%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} %-5level [%thread] %logger{36} cid=%X{correlationId:-} - %msg%n%ex</pattern>
+    </encoder>
+  </appender>
+
+  <logger name="com.omnibank" level="${LOG_LEVEL_OMNIBANK}"/>
+  <root level="${LOG_LEVEL_ROOT}">
+    <appender-ref ref="CONSOLE"/>
+  </root>
+</configuration>
