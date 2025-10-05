@@ -1,0 +1,27 @@
+server:
+  port: 8140
+
+spring:
+  application:
+    name: investment-onboarding-service
+  jackson:
+    serialization:
+      WRITE_DATES_AS_TIMESTAMPS: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+
+logging:
+  level:
+    root: INFO
+    com.omnibank.investmentonboarding: DEBUG
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui/index.html
+  packages-to-scan: com.omnibank.investmentonboarding.api

@@ -44,6 +44,8 @@
     <module>services/loan-management</module>
     <module>services/card-issuance</module>
     <module>services/card-management</module>
+    <module>services/investment-onboarding</module>
+    <module>services/product-catalog</module>
   </modules>
 
   
