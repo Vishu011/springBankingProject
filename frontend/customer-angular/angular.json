@@ -31,11 +31,11 @@
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
           "options": {
-            "browserTarget": "omnibank-customer-angular:build"
+            "buildTarget": "omnibank-customer-angular:build"
           },
           "configurations": {
             "production": {
-              "browserTarget": "omnibank-customer-angular:build:production"
+              "buildTarget": "omnibank-customer-angular:build:production"
             }
           }
         },
@@ -52,7 +52,6 @@
       }
     }
   },
-  "defaultProject": "omnibank-customer-angular",
   "cli": {
     "analytics": false
   }
