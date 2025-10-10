@@ -34,6 +34,7 @@ export interface DepositRequest {
 export interface WithdrawRequest {
     accountId: string;
     amount: number;
+    otpCode: string; // OTP from user, required by backend
 }
 
 // Interface mirroring backend TransferRequest DTO
@@ -41,4 +42,5 @@ export interface TransferRequest {
     fromAccountNumber: string; // Changed from fromAccountId
     toAccountNumber: string;   // Changed from toAccountId
     amount: number;
+    otpCode: string; // OTP from user, required by backend for transfer
 }

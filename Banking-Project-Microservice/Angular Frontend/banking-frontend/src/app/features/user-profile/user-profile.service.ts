@@ -37,4 +37,12 @@ export class UserProfileService {
   getUserProfile(userId: string): Observable<UserProfile> {
     return this.http.get<UserProfile>(`${this.userProfileApiUrl}/${userId}`);
   }
+
+  /**
+   * Fetches the authenticated user's profile (server derives userId from JWT).
+   * GET /auth/profile
+   */
+  getMyProfile(): Observable<UserProfile> {
+    return this.http.get<UserProfile>(`${environment.apiUrl}/auth/profile`);
+  }
 }

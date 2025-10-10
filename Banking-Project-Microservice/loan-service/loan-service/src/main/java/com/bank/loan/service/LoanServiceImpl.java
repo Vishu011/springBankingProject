@@ -11,6 +11,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.bank.loan.client.UserClient;
+import com.bank.loan.client.OtpServiceClient;
+import com.bank.loan.dto.OtpVerifyRequest;
+import com.bank.loan.dto.OtpVerifyResponse;
 import com.bank.loan.dto.LoanRequestDto;
 import com.bank.loan.dto.LoanResponseDto;
 import com.bank.loan.dto.UserDto;
@@ -28,13 +31,15 @@ import com.bank.loan.repository.LoanRepository;
 public class LoanServiceImpl implements LoanService {
 	private final LoanRepository loanRepository;
 	private final UserClient userClient;
+    private final OtpServiceClient otpServiceClient;
     private final KafkaTemplate<String, LoanStatusUpdatedEvent> kafkaTemplate; // Ensure correct KafkaTemplate type
 
 	@Autowired
-	public LoanServiceImpl(LoanRepository loanRepository, UserClient userClient, KafkaTemplate<String, LoanStatusUpdatedEvent> kafkaTemplate) {
+	public LoanServiceImpl(LoanRepository loanRepository, UserClient userClient, KafkaTemplate<String, LoanStatusUpdatedEvent> kafkaTemplate, OtpServiceClient otpServiceClient) {
 		this.loanRepository = loanRepository;
 		this.userClient = userClient;
         this.kafkaTemplate = kafkaTemplate;
+        this.otpServiceClient = otpServiceClient;
 	}
 
     /**
@@ -59,6 +64,18 @@ public class LoanServiceImpl implements LoanService {
 				throw new LoanCreationException("User not found with ID: " + requestDto.getUserId());
 			}
             checkKycStatus(requestDto.getUserId());
+
+            // OTP verification before creating loan
+            OtpVerifyRequest otpReq = new OtpVerifyRequest(
+                requestDto.getUserId(),
+                "LOAN_SUBMISSION",
+                null,
+                requestDto.getOtpCode()
+            );
+            OtpVerifyResponse otpRes = otpServiceClient.verify(otpReq);
+            if (otpRes == null || !otpRes.isVerified()) {
+                throw new LoanCreationException("OTP verification failed: " + (otpRes != null ? otpRes.getMessage() : "no response"));
+            }
 
 			Loan loan = LoanMapper.toEntity(requestDto);
 			loan.setApplicationDate(LocalDateTime.now());
@@ -139,7 +156,7 @@ public class LoanServiceImpl implements LoanService {
 
 	@Override
 	@Transactional
-	public LoanResponseDto rejectLoan(String loanId) {
+	public LoanResponseDto rejectLoan(String loanId, String reason) {
 		Loan loan = loanRepository.findById(loanId)
 				.orElseThrow(() -> new LoanNotFoundException("Loan not found with id: " + loanId));
 		
@@ -163,7 +180,7 @@ public class LoanServiceImpl implements LoanService {
                 updatedLoan.getStatus().name(),
                 updatedLoan.getAmount().doubleValue(),
                 updatedLoan.getLoanType().name(),
-                "Your loan application has been REJECTED."
+                ("Your loan application has been REJECTED." + (reason != null && !reason.isBlank() ? " Reason: " + reason : ""))
             );
             return LoanMapper.toDto(updatedLoan);
         } catch (Exception e) {

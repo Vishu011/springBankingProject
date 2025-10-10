@@ -21,7 +21,7 @@ public class AccountDto {
 	    // Enum definitions for AccountType
 	    public enum AccountType {
 	        SAVINGS,
-	        CURRENT
+	        SALARY_CORPORATE
 	    }
 
 	    // Enum definitions for AccountStatus
@@ -30,4 +30,3 @@ public class AccountDto {
 	        CLOSED
 	    }
 }
-

@@ -70,7 +70,7 @@ export class AdminDashboardComponent implements OnInit {
         // }, 1500);
 
         // Uncomment for real API call
-        this.http.get<UserProfile[]>(`${environment.apiUrl}/auth/users`).subscribe(
+        this.http.get<UserProfile[]>(`${environment.apiUrl}/user-service/auth/users`).subscribe(
             (users) => {
                 this.pendingUsers = users.filter(user => user.kycStatus === KycStatus.PENDING);
                 this.loading = false;
@@ -107,7 +107,7 @@ export class AdminDashboardComponent implements OnInit {
         if (adminComment) {
             payload.adminComment = adminComment;
         }
-        this.http.put<UserProfile>(`${environment.apiUrl}/auth/user/${userId}/kyc-status`, payload).subscribe(
+        this.http.put<UserProfile>(`${environment.apiUrl}/user-service/auth/user/${userId}/kyc-status`, payload).subscribe(
             (updatedUser) => {
                 console.log(`User ${userId} KYC status updated to ${newStatus}:`, updatedUser);
                 this.successMessage = `User ${updatedUser.username}'s KYC status updated to ${newStatus}.`;

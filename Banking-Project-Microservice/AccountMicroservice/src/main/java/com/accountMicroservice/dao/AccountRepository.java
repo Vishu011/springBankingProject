@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 
 import com.accountMicroservice.model.Account;
 import com.accountMicroservice.model.AccountStatus;
+import com.accountMicroservice.model.AccountType;
 
 @Repository // Marks this interface as a Spring Data JPA repository component
 public interface AccountRepository extends JpaRepository<Account, String> {
@@ -42,6 +43,11 @@ public interface AccountRepository extends JpaRepository<Account, String> {
      * @return A list of Account entities.
      */
     List<Account> findByStatus(AccountStatus status);
+
+    /**
+     * Counts non-closed accounts of a given type for a user.
+     */
+    long countByUserIdAndAccountTypeAndStatusNot(String userId, AccountType accountType, AccountStatus status);
 
     // You can add more custom query methods as needed for your business logic.
 }

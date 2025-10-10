@@ -172,18 +172,31 @@ public class NotificationServiceImpl implements NotificationService {
         try {
             String recipientEmail = null;
 
-            if (request.getUserId() != null) {
-                UserDto userProfile = userServiceClient.getUserById(request.getUserId(), "Bearer " + serviceAccessToken);
-                if (userProfile != null && userProfile.getEmail() != null) {
-                    recipientEmail = userProfile.getEmail();
-                } else {
-                    System.err.println("User profile or email not found for userId: " + request.getUserId() + ". Cannot send email.");
-                    throw new NotificationProcessingException("User email not found for notification.");
-                }
+            // Prefer explicit recipient email when provided (e.g., public registration OTP)
+            if (request.getToEmail() != null && !request.getToEmail().isBlank()) {
+                recipientEmail = request.getToEmail().trim();
             } else {
-                System.err.println("User ID is null. Cannot send email notification.");
-                throw new NotificationProcessingException("User ID is missing for notification.");
+                // Fallback: resolve via User Service using userId
+                if (serviceAccessToken == null || serviceAccessToken.isBlank()) {
+                    System.out.println("Notification Service: serviceAccessToken is empty. Refreshing token before user lookup...");
+                    refreshServiceAccessToken();
+                }
+
+                if (request.getUserId() != null) {
+                    UserDto userProfile = userServiceClient.getUserById(request.getUserId(), "Bearer " + serviceAccessToken);
+                    if (userProfile != null && userProfile.getEmail() != null) {
+                        recipientEmail = userProfile.getEmail();
+                    } else {
+                        System.err.println("User profile or email not found for userId: " + request.getUserId() + ". Cannot send email.");
+                        throw new NotificationProcessingException("User email not found for notification.");
+                    }
+                } else {
+                    System.err.println("User ID is null and toEmail not provided. Cannot send email notification.");
+                    throw new NotificationProcessingException("Recipient email missing for notification.");
+                }
             }
+
+            System.out.println("Notification Service: Resolved recipient email for userId " + request.getUserId() + " -> " + recipientEmail);
 
             if (request.getType() == NotificationType.EMAIL) {
                 sendEmail(recipientEmail, "Banking Alert: " + request.getType().name() + " Update", request.getContent());

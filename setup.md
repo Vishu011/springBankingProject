@@ -94,7 +94,8 @@ This script creates/grants schemas:
 - TRANSACT_MS/transact123
 - LOAN_MS/loan123
 - CARD_MS/card123
-- NOTIFY_MS (for NotificationService later)
+- NOTIFY_MS/notify123
+- OTP_MS/otp123
 
 Ensure microservices point to:
 - URL: jdbc:oracle:thin:@//localhost:1521/ORCL
@@ -185,6 +186,9 @@ $env:SPRING_PROFILES_ACTIVE='local'
 - CreditCardService/
 <!-- cd Banking-Project-Microservice/CreditCardService
 mvn spring-boot:run -->
+- NotificationService/
+<!-- cd Banking-Project-Microservice/NotificationService
+mvn spring-boot:run -->
 
 
 Each service should register with Eureka at http://localhost:8761 and use the Oracle schema noted above. Check application.yaml for:
@@ -237,7 +241,8 @@ OIDC client: bank-frontend (public, Standard Flow)
 
 banking-admin-dashboard (Admin UI):
 ```
-cmd.exe /c "cd /d Banking-Project-Microservice\Angular Frontend\banking-admin-dashboard && npm start -- --port 4300"
+cd "Banking-Project-Microservice/Angular Frontend/banking-admin-dashboard"
+ng serve --port 4300
 # http://localhost:4300
 ```
 OIDC client: bank-admin-frontend (public)

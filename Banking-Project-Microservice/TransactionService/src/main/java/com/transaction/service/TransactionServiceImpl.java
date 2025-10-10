@@ -19,6 +19,7 @@ import com.transaction.dto.TransferRequest; // Updated DTO
 import com.transaction.dto.UserDto;
 import com.transaction.dto.WithdrawRequest;
 import com.transaction.dto.WithdrawRequestDto;
+import com.transaction.dto.FineRequest;
 import com.transaction.event.TransactionCompletedEvent;
 import com.transaction.exceptions.AccountNotFoundException;
 import com.transaction.exceptions.InsufficientFundsException;
@@ -32,6 +33,9 @@ import com.transaction.proxyService.AccountServiceClient;
 import com.transaction.proxyService.LoanServiceClient;
 import com.transaction.proxyService.NotificationServiceClient;
 import com.transaction.proxyService.UserServiceClient;
+import com.transaction.proxyService.OtpServiceClient;
+import com.transaction.dto.OtpVerifyRequest;
+import com.transaction.dto.OtpVerifyResponse;
 
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 
@@ -44,6 +48,9 @@ public class TransactionServiceImpl implements TransactionService {
     private final KafkaTemplate<String, TransactionCompletedEvent> kafkaTemplate;
     private final NotificationServiceClient notificationServiceClient;
     private final UserServiceClient userServiceClient;
+    
+    @Autowired
+    private OtpServiceClient otpServiceClient;
 
     @Autowired
     public TransactionServiceImpl(TransactionRepository transactionRepository,
@@ -95,6 +102,20 @@ public class TransactionServiceImpl implements TransactionService {
             }
 
             checkKycStatus(targetAccount.getUserId());
+
+            // Enforce per-transaction limits and balance cap by account type
+            if (targetAccount.getAccountType() == AccountDto.AccountType.SAVINGS) {
+                if (request.getAmount() > 200000) {
+                    throw new InvalidTransactionException("Deposit exceeds maximum per-transaction limit of 200000 INR for SAVINGS account.");
+                }
+            } else if (targetAccount.getAccountType() == AccountDto.AccountType.SALARY_CORPORATE) {
+                if (request.getAmount() > 500000) {
+                    throw new InvalidTransactionException("Deposit exceeds maximum per-transaction limit of 500000 INR for SALARY/CORPORATE account.");
+                }
+                if (targetAccount.getBalance() + request.getAmount() > 10000000) {
+                    throw new InvalidTransactionException("Deposit would exceed the maximum balance cap of 10000000 INR for SALARY/CORPORATE account.");
+                }
+            }
 
             DepositRequestDto depositRequestDto = new DepositRequestDto(transaction.getTransactionId(), request.getAmount());
             accountServiceClient.depositFunds(request.getAccountId(), depositRequestDto);
@@ -152,8 +173,33 @@ public class TransactionServiceImpl implements TransactionService {
 
             checkKycStatus(sourceAccount.getUserId());
 
+            // Enforce per-transaction limits by account type
+            if (sourceAccount.getAccountType() == AccountDto.AccountType.SAVINGS) {
+                if (request.getAmount() > 200000) {
+                    throw new InvalidTransactionException("Withdrawal exceeds maximum per-transaction limit of 200000 INR for SAVINGS account.");
+                }
+            } else if (sourceAccount.getAccountType() == AccountDto.AccountType.SALARY_CORPORATE) {
+                if (request.getAmount() > 500000) {
+                    throw new InvalidTransactionException("Withdrawal exceeds maximum per-transaction limit of 500000 INR for SALARY/CORPORATE account.");
+                }
+            }
+
             if (sourceAccount.getBalance() < request.getAmount()) {
                 throw new InsufficientFundsException("Insufficient funds in account: " + request.getAccountId());
+            }
+
+            // OTP verification before proceeding
+            OtpVerifyRequest otpReq = new OtpVerifyRequest(
+                sourceAccount.getUserId(),
+                "WITHDRAWAL",
+                null,
+                request.getOtpCode()
+            );
+            OtpVerifyResponse otpRes = otpServiceClient.verify(otpReq);
+            if (otpRes == null || !otpRes.isVerified()) {
+                transaction.setStatus(TransactionStatus.FAILED);
+                transactionRepository.save(transaction);
+                throw new TransactionProcessingException("OTP verification failed: " + (otpRes != null ? otpRes.getMessage() : "no response"));
             }
 
             WithdrawRequestDto withdrawRequestDto = new WithdrawRequestDto(transaction.getTransactionId(), request.getAmount());
@@ -227,8 +273,47 @@ public class TransactionServiceImpl implements TransactionService {
             checkKycStatus(sourceAccount.getUserId());
             checkKycStatus(targetAccount.getUserId());
 
+            // Enforce per-transaction limits on source (withdraw side)
+            if (sourceAccount.getAccountType() == AccountDto.AccountType.SAVINGS) {
+                if (request.getAmount() > 200000) {
+                    throw new InvalidTransactionException("Transfer exceeds maximum per-transaction limit of 200000 INR for SAVINGS account.");
+                }
+            } else if (sourceAccount.getAccountType() == AccountDto.AccountType.SALARY_CORPORATE) {
+                if (request.getAmount() > 500000) {
+                    throw new InvalidTransactionException("Transfer exceeds maximum per-transaction limit of 500000 INR for SALARY/CORPORATE account.");
+                }
+            }
+
+            // Enforce deposit-side limits on target and salary cap
+            if (targetAccount.getAccountType() == AccountDto.AccountType.SAVINGS) {
+                if (request.getAmount() > 200000) {
+                    throw new InvalidTransactionException("Transfer exceeds maximum per-transaction deposit limit of 200000 INR for target SAVINGS account.");
+                }
+            } else if (targetAccount.getAccountType() == AccountDto.AccountType.SALARY_CORPORATE) {
+                if (request.getAmount() > 500000) {
+                    throw new InvalidTransactionException("Transfer exceeds maximum per-transaction deposit limit of 500000 INR for target SALARY/CORPORATE account.");
+                }
+                if (targetAccount.getBalance() + request.getAmount() > 10000000) {
+                    throw new InvalidTransactionException("Transfer would exceed the maximum balance cap of 10000000 INR for target SALARY/CORPORATE account.");
+                }
+            }
+
             if (sourceAccount.getBalance() < request.getAmount()) {
                 throw new InsufficientFundsException("Insufficient funds in source account: " + request.getFromAccountNumber());
+            }
+
+            // OTP verification before proceeding
+            OtpVerifyRequest otpReq = new OtpVerifyRequest(
+                sourceAccount.getUserId(),
+                "WITHDRAWAL",
+                null,
+                request.getOtpCode()
+            );
+            OtpVerifyResponse otpRes = otpServiceClient.verify(otpReq);
+            if (otpRes == null || !otpRes.isVerified()) {
+                transaction.setStatus(TransactionStatus.FAILED);
+                transactionRepository.save(transaction);
+                throw new TransactionProcessingException("OTP verification failed: " + (otpRes != null ? otpRes.getMessage() : "no response"));
             }
 
             if (sourceAccount.getAccountId().equals(targetAccount.getAccountId())) { // Compare resolved IDs
@@ -296,6 +381,40 @@ public class TransactionServiceImpl implements TransactionService {
     @Override
     public List<Transaction> getTransactionsByAccountId(String accountId) {
         return transactionRepository.findByFromAccountIdOrToAccountId(accountId, accountId);
+    }
+
+    @Override
+    @Transactional
+    public Transaction recordFine(FineRequest request) {
+        Transaction transaction = new Transaction();
+        transaction.setFromAccountId(null);
+        transaction.setToAccountId(request.getAccountId());
+        transaction.setAmount(request.getAmount());
+        transaction.setType(TransactionType.FINE);
+        transaction.setStatus(TransactionStatus.SUCCESS);
+        transaction.setTransactionDate(LocalDateTime.now());
+        transaction = transactionRepository.save(transaction);
+        try {
+            AccountDto account = accountServiceClient.getAccountById(request.getAccountId());
+            String notificationMessage = (request.getMessage() != null && !request.getMessage().isBlank())
+                ? request.getMessage()
+                : ("A fine of INR " + request.getAmount() + " has been recorded for account " + (account != null ? account.getAccountNumber() : request.getAccountId()) + ". Transaction ID: " + transaction.getTransactionId());
+            if (account != null) {
+                publishTransactionCompletedEvent(
+                    transaction.getTransactionId(),
+                    account.getUserId(),
+                    account.getAccountId(),
+                    request.getAmount(),
+                    transaction.getType().name(),
+                    transaction.getStatus().name(),
+                    notificationMessage
+                );
+            }
+            return transaction;
+        } catch (Exception e) {
+            System.err.println("recordFine: notification publish failed: " + e.getMessage());
+            return transaction;
+        }
     }
 
     @CircuitBreaker(name = "kafkaNotificationPublisher", fallbackMethod = "publishTransactionCompletedEventFallback")

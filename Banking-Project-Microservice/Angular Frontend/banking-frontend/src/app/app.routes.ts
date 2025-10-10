@@ -21,6 +21,8 @@ import { SidebarComponent } from './features/layout/sidebar/sidebar.component';
 import { NotificationListComponent } from './features/notifications/notification-list/notification-list.component';
 import { KycFormComponent } from './features/kyc/kyc-form/kyc-form.component';
 import { kycVerifiedGuard } from './core/guards/kyc.guard';
+import { SalaryApplicationComponent } from './features/accounts/salary-application/salary-application.component';
+import { SalaryApplicationsListComponent } from './features/accounts/salary-application/salary-applications-list.component';
 
 export const routes: Routes = [
     // Public routes (no layout)
@@ -55,6 +57,8 @@ export const routes: Routes = [
             { path: 'cards/manage', component: CardManagementComponent, canActivate: [kycVerifiedGuard] },
             { path: 'cards/issue', component: CardIssuanceComponent, canActivate: [kycVerifiedGuard] },
             { path: 'kyc', component: KycFormComponent },
+            { path: 'accounts/salary/apply', component: SalaryApplicationComponent, canActivate: [kycVerifiedGuard] },
+            { path: 'accounts/salary/applications', component: SalaryApplicationsListComponent, canActivate: [kycVerifiedGuard] },
 
         ]
     },

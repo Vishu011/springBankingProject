@@ -37,8 +37,8 @@ export interface UserProfileUpdateRequest {
 })
 export class UserProfileService {
 
-    private usersApiUrl = `${environment.apiUrl}/auth/users`; // Base URL for all users
-    private userProfileApiUrl = `${environment.apiUrl}/auth/user`; // Base URL for single user profile
+    private usersApiUrl = `${environment.apiUrl}/user-service/auth/users`; // Route via Gateway discovery ID
+    private userProfileApiUrl = `${environment.apiUrl}/user-service/auth/user`; // Route via Gateway discovery ID
 
     constructor(private http: HttpClient) { }
 

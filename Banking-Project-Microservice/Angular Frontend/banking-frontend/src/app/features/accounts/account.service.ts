@@ -55,8 +55,8 @@ export class AccountService {
    * @param status The new status (e.g., AccountStatus.CLOSED).
    * @returns An Observable of the updated AccountResponse.
    */
-  updateAccountStatus(accountId: string, status: AccountStatus): Observable<AccountResponse> {
-    const request: AccountUpdateRequest = { status: status };
+  updateAccountStatus(accountId: string, status: AccountStatus, otpCode: string): Observable<AccountResponse> {
+    const request: AccountUpdateRequest = { status: status, otpCode };
     return this.http.put<AccountResponse>(`${this.accountsApiUrl}/${accountId}`, request);
   }
 
@@ -66,8 +66,8 @@ export class AccountService {
    * @param accountId The ID of the account to delete.
    * @returns An Observable of void.
    */
-  deleteAccount(accountId: string): Observable<void> {
-    return this.http.delete<void>(`${this.accountsApiUrl}/${accountId}`);
+  deleteAccount(accountId: string, otpCode: string): Observable<void> {
+    return this.http.delete<void>(`${this.accountsApiUrl}/${accountId}?otpCode=${encodeURIComponent(otpCode)}`);
   }
 
   /**

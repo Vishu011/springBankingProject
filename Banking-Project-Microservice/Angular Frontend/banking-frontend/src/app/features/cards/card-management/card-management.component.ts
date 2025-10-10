@@ -11,6 +11,7 @@ import { CardResponse, CardStatus, CardType } from '../../../shared/models/card.
 import { AccountResponse } from '../../../shared/models/account.model';
 import { AuthService } from '../../../core/services/auth.service';
 import { TransactionLimitModalComponent } from '../transaction-limit-modal/transaction-limit-modal.component';
+import { OtpService } from '../../otp/otp.service';
 
 
 @Component({
@@ -33,10 +34,15 @@ export class CardManagementComponent implements OnInit {
   isModalOpen: boolean = false;
   currentCardForLimitUpdate: CardResponse | null = null;
 
+  // OTP state per card for CARD_OPERATIONs
+  rowOtpCodes: { [cardId: string]: string } = {};
+  generatingRowOtp: { [cardId: string]: boolean } = {};
+
   constructor(
     private cardService: CardService,
     private authService: AuthService,
-    private accountService: AccountService // Inject AccountService
+    private accountService: AccountService, // Inject AccountService
+    private otpService: OtpService
   ) { }
 
   ngOnInit(): void {
@@ -105,12 +111,45 @@ export class CardManagementComponent implements OnInit {
     }
   }
 
+  generateOtpForCardOperation(cardId: string): void {
+    this.errorMessage = null;
+    this.successMessage = null;
+    const userId = this.authService.getIdentityClaims()?.sub;
+    if (!userId) {
+      this.errorMessage = 'User not logged in. Cannot generate OTP.';
+      return;
+    }
+    this.generatingRowOtp[cardId] = true;
+    this.otpService.generate({
+      userId,
+      purpose: 'CARD_OPERATION',
+      channels: ['EMAIL'],
+      contextId: null
+    }).subscribe(
+      () => {
+        this.successMessage = 'OTP sent to your registered email.';
+        this.generatingRowOtp[cardId] = false;
+      },
+      (error) => {
+        console.error('Error generating OTP for card operation:', error);
+        this.errorMessage = error.error?.message || 'Failed to generate OTP.';
+        this.generatingRowOtp[cardId] = false;
+      }
+    );
+  }
+
   // Refactored from inline JS blockCard
   blockCard(cardId: string, cardNumber: string): void {
+    const otp = this.rowOtpCodes[cardId];
+    if (!otp || otp.trim().length === 0) {
+      this.errorMessage = 'Please enter OTP to block the card.';
+      return;
+    }
     if (confirm(`Are you sure you want to BLOCK card ${cardNumber}?`)) {
-      this.cardService.blockCard(cardId).subscribe(
+      this.cardService.blockCard(cardId, otp).subscribe(
         (response) => {
           this.successMessage = `Card ${response.cardNumber.slice(-4)} blocked successfully.`;
+          this.rowOtpCodes[cardId] = '';
           this.loadUserCardsAndAccounts(); // Reload list
         },
         (error) => {
@@ -123,10 +162,16 @@ export class CardManagementComponent implements OnInit {
 
   // Refactored from inline JS unblockCard
   unblockCard(cardId: string, cardNumber: string): void {
+    const otp = this.rowOtpCodes[cardId];
+    if (!otp || otp.trim().length === 0) {
+      this.errorMessage = 'Please enter OTP to unblock the card.';
+      return;
+    }
     if (confirm(`Are you sure you want to UNBLOCK card ${cardNumber}?`)) {
-      this.cardService.unblockCard(cardId).subscribe(
+      this.cardService.unblockCard(cardId, otp).subscribe(
         (response) => {
           this.successMessage = `Card ${response.cardNumber.slice(-4)} unblocked successfully.`;
+          this.rowOtpCodes[cardId] = '';
           this.loadUserCardsAndAccounts(); // Reload list
         },
         (error) => {

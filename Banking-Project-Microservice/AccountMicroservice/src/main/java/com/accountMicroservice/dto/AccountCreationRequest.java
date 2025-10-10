@@ -26,4 +26,7 @@ public class AccountCreationRequest {
     @NotNull(message = "Initial balance cannot be null")
     @PositiveOrZero(message = "Initial balance must be zero or positive")
     private Double initialBalance;
+
+    @NotBlank(message = "OTP code is required")
+    private String otpCode;
 }

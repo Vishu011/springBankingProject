@@ -43,15 +43,15 @@ public class CreditCardController {
 
     // Block a card
     @PutMapping("/{cardId}/block")
-    public ResponseEntity<CreditCardResponseDTO> blockCard(@PathVariable String cardId) {
-        CreditCardResponseDTO updated = creditCardService.blockCard(cardId);
+    public ResponseEntity<CreditCardResponseDTO> blockCard(@PathVariable String cardId, @RequestParam String otpCode) {
+        CreditCardResponseDTO updated = creditCardService.blockCard(cardId, otpCode);
         return ResponseEntity.ok(updated);
     }
 
     // Unblock a card
     @PutMapping("/{cardId}/unblock")
-    public ResponseEntity<CreditCardResponseDTO> unblockCard(@PathVariable String cardId) {
-        CreditCardResponseDTO updated = creditCardService.unblockCard(cardId);
+    public ResponseEntity<CreditCardResponseDTO> unblockCard(@PathVariable String cardId, @RequestParam String otpCode) {
+        CreditCardResponseDTO updated = creditCardService.unblockCard(cardId, otpCode);
         return ResponseEntity.ok(updated);
     }
 

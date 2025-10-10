@@ -8,6 +8,7 @@ import { AccountService } from '../../accounts/account.service'; // To get user'
 import { AccountResponse } from '../../../shared/models/account.model';
 import { AuthService } from '../../../core/services/auth.service';
 import { TransferRequest } from '../../../shared/models/transaction.model';
+import { OtpService, GenerateOtpRequest } from '../../otp/otp.service';
 
 
 @Component({
@@ -23,7 +24,8 @@ export class TransferComponent implements OnInit {
     fromAccountId: '', // This will store the accountId for dropdown selection
     fromAccountNumber: '', // This will be sent to backend
     toAccountNumber: '', // This will be sent to backend
-    amount: 0
+    amount: 0,
+    otpCode: '' // OTP entered by user
   };
   loadingAccounts: boolean = true;
   errorMessage: string | null = null;
@@ -32,7 +34,8 @@ export class TransferComponent implements OnInit {
   constructor(
     private transactionService: TransactionService,
     private accountService: AccountService,
-    private authService: AuthService
+    private authService: AuthService,
+    private otpService: OtpService
   ) { }
 
   ngOnInit(): void {
@@ -99,11 +102,16 @@ export class TransferComponent implements OnInit {
       this.errorMessage = 'Insufficient funds in the source account.';
       return;
     }
+    if (!this.transferForm.otpCode) {
+      this.errorMessage = 'Please enter the OTP sent to your email.';
+      return;
+    }
 
     const request: TransferRequest = {
       fromAccountNumber: this.transferForm.fromAccountNumber,
       toAccountNumber: this.transferForm.toAccountNumber,
-      amount: this.transferForm.amount
+      amount: this.transferForm.amount,
+      otpCode: this.transferForm.otpCode
     };
 
     this.transactionService.transferFunds(request).subscribe(
@@ -128,12 +136,37 @@ export class TransferComponent implements OnInit {
     );
   }
 
+  generateOtp(): void {
+    this.errorMessage = null;
+    const userId = this.authService.getIdentityClaims()?.sub;
+    if (!userId) {
+      this.errorMessage = 'User ID not found. Please log in again.';
+      return;
+    }
+    const req: GenerateOtpRequest = {
+      userId,
+      purpose: 'WITHDRAWAL',
+      channels: ['EMAIL'],
+      contextId: null
+    };
+    this.otpService.generate(req).subscribe({
+      next: () => {
+        this.successMessage = 'OTP has been sent to your registered email. Please enter it below.';
+      },
+      error: (err) => {
+        console.error('Failed to generate OTP', err);
+        this.errorMessage = err.error?.message || 'Failed to generate OTP. Please try again.';
+      }
+    });
+  }
+
   resetForm(): void {
     this.transferForm = {
       fromAccountId: this.accounts.length > 0 ? this.accounts[0].accountId : '',
       fromAccountNumber: this.accounts.length > 0 ? this.accounts[0].accountNumber : '',
       toAccountNumber: '',
-      amount: 0
+      amount: 0,
+      otpCode: ''
     };
   }
 }

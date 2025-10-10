@@ -21,6 +21,7 @@ create user TRANSACT_MS identified by transact123;
 create user NOTIFY_MS identified by notify123;
 create user LOAN_MS identified by loan123;
 create user CARD_MS identified by card123;
+CREATE USER OTP_MS IDENTIFIED BY otp123;
 
 prompt Unlocking accounts...
 alter user AUTH_MS account unlock;
@@ -29,6 +30,7 @@ alter user TRANSACT_MS account unlock;
 alter user NOTIFY_MS account unlock;
 alter user LOAN_MS account unlock;
 alter user CARD_MS account unlock;
+alter user OTP_MS account unlock;
 
 prompt Granting privileges (sufficient for Spring JPA/Hibernate in dev)...
 grant create session to AUTH_MS;
@@ -85,6 +87,15 @@ grant create trigger to CARD_MS;
 grant connect to CARD_MS;
 grant resource to CARD_MS;
 
+grant create session to OTP_MS;
+grant create table to OTP_MS;
+grant create sequence to OTP_MS;
+grant create view to OTP_MS;
+grant create procedure to OTP_MS;
+grant create trigger to OTP_MS;
+grant connect to OTP_MS;
+grant resource to OTP_MS;
+
 prompt Granting unlimited quota on USERS tablespace (adjust if you use a different default TS)...
 alter user AUTH_MS quota unlimited on USERS;
 alter user ACCOUNT_MS quota unlimited on USERS;
@@ -92,5 +103,6 @@ alter user TRANSACT_MS quota unlimited on USERS;
 alter user NOTIFY_MS quota unlimited on USERS;
 alter user LOAN_MS quota unlimited on USERS;
 alter user CARD_MS quota unlimited on USERS;
+alter user OTP_MS quota unlimited on USERS;
 
-prompt Done. Verify with: select username, account_status from dba_users where username in ('AUTH_MS','ACCOUNT_MS','TRANSACT_MS','NOTIFY_MS','LOAN_MS','CARD_MS');
+prompt Done. Verify with: select username, account_status from dba_users where username in ('AUTH_MS','ACCOUNT_MS','TRANSACT_MS','NOTIFY_MS','LOAN_MS','CARD_MS','OTP_MS');

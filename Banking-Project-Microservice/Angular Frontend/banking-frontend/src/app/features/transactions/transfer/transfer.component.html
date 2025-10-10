@@ -30,7 +30,17 @@
           step="0.01">
       </div>
 
-      <button type="submit" [disabled]="!formRef.valid" class="transfer-button">Transfer</button>
+      <div class="form-group">
+        <label for="otpCode">OTP:</label>
+        <div class="otp-row">
+          <input type="text" id="otpCode" name="otpCode" maxlength="6" placeholder="Enter 6-digit OTP" [(ngModel)]="transferForm.otpCode" required>
+          <button type="button" class="generate-otp-button" (click)="generateOtp()">
+            Generate OTP
+          </button>
+        </div>
+      </div>
+
+      <button type="submit" [disabled]="!formRef.valid || !transferForm.otpCode" class="transfer-button">Transfer</button>
     </form>
   </div>
 

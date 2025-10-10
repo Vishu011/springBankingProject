@@ -1,6 +1,6 @@
 package com.accountMicroservice.model;
 
 public enum AccountType {
-	SAVINGS,
-    CURRENT
+    SAVINGS,
+    SALARY_CORPORATE
 }

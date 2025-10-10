@@ -37,4 +37,5 @@ export interface CardRequest {
     issueDate: string; // Send as 'YYYY-MM-DD' string
     expiryDate: string; // Send as 'YYYY-MM-DD' string
     transactionLimit: number;
+    otpCode: string; // 6-digit OTP entered by user
 }

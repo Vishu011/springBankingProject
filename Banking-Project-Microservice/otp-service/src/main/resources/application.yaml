@@ -1,0 +1,115 @@
+spring:
+  application:
+    name: otp-service
+
+  datasource:
+    url: jdbc:oracle:thin:@//localhost:1521/ORCL
+    username: OTP_MS
+    password: otp123
+    driver-class-name: oracle.jdbc.OracleDriver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.OracleDialect
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: http://localhost:8080/realms/bank-realm/protocol/openid-connect/certs
+
+server:
+  port: 8006
+
+logging:
+  level:
+    org:
+      springframework:
+        web: DEBUG
+        security: DEBUG
+      hibernate: ERROR
+      io.github.resilience4j: DEBUG
+  pattern:
+    level: "%5p [${spring.application.name:},%X{traceId:-},%X{spanId:-}]"
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://localhost:8761/eureka/
+    register-with-eureka: true
+    fetch-registry: true
+  instance:
+    preferIpAddress: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, prometheus
+  tracing:
+    sampling:
+      probability: 1.0
+
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        slidingWindowType: COUNT_BASED
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 5s
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        recordExceptions:
+          - org.springframework.web.client.HttpClientErrorException
+          - java.io.IOException
+          - java.util.concurrent.TimeoutException
+    instances:
+      notificationService:
+        baseConfig: default
+  retry:
+    configs:
+      default:
+        maxAttempts: 3
+        waitDuration: 1s
+        retryExceptions:
+          - org.springframework.web.client.HttpClientErrorException
+          - java.io.IOException
+          - java.util.concurrent.TimeoutException
+    instances:
+      notificationService:
+        baseConfig: default
+  timelimiter:
+    configs:
+      default:
+        timeoutDuration: 3s
+    instances:
+      notificationService:
+        baseConfig: default
+
+otp:
+  code-length: 6
+  ttl-seconds:
+    default: 300       # 5 minutes
+    login: 300
+    withdrawal: 120
+    loan-submission: 180
+    card-operation: 180
+    account-operation: 180
+    contact-verification: 300
+  max-attempts: 5
+  rate-limit:
+    window-seconds: 60
+    max-requests-per-window: 1
+
+keycloak:
+  service-client:
+    url: http://localhost:8080
+    realm: bank-realm
+    client-id: notification-service-client
+    client-secret: UQCtpCaZ02y9DQK8sMUcm03G9A6p88vD

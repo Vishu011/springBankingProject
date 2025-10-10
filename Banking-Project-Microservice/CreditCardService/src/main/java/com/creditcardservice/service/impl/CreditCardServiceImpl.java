@@ -16,6 +16,8 @@ import com.creditcardservice.dto.CreditCardRequestDTO;
 import com.creditcardservice.dto.CreditCardResponseDTO;
 import com.creditcardservice.dto.TransactionDTO;
 import com.creditcardservice.dto.UserDto;
+import com.creditcardservice.dto.OtpVerifyRequest;
+import com.creditcardservice.dto.OtpVerifyResponse;
 import com.creditcardservice.exceptions.CardServiceException; // NEW: Custom exception for Card Service
 import com.creditcardservice.exceptions.ResourceNotFoundException; // Assuming this is your base exception
 import com.creditcardservice.model.AccountStatus;
@@ -24,6 +26,7 @@ import com.creditcardservice.model.CreditCard;
 import com.creditcardservice.model.KycStatus;
 import com.creditcardservice.proxyservice.AccountServiceClient; // NEW: Import AccountServiceClient
 import com.creditcardservice.proxyservice.TransactionServiceProxy;
+import com.creditcardservice.proxyservice.OtpServiceClient;
 import com.creditcardservice.proxyservice.UserServiceClient; // NEW: Import UserServiceClient
 import com.creditcardservice.service.CreditCardService;
 
@@ -43,6 +46,9 @@ public class CreditCardServiceImpl implements CreditCardService {
 
     @Autowired // NEW: Inject UserServiceClient
     private UserServiceClient userServiceClient;
+
+    @Autowired
+    private OtpServiceClient otpServiceClient;
 
     @Override
     @Transactional // Ensure atomicity for card issuance
@@ -68,7 +74,19 @@ public class CreditCardServiceImpl implements CreditCardService {
             throw new CardServiceException("Card issuance denied: Account ID " + requestDTO.getAccountId() + " is " + account.getStatus() + ". Must be ACTIVE.");
         }
 
-        // 3. Proceed with card creation
+        // 3. Verify OTP for card operation
+        OtpVerifyRequest otpReq = new OtpVerifyRequest(
+            requestDTO.getUserId(),
+            "CARD_OPERATION",
+            null,
+            requestDTO.getOtpCode()
+        );
+        OtpVerifyResponse otpRes = otpServiceClient.verify(otpReq);
+        if (otpRes == null || !otpRes.isVerified()) {
+            throw new CardServiceException("Card issuance denied: OTP verification failed" + (otpRes != null && otpRes.getMessage() != null ? " - " + otpRes.getMessage() : ""));
+        }
+
+        // 4. Proceed with card creation
         CreditCard card = new CreditCard();
         card.setUserId(requestDTO.getUserId());
         card.setAccountId(requestDTO.getAccountId());
@@ -148,17 +166,43 @@ public class CreditCardServiceImpl implements CreditCardService {
     }
 
     @Override
-    public CreditCardResponseDTO blockCard(String cardId) {
+    public CreditCardResponseDTO blockCard(String cardId, String otpCode) {
         CreditCard card = creditCardRepository.findById(cardId)
                 .orElseThrow(() -> new ResourceNotFoundException("Card not found with ID: " + cardId));
+
+        // Verify OTP for card operation
+        OtpVerifyRequest otpReq = new OtpVerifyRequest(
+            card.getUserId(),
+            "CARD_OPERATION",
+            null,
+            otpCode
+        );
+        OtpVerifyResponse otpRes = otpServiceClient.verify(otpReq);
+        if (otpRes == null || !otpRes.isVerified()) {
+            throw new CardServiceException("Card block denied: OTP verification failed" + (otpRes != null && otpRes.getMessage() != null ? " - " + otpRes.getMessage() : ""));
+        }
+
         card.setStatus(CardStatus.BLOCKED);
         return mapToResponseDTO(creditCardRepository.save(card));
     }
 
     @Override
-    public CreditCardResponseDTO unblockCard(String cardId) {
+    public CreditCardResponseDTO unblockCard(String cardId, String otpCode) {
         CreditCard card = creditCardRepository.findById(cardId)
                 .orElseThrow(() -> new ResourceNotFoundException("Card not found with ID: " + cardId));
+
+        // Verify OTP for card operation
+        OtpVerifyRequest otpReq = new OtpVerifyRequest(
+            card.getUserId(),
+            "CARD_OPERATION",
+            null,
+            otpCode
+        );
+        OtpVerifyResponse otpRes = otpServiceClient.verify(otpReq);
+        if (otpRes == null || !otpRes.isVerified()) {
+            throw new CardServiceException("Card unblock denied: OTP verification failed" + (otpRes != null && otpRes.getMessage() != null ? " - " + otpRes.getMessage() : ""));
+        }
+
         card.setStatus(CardStatus.ACTIVE);
         return mapToResponseDTO(creditCardRepository.save(card));
     }

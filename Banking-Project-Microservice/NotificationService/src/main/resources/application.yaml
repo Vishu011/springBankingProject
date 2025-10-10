@@ -3,7 +3,7 @@ spring:
     name: notification-service
 
   datasource:
-    url: jdbc:oracle:thin:@localhost:1521/NOTIFY_PDB
+    url: jdbc:oracle:thin:@//localhost:1521/ORCL
     username: NOTIFY_MS
     password: notify123
     driver-class-name: oracle.jdbc.OracleDriver
@@ -20,12 +20,13 @@ spring:
   mail: # <--- ADD THIS SECTION FOR GMAIL SMTP
     host: smtp.gmail.com
     port: 587 # Standard TLS port
-    username: # <--- Replace with your Gmail address
-    password:  # <--- IMPORTANT: Use a Gmail App Password, NOT your regular password
+    username: faizaltest204@gmail.com
+    password: xytyyekfjvqtrmna
     properties:
       mail.smtp.auth: true
       mail.smtp.starttls.enable: true # Enable STARTTLS for secure connection
       mail.smtp.ssl.trust: smtp.gmail.com # Trust Gmail's SSL certificate (sometimes needed)
+      mail.debug: true # Enable SMTP session debug logging
 
   security: # <--- ADD THIS SECTION FOR SECURITY CONFIGURATION
     oauth2:
@@ -132,4 +133,4 @@ keycloak:
     url: http://localhost:8080 # Keycloak server URL
     realm: bank-realm
     client-id: notification-service-client # Client ID created above
-    client-secret: 9zAkbu3DiXjsNfmSKpjMID47bPof0d4F # Secret from Keycloak
+    client-secret: UQCtpCaZ02y9DQK8sMUcm03G9A6p88vD # Secret from Keycloak

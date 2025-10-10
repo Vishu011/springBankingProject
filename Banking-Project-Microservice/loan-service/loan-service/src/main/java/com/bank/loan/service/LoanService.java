@@ -15,7 +15,7 @@ public interface LoanService {
 
 	LoanResponseDto approveLoan(String loanId);
 
-	LoanResponseDto rejectLoan(String loanId);
+	LoanResponseDto rejectLoan(String loanId, String reason);
 
 	Double calculateEmi(String loanId);
 

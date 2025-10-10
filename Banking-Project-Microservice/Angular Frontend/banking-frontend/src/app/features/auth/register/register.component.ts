@@ -6,6 +6,7 @@ import { Router } from '@angular/router';
 
 import { environment } from '../../../../environments/environment';
 import { KycStatus, UserRole } from '../../../shared/models/user.model';
+import { OtpService, GenerateOtpRequest, VerifyOtpRequest } from '../../otp/otp.service';
 
 @Component({
   selector: 'app-register',
@@ -35,7 +36,94 @@ export class RegisterComponent {
   agreeToTerms: boolean = false;
   isSubmitting: boolean = false;
 
-  constructor(private http: HttpClient, private router: Router) { }
+  // OTP state
+  otpCode: string = '';
+  otpVerified: boolean = false;
+  otpStatus: 'idle' | 'sent' | 'verifying' | 'verified' | 'failed' = 'idle';
+  otpRequestId?: string;
+  otpError?: string;
+  isGeneratingOtp: boolean = false;
+  isVerifyingOtp: boolean = false;
+
+  constructor(private http: HttpClient, private router: Router, private otpService: OtpService) { }
+
+  /**
+   * Generate CONTACT_VERIFICATION OTP to the user's email.
+   */
+  generateContactOtp(): void {
+    if (!this.registrationForm.email || !this.registrationForm.phoneNumber) {
+      this.errorMessage = 'Enter email and phone number before generating OTP.';
+      return;
+    }
+    this.errorMessage = null;
+    this.otpError = undefined;
+    this.isGeneratingOtp = true;
+
+    const userId = this.registrationForm.email.trim();
+    const req: GenerateOtpRequest = {
+      userId,
+      purpose: 'CONTACT_VERIFICATION',
+      channels: ['EMAIL']
+    };
+
+    this.otpService.generatePublic(req).subscribe({
+      next: (res) => {
+        this.isGeneratingOtp = false;
+        this.otpStatus = 'sent';
+        this.otpRequestId = res.requestId;
+        this.successMessage = 'OTP sent to your email address.';
+      },
+      error: (err) => {
+        this.isGeneratingOtp = false;
+        this.otpStatus = 'failed';
+        this.otpError = err?.error?.message || 'Failed to send OTP.';
+      }
+    });
+  }
+
+  /**
+   * Verify CONTACT_VERIFICATION OTP entered by the user.
+   */
+  verifyContactOtp(): void {
+    if (!this.registrationForm.email) {
+      this.otpError = 'Email is required to verify OTP.';
+      return;
+    }
+    if (!this.otpCode || this.otpCode.trim().length === 0) {
+      this.otpError = 'Enter the OTP code.';
+      return;
+    }
+    this.otpError = undefined;
+    this.isVerifyingOtp = true;
+
+    const userId = this.registrationForm.email.trim();
+    const req: VerifyOtpRequest = {
+      userId,
+      purpose: 'CONTACT_VERIFICATION',
+      code: this.otpCode.trim()
+    };
+
+    this.otpService.verifyPublic(req).subscribe({
+      next: (res) => {
+        this.isVerifyingOtp = false;
+        if (res.verified) {
+          this.otpVerified = true;
+          this.otpStatus = 'verified';
+          this.successMessage = 'Contact verification successful.';
+        } else {
+          this.otpVerified = false;
+          this.otpStatus = 'failed';
+          this.otpError = res.message || 'Invalid or expired OTP.';
+        }
+      },
+      error: (err) => {
+        this.isVerifyingOtp = false;
+        this.otpVerified = false;
+        this.otpStatus = 'failed';
+        this.otpError = err?.error?.message || 'Failed to verify OTP.';
+      }
+    });
+  }
 
   /**
    * Handles the registration form submission.
@@ -44,6 +132,10 @@ export class RegisterComponent {
   onSubmit(): void {
     if (!this.agreeToTerms) {
       this.errorMessage = 'Please agree to the terms and conditions';
+      return;
+    }
+    if (!this.otpVerified) {
+      this.errorMessage = 'Please verify the OTP sent to your email before creating the account.';
       return;
     }
 

@@ -36,25 +36,20 @@ export class DashboardComponent implements OnInit {
   loadUserProfile(): void {
     this.loadingProfile = true;
     this.profileError = null;
-    const userId = this.authService.getIdentityClaims()?.sub;
 
-    if (userId) {
-      this.userProfileService.getUserProfile(userId).subscribe({
-        next: (data) => {
-          this.userProfile = data;
-          this.loadingProfile = false;
-          console.log('User Profile from Backend:', this.userProfile);
-        },
-        error: (error) => {
-          console.error('Error fetching user profile:', error);
-          this.profileError = error.error?.message || 'Failed to load user profile.';
-          this.loadingProfile = false;
-        }
-      });
-    } else {
-      this.profileError = 'User ID not found in token.';
-      this.loadingProfile = false;
-    }
+    // Prefer backend-derived profile using JWT (avoids mismatches and 500s if userId path is wrong)
+    this.userProfileService.getMyProfile().subscribe({
+      next: (data) => {
+        this.userProfile = data;
+        this.loadingProfile = false;
+        console.log('User Profile from Backend (/auth/profile):', this.userProfile);
+      },
+      error: (error) => {
+        console.error('Error fetching user profile (/auth/profile):', error);
+        this.profileError = error.error?.message || 'Failed to load user profile.';
+        this.loadingProfile = false;
+      }
+    });
   }
 
   getKycStatusClass(status: KycStatus): string {

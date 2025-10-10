@@ -185,7 +185,70 @@
 
       
 
-      <!-- Terms and Conditions -->
+<!-- Contact Verification (OTP) Section -->
+<div class="form-section">
+  <div class="section-header">
+    <i class="fas fa-key"></i>
+    <h4>Contact Verification (OTP)</h4>
+  </div>
+
+  <div class="form-group full-width">
+    <label for="otpCode">
+      <i class="fas fa-envelope"></i>
+      Verify your email with OTP
+    </label>
+
+    <!-- Generate OTP -->
+    <div class="form-row" style="gap: 12px; align-items: center;">
+      <button
+        type="button"
+        (click)="generateContactOtp()"
+        [disabled]="isGeneratingOtp || !registrationForm.email || !registrationForm.phoneNumber"
+        class="otp-generate-button">
+        <i class="fas" [class.fa-paper-plane]="!isGeneratingOtp" [class.fa-spinner]="isGeneratingOtp" [class.fa-spin]="isGeneratingOtp"></i>
+        <span>{{ isGeneratingOtp ? 'Sending OTP...' : 'Send OTP to Email' }}</span>
+      </button>
+
+      <span *ngIf="otpStatus === 'sent' && !otpVerified" class="info-text">
+        OTP sent to {{ registrationForm.email }}. Please check your inbox.
+      </span>
+      <span *ngIf="otpVerified" class="otp-badge success">
+        <i class="fas fa-check-circle"></i> Verified
+      </span>
+    </div>
+
+    <!-- OTP input + Verify -->
+    <div class="input-container" *ngIf="otpStatus === 'sent' || otpStatus === 'failed' || otpVerified" style="margin-top: 10px;">
+      <input type="text" id="otpCode" name="otpCode" [(ngModel)]="otpCode" maxlength="6" placeholder="Enter the 6-digit OTP">
+      <div class="input-border"></div>
+    </div>
+
+    <div class="form-row" *ngIf="otpStatus === 'sent' || otpVerified" style="margin-top: 10px; gap: 12px; align-items: center;">
+      <button
+        type="button"
+        (click)="verifyContactOtp()"
+        [disabled]="isVerifyingOtp || !otpCode"
+        class="otp-verify-button">
+        <i class="fas" [class.fa-check]="!isVerifyingOtp" [class.fa-spinner]="isVerifyingOtp" [class.fa-spin]="isVerifyingOtp"></i>
+        <span>{{ isVerifyingOtp ? 'Verifying...' : 'Verify OTP' }}</span>
+      </button>
+      <button
+        type="button"
+        (click)="generateContactOtp()"
+        [disabled]="isGeneratingOtp"
+        class="otp-generate-button secondary">
+        Resend OTP
+      </button>
+    </div>
+
+    <div class="error-text" *ngIf="otpError" style="margin-top: 6px;">
+      <i class="fas fa-exclamation-circle"></i>
+      {{ otpError }}
+    </div>
+  </div>
+</div>
+
+<!-- Terms and Conditions -->
       <div class="terms-section">
         <label class="checkbox-container">
           <input type="checkbox" [(ngModel)]="agreeToTerms" name="agreeToTerms" required>
@@ -200,7 +263,7 @@
       </div>
 
       <!-- Submit Button -->
-      <button type="submit" [disabled]="!formRef.valid || !agreeToTerms || isSubmitting" class="register-button"
+<button type="submit" [disabled]="!formRef.valid || !agreeToTerms || isSubmitting || !otpVerified" class="register-button"
         [class.loading]="isSubmitting">
         <div class="button-content">
           <div *ngIf="!isSubmitting" class="button-normal">

@@ -92,8 +92,8 @@ public class AccountController {
      * Handles DELETE /accounts/{accountId} requests.
      */
     @DeleteMapping("/{accountId}")
-    public ResponseEntity<Void> deleteAccount(@PathVariable String accountId) {
-        accountService.deleteAccount(accountId);
+    public ResponseEntity<Void> deleteAccount(@PathVariable String accountId, @org.springframework.web.bind.annotation.RequestParam String otpCode) {
+        accountService.deleteAccount(accountId, otpCode);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 

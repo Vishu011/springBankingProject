@@ -26,7 +26,7 @@ export interface KycApplication {
   providedIn: 'root'
 })
 export class AdminKycService {
-  private baseUrl = `${environment.apiUrl}/auth/kyc`;
+  private baseUrl = `${environment.apiUrl}/user-service/auth/kyc`;
 
   constructor(private http: HttpClient) {}
 

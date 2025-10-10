@@ -242,7 +242,7 @@
                     <td>{{ loan.userId | slice:0:8 }}...</td>
                     <td>{{ loan.loanType }}</td>
                     <td>{{ loan.amount | currency:'INR':'symbol':'1.2-2' }}</td>
-                    <td>{{ loan.tenureMonths }}</td>
+                    <td>{{ loan.tenureInMonths }}</td>
                     <td>{{ loan.interestRate | number:'1.2-2' }}%</td>
                     <td>{{ loan.applicationDate | date:'short' }}</td>
                     <td><span [ngClass]="getLoanStatusClass(loan.status)">{{ loan.status }}</span></td>

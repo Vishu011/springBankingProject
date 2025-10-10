@@ -113,8 +113,8 @@ public class LoanController {
 	 */
 	@PutMapping("/{loanId}/reject")
 //	@PreAuthorize("hasRole('ADMIN')") // Only ADMINs can reject loans
-	public ResponseEntity<LoanResponseDto> rejectLoan(@PathVariable String loanId) {
-		return ResponseEntity.ok(loanService.rejectLoan(loanId));
+	public ResponseEntity<LoanResponseDto> rejectLoan(@PathVariable String loanId, @RequestBody com.bank.loan.dto.LoanRejectionRequest request) {
+		return ResponseEntity.ok(loanService.rejectLoan(loanId, request != null ? request.getReason() : null));
 	}
 
 	/**
@@ -130,4 +130,3 @@ public class LoanController {
 		return ResponseEntity.ok(loanService.calculateEmi(loanId));
 	}
 }
-

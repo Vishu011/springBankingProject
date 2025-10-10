@@ -9,6 +9,11 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
+import java.util.Collection;
+import java.util.ArrayList;
+import java.util.Map;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 @Configuration
 @EnableWebSecurity // Enables Spring Security's web security support
@@ -35,6 +40,11 @@ public class SecurityConfig {
                     .jwtAuthenticationConverter(jwtAuthenticationConverter())
                 )
             )
+            // Ensure proper 401/403 responses instead of generic 500
+            .exceptionHandling(ex -> ex
+                .authenticationEntryPoint(new org.springframework.security.web.authentication.HttpStatusEntryPoint(org.springframework.http.HttpStatus.UNAUTHORIZED))
+                .accessDeniedHandler(new org.springframework.security.web.access.AccessDeniedHandlerImpl())
+            )
             // Configure session management to be stateless, as JWTs handle authentication per request
             .sessionManagement(session -> session
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
@@ -49,16 +59,51 @@ public class SecurityConfig {
      */
     @Bean
     public JwtAuthenticationConverter jwtAuthenticationConverter() {
-        JwtGrantedAuthoritiesConverter grantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
-        // Set the claim name where Keycloak stores the roles.
-        // For realm roles, it's commonly "realm_access.roles".
-        // For client roles, it might be "resource_access.<client-id>.roles".
-        grantedAuthoritiesConverter.setAuthoritiesClaimName("realm_access.roles"); // Or "resource_access.<client-id>.roles"
-        // Add a prefix to the extracted roles (e.g., "ADMIN" becomes "ROLE_ADMIN")
-        grantedAuthoritiesConverter.setAuthorityPrefix("ROLE_");
-
         JwtAuthenticationConverter jwtAuthenticationConverter = new JwtAuthenticationConverter();
-        jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(grantedAuthoritiesConverter);
+
+        // Custom converter that extracts roles from:
+        //  - realm_access.roles           (Keycloak realm roles)
+        //  - resource_access.*.roles      (Keycloak client roles for any client)
+        //  - scope/scope-like claims      (as SCOPE_* authorities)
+        jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(jwt -> {
+            Collection<GrantedAuthority> authorities = new ArrayList<>();
+
+            // Realm roles
+            Map<String, Object> realmAccess = jwt.getClaim("realm_access");
+            if (realmAccess != null) {
+                Object rolesObj = realmAccess.get("roles");
+                if (rolesObj instanceof Collection<?> roles) {
+                    for (Object roleObj : roles) {
+                        String role = roleObj.toString();
+                        authorities.add(new SimpleGrantedAuthority("ROLE_" + role.toUpperCase()));
+                    }
+                }
+            }
+
+            // Client roles (iterate all clients present in resource_access)
+            Map<String, Object> resourceAccess = jwt.getClaim("resource_access");
+            if (resourceAccess != null) {
+                for (Object clientObj : resourceAccess.values()) {
+                    if (clientObj instanceof Map<?, ?> client) {
+                        Object rolesObj = client.get("roles");
+                        if (rolesObj instanceof Collection<?> roles) {
+                            for (Object roleObj : roles) {
+                                String role = roleObj.toString();
+                                authorities.add(new SimpleGrantedAuthority("ROLE_" + role.toUpperCase()));
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Include scope authorities as SCOPE_*
+            JwtGrantedAuthoritiesConverter scopeConverter = new JwtGrantedAuthoritiesConverter();
+            scopeConverter.setAuthorityPrefix("SCOPE_");
+            authorities.addAll(scopeConverter.convert(jwt));
+
+            return authorities;
+        });
+
         return jwtAuthenticationConverter;
     }
 }

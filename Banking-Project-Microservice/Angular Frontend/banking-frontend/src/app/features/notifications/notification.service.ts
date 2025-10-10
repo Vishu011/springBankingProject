@@ -12,7 +12,7 @@ import { NotificationResponse } from '../../shared/models/notification.model';
 })
 export class NotificationService {
 
-  private notificationsApiUrl = `${environment.apiUrl}/notifications`; // Base URL for Notification Microservice
+  private notificationsApiUrl = `${environment.apiUrl}/notification-service/notifications`; // Route via Gateway discovery ID
 
   constructor(private http: HttpClient) { }
 

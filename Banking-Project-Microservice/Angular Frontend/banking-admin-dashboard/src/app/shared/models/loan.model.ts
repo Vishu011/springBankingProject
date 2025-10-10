@@ -18,7 +18,7 @@ export interface LoanResponse {
     userId: string;
     loanType: LoanType;
     amount: number;
-    tenureMonths: number; // Corrected to number
+    tenureInMonths: number; // Match backend DTO field name
     interestRate: number;
     status: LoanStatus;
     applicationDate: string; // Use string for LocalDateTime from Java

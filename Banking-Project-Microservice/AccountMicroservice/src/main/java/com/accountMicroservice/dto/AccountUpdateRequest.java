@@ -17,4 +17,7 @@ import lombok.NoArgsConstructor;
 public class AccountUpdateRequest {
     @NotNull(message = "Account status cannot be null")
     private AccountStatus status; // ACTIVE, CLOSED
+
+    @NotNull(message = "OTP code cannot be null")
+    private String otpCode;
 }

@@ -34,4 +34,5 @@ export interface LoanRequest {
     amount: number;
     tenureInMonths: number;
     interestRate: number;
+    otpCode: string; // OTP from user, required by backend
 }

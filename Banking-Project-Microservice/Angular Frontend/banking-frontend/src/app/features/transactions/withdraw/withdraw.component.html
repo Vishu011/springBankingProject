@@ -23,6 +23,23 @@
           step="0.01">
       </div>
 
+      <div class="form-group">
+        <label for="otpCode">Enter OTP:</label>
+        <div class="otp-row">
+          <input
+            type="text"
+            id="otpCode"
+            name="otpCode"
+            [(ngModel)]="withdrawForm.otpCode"
+            required
+            maxlength="6"
+            pattern="[0-9]{6}"
+            placeholder="6-digit code" />
+          <button type="button" (click)="generateOtp()" class="generate-otp-button">Generate OTP</button>
+        </div>
+        <small class="help-text">A 6-digit OTP will be sent to your registered email.</small>
+      </div>
+
       <button type="submit" [disabled]="!formRef.valid" class="withdraw-button">Withdraw</button>
     </form>
   </div>

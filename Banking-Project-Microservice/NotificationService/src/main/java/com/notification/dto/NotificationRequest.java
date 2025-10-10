@@ -20,6 +20,10 @@ public class NotificationRequest {
     @NotBlank(message = "User ID cannot be empty")
     private String userId;
 
+    // Optional: direct recipient email for public flows (e.g., registration OTP)
+    // If provided, NotificationService will use this email directly and skip user lookup.
+    private String toEmail;
+
     @NotNull(message = "Notification type cannot be null")
     private NotificationType type; // e.g., EMAIL, SMS, IN_APP, PUSH
 

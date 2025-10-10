@@ -83,12 +83,12 @@ spring:
         - id: loan_service
           uri: lb://loan-service
           predicates:
-            - Path=/loans/**
-          filters:
-            - name: RewritePath
+            - name: Path
               args:
-                regexp: '/loans(?<segment>/?.*)'
-                replacement: '/loans/${segment}' # Preserves /loans path for the loan-service
+                patterns:
+                  - /loans
+                  - /loans/**
+          # No rewrite filter needed; forward path as-is to preserve /loans prefix
 
         # Card Service Routes (Assuming card-service on port 8005, base path /cards)
         - id: credit-card-service
@@ -100,6 +100,17 @@ spring:
               args:
                 regexp: '/cards(?<segment>/?.*)'
                 replacement: '/cards/${segment}' # Preserves /cards path for the card-service
+
+        # OTP Service Routes
+        - id: otp_service
+          uri: lb://otp-service
+          predicates:
+            - name: Path
+              args:
+                patterns:
+                  - /otp
+                  - /otp/**
+          # Pass path as-is; controllers expected to be under /otp
 
   autoconfigure:
     exclude:

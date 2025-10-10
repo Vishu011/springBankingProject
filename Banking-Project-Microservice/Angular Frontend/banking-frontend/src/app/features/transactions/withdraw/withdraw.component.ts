@@ -8,6 +8,7 @@ import { AccountService } from '../../accounts/account.service';
 import { AccountResponse } from '../../../shared/models/account.model';
 import { AuthService } from '../../../core/services/auth.service';
 import { WithdrawRequest } from '../../../shared/models/transaction.model';
+import { OtpService, GenerateOtpRequest } from '../../otp/otp.service';
 
 
 @Component({
@@ -21,7 +22,8 @@ export class WithdrawComponent implements OnInit {
   accounts: AccountResponse[] = [];
   withdrawForm = {
     accountId: '',
-    amount: 0
+    amount: 0,
+    otpCode: ''
   };
 
   
@@ -32,7 +34,8 @@ export class WithdrawComponent implements OnInit {
   constructor(
     private transactionService: TransactionService,
     private accountService: AccountService,
-    private authService: AuthService
+    private authService: AuthService,
+    private otpService: OtpService
   ) { }
 
   ngOnInit(): void {
@@ -88,9 +91,15 @@ export class WithdrawComponent implements OnInit {
       return;
     }
 
+    if (!this.withdrawForm.otpCode) {
+      this.errorMessage = 'Please enter the OTP sent to your email.';
+      return;
+    }
+
     const request: WithdrawRequest = {
       accountId: this.withdrawForm.accountId,
-      amount: this.withdrawForm.amount
+      amount: this.withdrawForm.amount,
+      otpCode: this.withdrawForm.otpCode
     };
 
     this.transactionService.withdrawFunds(request).subscribe(
@@ -114,7 +123,32 @@ export class WithdrawComponent implements OnInit {
   resetForm(): void {
     this.withdrawForm = {
       accountId: this.accounts.length > 0 ? this.accounts[0].accountId : '',
-      amount: 0
+      amount: 0,
+      otpCode: ''
     };
+  }
+
+  generateOtp(): void {
+    this.errorMessage = null;
+    const userId = this.authService.getIdentityClaims()?.sub;
+    if (!userId) {
+      this.errorMessage = 'User ID not found. Please log in again.';
+      return;
+    }
+    const req: GenerateOtpRequest = {
+      userId,
+      purpose: 'WITHDRAWAL',
+      channels: ['EMAIL'],
+      contextId: null
+    };
+    this.otpService.generate(req).subscribe({
+      next: () => {
+        this.successMessage = 'OTP has been sent to your registered email. Please enter it below.';
+      },
+      error: (err) => {
+        console.error('Failed to generate OTP', err);
+        this.errorMessage = err.error?.message || 'Failed to generate OTP. Please try again.';
+      }
+    });
   }
 }

@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.transaction.dto.DepositRequest;
 import com.transaction.dto.TransferRequest;
 import com.transaction.dto.WithdrawRequest;
+import com.transaction.dto.FineRequest;
 import com.transaction.exceptions.AccountNotFoundException;
 import com.transaction.exceptions.InsufficientFundsException;
 import com.transaction.exceptions.InvalidTransactionException;
@@ -82,6 +83,18 @@ public class TransactionController {
     @PostMapping("/transfer")
     public ResponseEntity<Transaction> transfer(@Valid @RequestBody TransferRequest request) {
         Transaction transaction = transactionService.transfer(request);
+        return new ResponseEntity<>(transaction, HttpStatus.CREATED);
+    }
+
+    /**
+     * Handles POST /transactions/fine requests.
+     * Internal endpoint to record a fine transaction (no OTP/KYC).
+     * @param request The FineRequest containing account ID, amount, and optional message.
+     * @return ResponseEntity with the created Transaction and HTTP status 201 (Created).
+     */
+    @PostMapping("/fine")
+    public ResponseEntity<Transaction> recordFine(@Valid @RequestBody FineRequest request) {
+        Transaction transaction = transactionService.recordFine(request);
         return new ResponseEntity<>(transaction, HttpStatus.CREATED);
     }
 

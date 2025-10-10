@@ -3,7 +3,7 @@
 // Enums mirroring backend Account.java
 export enum AccountType {
   SAVINGS = 'SAVINGS',
-  CURRENT = 'CURRENT',
+  SALARY_CORPORATE = 'SALARY_CORPORATE',
 }
 
 export enum AccountStatus {

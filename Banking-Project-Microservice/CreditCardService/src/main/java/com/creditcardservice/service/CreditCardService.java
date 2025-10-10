@@ -11,9 +11,9 @@ public interface CreditCardService {
 
     CreditCardResponseDTO getCardById(String cardId);
 
-    CreditCardResponseDTO blockCard(String cardId);
+    CreditCardResponseDTO blockCard(String cardId, String otpCode);
 
-    CreditCardResponseDTO unblockCard(String cardId);
+    CreditCardResponseDTO unblockCard(String cardId, String otpCode);
 
     CreditCardResponseDTO updateTransactionLimit(String cardId, Double newLimit);
 

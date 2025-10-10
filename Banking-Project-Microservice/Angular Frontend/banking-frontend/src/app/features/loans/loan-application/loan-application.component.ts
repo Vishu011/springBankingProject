@@ -7,6 +7,7 @@ import { LoanService } from '../loan.service';
 import { Router } from '@angular/router';
 import { LoanRequest, LoanResponse, LoanType } from '../../../shared/models/loan.model';
 import { AuthService } from '../../../core/services/auth.service';
+import { OtpService, GenerateOtpRequest } from '../../otp/otp.service';
 
 @Component({
   selector: 'app-loan-application',
@@ -21,7 +22,8 @@ export class LoanApplicationComponent implements OnInit {
     loanType: LoanType.PERSONAL,
     amount: 0,
     tenureInMonths: 12,
-    interestRate: 12.0
+    interestRate: 12.0,
+    otpCode: ''
   };
 
   loanTypes = Object.values(LoanType);
@@ -44,7 +46,8 @@ export class LoanApplicationComponent implements OnInit {
   constructor(
     private loanService: LoanService,
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private otpService: OtpService
   ) { }
 
   ngOnInit(): void {
@@ -63,6 +66,10 @@ export class LoanApplicationComponent implements OnInit {
 
   onSubmit(): void {
     if (!this.validateForm()) {
+      return;
+    }
+    if (!this.loanForm.otpCode) {
+      this.showError('Please enter the OTP sent to your email before submitting.');
       return;
     }
 
@@ -158,6 +165,30 @@ export class LoanApplicationComponent implements OnInit {
     }
 
     return true;
+  }
+
+  generateOtp(): void {
+    this.clearMessages();
+    const userId = this.authService.getIdentityClaims()?.sub;
+    if (!userId) {
+      this.showError('User ID not found. Please log in again.');
+      return;
+    }
+    const req: GenerateOtpRequest = {
+      userId,
+      purpose: 'LOAN_SUBMISSION',
+      channels: ['EMAIL'],
+      contextId: null
+    };
+    this.otpService.generate(req).subscribe({
+      next: () => {
+        this.successMessage = 'OTP has been sent to your registered email. Please enter it below.';
+      },
+      error: (err) => {
+        console.error('Failed to generate OTP', err);
+        this.showError(err.error?.message || 'Failed to generate OTP. Please try again.');
+      }
+    });
   }
 
   calculateEmiPreview(): void {

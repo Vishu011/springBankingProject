@@ -85,5 +85,5 @@ public interface AccountService {
      * @throws AccountNotFoundException if the account is not found.
      * @throws AccountProcessingException if the deletion fails.
      */
-    void deleteAccount(String accountId);
+    void deleteAccount(String accountId, String otpCode);
 }

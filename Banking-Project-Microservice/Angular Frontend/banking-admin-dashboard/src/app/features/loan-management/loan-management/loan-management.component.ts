@@ -44,9 +44,10 @@ export class LoanManagementComponent implements OnInit {
 
     this.loanService.getAllLoans().subscribe(
       (loans) => {
-        this.allLoans = loans;
-        this.filteredLoans = [...loans]; // 👈 Initialize filtered loans
-        this.pendingLoans = loans.filter(loan => loan.status === LoanStatus.PENDING);
+        const data = Array.isArray(loans) ? loans : (loans ? [loans] : []);
+        this.allLoans = data;
+        this.filteredLoans = [...data]; // 👈 Initialize filtered loans
+        this.pendingLoans = data.filter(loan => loan.status === LoanStatus.PENDING);
         this.applyFilters(); // 👈 Apply initial filters
         this.loading = false;
         if (this.pendingLoans.length === 0) {
@@ -71,14 +72,14 @@ export class LoanManagementComponent implements OnInit {
       filtered = filtered.filter(loan =>
         loan.loanId.toLowerCase().includes(term) ||
         loan.userId.toLowerCase().includes(term) ||
-        loan.loanType.toLowerCase().includes(term) ||
+        String(loan.loanType).toLowerCase().includes(term) ||
         loan.amount.toString().includes(term)
       );
     }
 
     // Apply status filter
     if (this.selectedStatus !== 'ALL') {
-      filtered = filtered.filter(loan => loan.status === this.selectedStatus);
+      filtered = filtered.filter(loan => loan.status.toString() === this.selectedStatus);
     }
 
     // Apply loan type filter
@@ -161,7 +162,12 @@ export class LoanManagementComponent implements OnInit {
     if (action === 'approve') {
       actionObservable = this.loanService.approveLoan(loanId);
     } else {
-      actionObservable = this.loanService.rejectLoan(loanId);
+      const reason = prompt('Please provide a reason for rejection:');
+      if (!reason || !reason.trim()) {
+        this.errorMessage = 'Rejection reason is required.';
+        return;
+      }
+      actionObservable = this.loanService.rejectLoan(loanId, reason.trim());
     }
 
     actionObservable.subscribe(

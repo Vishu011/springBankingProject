@@ -55,8 +55,8 @@ export class CardService {
    * @param cardId The ID of the card to block.
    * @returns An Observable of the updated CardResponse.
    */
-  blockCard(cardId: string): Observable<CardResponse> {
-    return this.http.put<CardResponse>(`${this.cardsApiUrl}/${cardId}/block`, {}); // Empty body
+  blockCard(cardId: string, otpCode: string): Observable<CardResponse> {
+    return this.http.put<CardResponse>(`${this.cardsApiUrl}/${cardId}/block?otpCode=${encodeURIComponent(otpCode)}`, {});
   }
 
   /**
@@ -65,8 +65,8 @@ export class CardService {
    * @param cardId The ID of the card to unblock.
    * @returns An Observable of the updated CardResponse.
    */
-  unblockCard(cardId: string): Observable<CardResponse> {
-    return this.http.put<CardResponse>(`${this.cardsApiUrl}/${cardId}/unblock`, {}); // Empty body
+  unblockCard(cardId: string, otpCode: string): Observable<CardResponse> {
+    return this.http.put<CardResponse>(`${this.cardsApiUrl}/${cardId}/unblock?otpCode=${encodeURIComponent(otpCode)}`, {});
   }
 
   /**

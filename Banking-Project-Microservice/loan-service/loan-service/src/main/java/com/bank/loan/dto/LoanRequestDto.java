@@ -28,4 +28,6 @@ public class LoanRequestDto {
 	@NotNull(message = "Loan type is required")
 	private LoanType loanType;
 
+	@NotBlank(message = "OTP code is required")
+	private String otpCode;
 }

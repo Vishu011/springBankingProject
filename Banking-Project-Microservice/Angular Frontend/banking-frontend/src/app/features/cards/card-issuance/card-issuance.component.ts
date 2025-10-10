@@ -11,6 +11,7 @@ import { Router } from '@angular/router'; // Import Router for navigation
 import { AccountResponse } from '../../../shared/models/account.model';
 import { CardRequest, CardResponse, CardType } from '../../../shared/models/card.model';
 import { AuthService } from '../../../core/services/auth.service';
+import { OtpService, GenerateOtpRequest } from '../../otp/otp.service';
 
 @Component({
   selector: 'app-card-issuance',
@@ -27,7 +28,8 @@ export class CardIssuanceComponent implements OnInit {
     cardType: CardType.VISA, // Default card type (from your HTML)
     issueDate: '',
     expiryDate: '',
-    transactionLimit: 10000 // Default limit (from your HTML)
+    transactionLimit: 10000, // Default limit (from your HTML)
+    otpCode: ''
   };
   cardTypes = Object.values(CardType); // For dropdown/radio options
   CardType = CardType; // For template access
@@ -39,6 +41,7 @@ export class CardIssuanceComponent implements OnInit {
     private cardService: CardService,
     private accountService: AccountService,
     private authService: AuthService,
+    private otpService: OtpService,
     private router: Router
   ) { }
 
@@ -84,6 +87,30 @@ export class CardIssuanceComponent implements OnInit {
     this.cardForm.expiryDate = expiryDate;
   }
 
+  generateOtp(): void {
+    this.errorMessage = null;
+    const userId = this.authService.getIdentityClaims()?.sub;
+    if (!userId) {
+      this.errorMessage = 'User ID not found. Please log in again.';
+      return;
+    }
+    const req: GenerateOtpRequest = {
+      userId,
+      purpose: 'CARD_OPERATION',
+      channels: ['EMAIL'],
+      contextId: null
+    };
+    this.otpService.generate(req).subscribe({
+      next: () => {
+        this.successMessage = 'OTP has been sent to your registered email. Please enter it below.';
+      },
+      error: (err) => {
+        console.error('Failed to generate OTP', err);
+        this.errorMessage = err.error?.message || 'Failed to generate OTP. Please try again.';
+      }
+    });
+  }
+
   onSubmit(): void {
     this.loading = true;
     this.errorMessage = null;
@@ -96,6 +123,12 @@ export class CardIssuanceComponent implements OnInit {
     }
     if (this.cardForm.transactionLimit <= 0) {
       this.errorMessage = 'Transaction limit must be positive.';
+      this.loading = false;
+      return;
+    }
+
+    if (!this.cardForm.otpCode) {
+      this.errorMessage = 'Please enter the OTP sent to your email.';
       this.loading = false;
       return;
     }
@@ -122,7 +155,8 @@ export class CardIssuanceComponent implements OnInit {
       cardType: CardType.VISA, // Reset to default type
       issueDate: '',
       expiryDate: '',
-      transactionLimit: 10000
+      transactionLimit: 10000,
+      otpCode: ''
     };
     this.setInitialDates();
   }

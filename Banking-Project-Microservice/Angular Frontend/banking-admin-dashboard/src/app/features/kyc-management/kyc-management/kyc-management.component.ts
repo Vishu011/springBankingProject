@@ -99,6 +99,31 @@ export class KycManagementComponent implements OnInit {
     });
   }
 
+  view(app: KycApplication, relPath: string): void {
+    this.kycService.downloadDocument(app.applicationId, relPath).subscribe({
+      next: (blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const newWin = window.open(url, '_blank');
+        if (!newWin) {
+          const a = document.createElement('a');
+          const fileName = relPath.split('/').pop() || 'document';
+          a.href = url;
+          a.download = fileName;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+        }
+        setTimeout(() => {
+          window.URL.revokeObjectURL(url);
+        }, 60000);
+      },
+      error: (err) => {
+        console.error('Failed to view document', err);
+        this.errorMessage = 'Failed to open document.';
+      }
+    });
+  }
+
   maskAadhar(a: string): string {
     if (!a || a.length < 12) return a;
     return a.slice(0, 4) + ' **** ****';

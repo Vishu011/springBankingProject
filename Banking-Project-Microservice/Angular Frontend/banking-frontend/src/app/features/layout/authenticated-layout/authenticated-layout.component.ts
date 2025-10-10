@@ -75,6 +75,18 @@ export class AuthenticatedLayoutComponent {
             description: 'Manage your bank accounts and view account details'
         },
         {
+            title: 'Apply Salary Account',
+            icon: 'fas fa-briefcase',
+            route: '/accounts/salary/apply',
+            description: 'Apply for a corporate salary account'
+        },
+        {
+            title: 'My Salary Applications',
+            icon: 'fas fa-file-alt',
+            route: '/accounts/salary/applications',
+            description: 'View status of your salary account applications'
+        },
+        {
             title: 'Transaction History',
             icon: 'fas fa-history',
             route: '/transactions/history',

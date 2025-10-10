@@ -20,5 +20,7 @@ export const routes: Routes = [
     { path: 'account-management', component: AccountManagementComponent, canActivate: [authGuard] },
     { path: 'user-management', component: UserManagementComponent, canActivate: [authGuard] }, // New route for user management
     { path: 'kyc-management', component: KycManagementComponent, canActivate: [authGuard] },
+    { path: 'salary-applications', canActivate: [authGuard], loadComponent: () => import('./features/salary-applications/salary-applications-list/salary-applications-list.component').then(m => m.SalaryApplicationsListComponent) },
+    { path: 'salary-applications/:id', canActivate: [authGuard], loadComponent: () => import('./features/salary-applications/salary-application-detail/salary-application-detail.component').then(m => m.SalaryApplicationDetailComponent) },
     { path: '**', redirectTo: '/admin-dashboard' },
 ];

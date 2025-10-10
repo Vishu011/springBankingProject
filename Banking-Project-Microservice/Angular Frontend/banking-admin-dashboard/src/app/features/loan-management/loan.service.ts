@@ -11,7 +11,7 @@ import { LoanResponse, LoanRequest, LoanStatus } from '../../shared/models/loan.
 })
 export class LoanService {
 
-  private loansApiUrl = `${environment.apiUrl}/loans`; // Base URL for Loan Microservice
+  private loansApiUrl = `${environment.apiUrl}/loan-service/loans`; // Use discovery-locator path to ensure routing via API Gateway
 
   constructor(private http: HttpClient) { }
 
@@ -45,13 +45,14 @@ export class LoanService {
   }
 
   /**
-   * Rejects a loan application.
+   * Rejects a loan application with a reason.
    * PUT /loans/{loanId}/reject
    * @param loanId The ID of the loan to reject.
+   * @param reason The reason for rejection (required).
    * @returns An Observable of the updated LoanResponse.
    */
-  rejectLoan(loanId: string): Observable<LoanResponse> {
-    return this.http.put<LoanResponse>(`${this.loansApiUrl}/${loanId}/reject`, {}); // Empty body for PUT
+  rejectLoan(loanId: string, reason: string): Observable<LoanResponse> {
+    return this.http.put<LoanResponse>(`${this.loansApiUrl}/${loanId}/reject`, { reason });
   }
 
   // You can add other methods like getLoansByUser, calculateEmi if needed for admin view

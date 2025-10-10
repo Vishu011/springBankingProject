@@ -46,4 +46,9 @@ public class Account {
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt; // Timestamp when the account was created
 
+    // Accrued fine amount (in INR) pending due to minimum balance violation for SAVINGS accounts.
+    // This is automatically deducted from the next deposits until fully recovered.
+    @Column(name = "pending_fine_amount", nullable = false)
+    private Double pendingFineAmount = 0.0;
+
 }

@@ -190,6 +190,29 @@
                         </div>
                     </div>
 
+                    <!-- OTP Verification -->
+                    <div class="form-group mb-4">
+                        <label for="otpCode" class="form-label">
+                            <i class="fas fa-shield-alt me-2"></i>Enter OTP
+                        </label>
+                        <div class="input-group">
+                            <input
+                                type="text"
+                                id="otpCode"
+                                name="otpCode"
+                                class="form-control"
+                                [(ngModel)]="loanForm.otpCode"
+                                required
+                                maxlength="6"
+                                pattern="[0-9]{6}"
+                                placeholder="6-digit code" />
+                            <button type="button" (click)="generateOtp()" class="btn btn-outline-secondary">
+                                Generate OTP
+                            </button>
+                        </div>
+                        <div class="form-text">A 6-digit OTP will be sent to your registered email.</div>
+                    </div>
+
                     <!-- Terms and Conditions -->
                     <div class="terms-section">
                         <div class="form-check mb-3">
@@ -214,7 +237,7 @@
                     </div>
 
                     <button type="submit" class="btn btn-primary btn-lg w-100"
-                        [disabled]="!formRef.valid || !acceptTerms || loading">
+                        [disabled]="!formRef.valid || !acceptTerms || loading || !loanForm.otpCode">
                         <span *ngIf="loading" class="spinner-border spinner-border-sm me-2" role="status"></span>
                         <i *ngIf="!loading" class="fas fa-paper-plane me-2"></i>
                         {{ loading ? 'Processing Application...' : 'Apply for Loan' }}

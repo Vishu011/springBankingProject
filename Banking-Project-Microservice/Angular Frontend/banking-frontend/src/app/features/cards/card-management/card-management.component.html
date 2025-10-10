@@ -104,9 +104,15 @@
         </div>
 
         <div class="card-actions">
-          <button (click)="blockCard(card.cardId, card.cardNumber)" [disabled]="card.status === CardStatus.BLOCKED"
+          <div class="otp-inline">
+            <input type="text" maxlength="6" placeholder="OTP" [(ngModel)]="rowOtpCodes[card.cardId]" name="otp_{{card.cardId}}">
+            <button type="button" (click)="generateOtpForCardOperation(card.cardId)" [disabled]="generatingRowOtp[card.cardId]">
+              {{ generatingRowOtp[card.cardId] ? 'Sending...' : 'Generate OTP' }}
+            </button>
+          </div>
+          <button (click)="blockCard(card.cardId, card.cardNumber)" [disabled]="card.status === CardStatus.BLOCKED || !rowOtpCodes[card.cardId]"
             class="btn action-button block">Block Card</button>
-          <button (click)="unblockCard(card.cardId, card.cardNumber)" [disabled]="card.status === CardStatus.ACTIVE"
+          <button (click)="unblockCard(card.cardId, card.cardNumber)" [disabled]="card.status === CardStatus.ACTIVE || !rowOtpCodes[card.cardId]"
             class="btn action-button unblock">Unblock Card</button>
         </div>
       </div>

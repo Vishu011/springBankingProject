@@ -6,6 +6,7 @@ import java.util.Optional;
 import com.transaction.dto.DepositRequest;
 import com.transaction.dto.TransferRequest;
 import com.transaction.dto.WithdrawRequest;
+import com.transaction.dto.FineRequest;
 import com.transaction.exceptions.AccountNotFoundException;
 import com.transaction.exceptions.InsufficientFundsException;
 import com.transaction.exceptions.InvalidTransactionException;
@@ -43,6 +44,12 @@ public interface TransactionService {
      * @throws TransactionProcessingException if the transfer fails due to other reasons.
      */
     Transaction transfer(TransferRequest request);
+
+    /**
+     * Records a fine transaction for an account (no OTP/KYC).
+     * Used by Account Service to persist fines applied or recovered.
+     */
+    Transaction recordFine(FineRequest request);
 
     /**
      * Retrieves a transaction by its ID.

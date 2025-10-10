@@ -3,7 +3,7 @@
 // Enums mirroring backend Account.java
 export enum AccountType {
     SAVINGS = 'SAVINGS',
-    CURRENT = 'CURRENT',
+    SALARY_CORPORATE = 'SALARY_CORPORATE',
 }
 
 export enum AccountStatus {
@@ -23,16 +23,18 @@ export interface AccountResponse {
     createdAt: string; // Use string for LocalDateTime from Java
 }
 
-// Interface mirroring backend AccountCreationRequest DTO
+ // Interface mirroring backend AccountCreationRequest DTO
 export interface AccountCreationRequest {
     userId: string;
     accountType: AccountType;
     initialBalance: number;
+    otpCode: string; // 6-digit OTP entered by user (ACCOUNT_OPERATION)
 }
 
-// Interface mirroring backend AccountUpdateRequest DTO
+ // Interface mirroring backend AccountUpdateRequest DTO
 export interface AccountUpdateRequest {
     status: AccountStatus;
+    otpCode: string; // OTP for status changes (ACCOUNT_OPERATION)
 }
 
 // Interface mirroring backend DepositRequest DTO (for internal calls from Transaction Service)

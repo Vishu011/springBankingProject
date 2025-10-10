@@ -6,6 +6,7 @@ import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication
 //@EnableFeignClients(basePackages = "com.transaction.proxyService") // IMPORTANT: Specifies the package where your Feign client interfaces are
@@ -13,6 +14,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 @EnableJpaRepositories("com.notification.dao") // IMPORTANT: Scans for your NotificationRepository
 @EnableDiscoveryClient // Enables service registration and discovery with Eureka
 @EnableFeignClients(basePackages = "com.notification.proxyService")
+@EnableScheduling
 public class NotificationServiceApplication {
 
 	public static void main(String[] args) {

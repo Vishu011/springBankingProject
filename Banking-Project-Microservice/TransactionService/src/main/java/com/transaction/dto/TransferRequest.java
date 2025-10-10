@@ -24,4 +24,7 @@ public class TransferRequest {
     @NotNull(message = "Amount cannot be null")
     @Positive(message = "Amount must be positive")
     private Double amount;
+
+    @NotBlank(message = "OTP code cannot be empty")
+    private String otpCode;
 }

@@ -36,4 +36,7 @@ public class CreditCardRequestDTO {
 
     @NotNull(message = "Expiry date is required")
     private LocalDate expiryDate;
+
+    @NotBlank(message = "OTP code is required")
+    private String otpCode;
 }
