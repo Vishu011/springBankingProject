@@ -22,6 +22,7 @@ export interface TransactionResponse {
     type: TransactionType;
     status: TransactionStatus;
     transactionDate: string; // Use string for LocalDateTime from Java
+    metadataJson?: string; // Optional JSON string with extra info (e.g., { method, brand, panMasked })
 }
 
 // Interface mirroring backend DepositRequest DTO
@@ -43,4 +44,12 @@ export interface TransferRequest {
     toAccountNumber: string;   // Changed from toAccountId
     amount: number;
     otpCode: string; // OTP from user, required by backend for transfer
+}
+
+// Request to perform withdrawal using a debit card
+export interface DebitCardWithdrawRequest {
+    cardNumber: string;
+    cvv: string;
+    amount: number;
+    otpCode: string;
 }

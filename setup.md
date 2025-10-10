@@ -388,6 +388,95 @@ Create a real admin user for the Admin UI (via UI):
 - Roles → Assign role: ADMIN
 
 
+## New Endpoints and Frontend Flows (Debit Card Withdraw + PAN Reveal)
+
+API Gateway
+- Proxies already exist:
+  - /transactions/** -> TRANSACTION-SERVICE
+  - /cards/** -> CREDIT-CARD-SERVICE
+- CORS: http://localhost:4200 and http://localhost:4300 allowed.
+- Security: Gateway is open (permitAll); microservices enforce JWT.
+
+CreditCardService (JWT required)
+- POST /cards/{id}/reveal-pan
+  - Purpose: Reveal full PAN for user’s own DEBIT or CREDIT card, OTP-gated.
+  - Request body:
+    {
+      "userId": "<keycloak-sub>",
+      "otpCode": "<otp-6-digit>"
+    }
+  - OTP purpose: CARD_OPERATION
+  - OTP contextId: accountId linked to the card (handled server-side)
+  - Validation: ownership, ACTIVE, not expired, OTP verify
+  - Audit: logs attempts; basic rate limit (5 per 10 minutes per userId+cardId)
+  - Response: { cardId, fullPan, message }
+  - Error contract: domain/business errors (e.g., card expired, wrong user) return 400 with { "message": "..." }; generic 500s return { "message": "Internal error" }.
+
+- POST /cards/{id}/regenerate-cvv
+  - Purpose: Securely regenerate CVV for user’s own DEBIT card. Original CVV cannot be revealed; new CVV is generated and returned once.
+  - Request body:
+    {
+      "userId": "<keycloak-sub>",
+      "otpCode": "<otp-6-digit>"
+    }
+  - OTP purpose: CARD_OPERATION
+  - OTP contextId: accountId linked to the card (handled server-side)
+  - Validation: ownership, DEBIT-only, ACTIVE, not expired, OTP verify
+  - Rate limit: max 3 attempts per 30 minutes per userId+cardId
+  - Persistence: only SHA-256 hash of the new CVV is stored (no plaintext)
+  - Notification: email sent to user (no plaintext CVV in email)
+  - Response: { cardId, cvv, message } — cvv is shown once in the API response; UI must not persist it beyond the one-time display.
+  - Error contract: business errors -> 400 { "message": "..." }; generic -> 500 { "message": "Internal error" }.
+
+TransactionService (JWT required)
+- POST /transactions/debit-card/withdraw
+  - Purpose: Withdraw using a DEBIT card (not credit). Validates CVV length by brand/account type, card status/expiry, ownership, and OTP.
+  - Request body:
+    {
+      "cardNumber": "string",
+      "cvv": "string",
+      "amount": number,
+      "otpCode": "string"
+    }
+  - OTP purpose: WITHDRAWAL
+  - Response metadata: metadataJson contains method, brand, panMasked for UI/notifications
+
+Angular Customer App (banking-frontend)
+- Withdraw page:
+  - Mode selector: Account or Debit Card
+  - Debit Card requires cardNumber, CVV, OTP; calls POST /transactions/debit-card/withdraw
+  - UX polish added:
+    - Button loaders (Processing...), disable during submit
+    - OTP Generate button with cooldown (Resend in Ns)
+    - Success message shows transaction id and masked card (when provided)
+- Card Management:
+  - Reveal PAN flow (DEBIT and CREDIT):
+    - “Get OTP” (purpose CARD_OPERATION) + input + Reveal
+    - Per-card loading and cooldown for OTP requests
+    - Shows full PAN for session on success
+  - CVV is never revealed; masked length reflects brand/account type.
+
+Notes
+- Database migrations unified (Oracle):
+  - Run db/migrations/20251011_unified_app_schema_fixes.sql (as SYS or per-schema by removing ALTER SESSION lines). It applies:
+    - ACCOUNT_MS: standardized CHECKs (account_type whitelist, balance rule for SAVINGS only), STATUS allowed values (ACTIVE, BLOCKED, CLOSED), and adds PENDING_FINE_AMOUNT if missing
+    - TRANSACT_MS: TRANSACTION_TYPE CHECK includes INTERNAL_DEBIT
+    - OTP_MS: CK_OTP_CODES_PURPOSE includes CARD_ISSUANCE and all required purposes
+- Security:
+  - CreditCardService and TransactionService require authenticated requests; roles mapped from Keycloak JWT.
+- Observability/Protection:
+  - Basic in-memory rate-limiting and audit logs for PAN reveal attempts.
+
+Smoke Test (after services start and Angular running)
+1) Login via Angular at http://localhost:4200
+2) Withdraw:
+   - Account mode: generate OTP (WITHDRAWAL), withdraw small amount
+   - Debit Card mode: enter cardNumber, CVV, amount, OTP; verify success message and metadata
+3) Card Management:
+   - Click Get OTP (CARD_OPERATION), enter OTP, click Reveal; full PAN should display for that session
+4) Check Transaction History:
+   - “Method” column shows Debit Card/Account, brand, masked PAN when available.
+
 ## End-to-End Order of Startup
 
 1) Oracle DB listener and schemas ready

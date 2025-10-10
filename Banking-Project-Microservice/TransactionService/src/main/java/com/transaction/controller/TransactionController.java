@@ -17,6 +17,8 @@ import com.transaction.dto.DepositRequest;
 import com.transaction.dto.TransferRequest;
 import com.transaction.dto.WithdrawRequest;
 import com.transaction.dto.FineRequest;
+import com.transaction.dto.InternalDebitRequest;
+import com.transaction.dto.DebitCardWithdrawRequest;
 import com.transaction.exceptions.AccountNotFoundException;
 import com.transaction.exceptions.InsufficientFundsException;
 import com.transaction.exceptions.InvalidTransactionException;
@@ -95,6 +97,27 @@ public class TransactionController {
     @PostMapping("/fine")
     public ResponseEntity<Transaction> recordFine(@Valid @RequestBody FineRequest request) {
         Transaction transaction = transactionService.recordFine(request);
+        return new ResponseEntity<>(transaction, HttpStatus.CREATED);
+    }
+
+    /**
+     * Handles POST /transactions/internal/debit requests.
+     * Internal endpoint used by other services (e.g., CreditCardService) to debit fees such as CARD_ISSUANCE_FEE.
+     * Requires a valid JWT (enforced by SecurityConfig). No OTP required.
+     */
+    @PostMapping("/internal/debit")
+    public ResponseEntity<Transaction> internalDebit(@Valid @RequestBody InternalDebitRequest request) {
+        Transaction transaction = transactionService.internalDebit(request);
+        return new ResponseEntity<>(transaction, HttpStatus.CREATED);
+    }
+
+    /**
+     * Handles POST /transactions/debit-card/withdraw requests.
+     * Performs withdrawal using a debit card. Validates card with CreditCardService and requires OTP.
+     */
+    @PostMapping("/debit-card/withdraw")
+    public ResponseEntity<Transaction> debitCardWithdraw(@Valid @RequestBody DebitCardWithdrawRequest request) {
+        Transaction transaction = transactionService.debitCardWithdraw(request);
         return new ResponseEntity<>(transaction, HttpStatus.CREATED);
     }
 

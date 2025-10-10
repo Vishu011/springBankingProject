@@ -7,6 +7,7 @@ import { LoanService } from '../loans/loan.service'; // Import LoanService
 import { CardService } from '../cards/card.service'; // Import CardService
 import { TransactionService } from '../transactions/transaction.service'; // Import TransactionService
 import { forkJoin } from 'rxjs'; // Import forkJoin for parallel API calls
+import { CardResponse } from '../../shared/models/card.model';
 
 @Component({
   selector: 'app-banking-features',
@@ -143,7 +144,7 @@ export class BankingFeaturesComponent implements OnInit {
     forkJoin({
       accounts: this.accountService.getAccountsByUserId(userId),
       loans: this.loanService.getLoansByUserId(userId),
-      cards: this.cardService.getCardsByUserId(userId)
+      cards: this.cardService.listMyCards(userId)
     }).subscribe(
       ({ accounts, loans, cards }) => {
         // Calculate Total Available Balance
@@ -153,7 +154,7 @@ export class BankingFeaturesComponent implements OnInit {
 
         // Count Active Cards
         this.activeCardsCount = (cards || [])
-          .filter(card => card.status === 'ACTIVE')
+          .filter((card: CardResponse) => card.status === 'ACTIVE')
           .length;
 
         // Count Active Loans (e.g., PENDING or APPROVED/DISBURSED)

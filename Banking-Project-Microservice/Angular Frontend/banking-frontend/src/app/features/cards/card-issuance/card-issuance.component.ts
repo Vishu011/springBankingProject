@@ -2,16 +2,16 @@
 
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms'; // For ngModel and form handling
-import { CardService } from '../card.service'; // Import CardService
-import { AccountService } from '../../accounts/account.service'; // To get user's accounts
+import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 
-
-import { Router } from '@angular/router'; // Import Router for navigation
-import { AccountResponse } from '../../../shared/models/account.model';
-import { CardRequest, CardResponse, CardType } from '../../../shared/models/card.model';
+import { CardService } from '../card.service';
+import { AccountService } from '../../accounts/account.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { OtpService, GenerateOtpRequest } from '../../otp/otp.service';
+
+import { AccountResponse, AccountType } from '../../../shared/models/account.model';
+import { CardApplicationResponse, CardBrand, CardKind, CreateCardApplicationRequestDto } from '../../../shared/models/card.model';
 
 @Component({
   selector: 'app-card-issuance',
@@ -22,18 +22,24 @@ import { OtpService, GenerateOtpRequest } from '../../otp/otp.service';
 })
 export class CardIssuanceComponent implements OnInit {
   accounts: AccountResponse[] = [];
-  cardForm: CardRequest = {
+
+  // Application form (no limit/dates; admin sets them)
+  applicationForm: CreateCardApplicationRequestDto = {
     userId: '',
     accountId: '',
-    cardType: CardType.VISA, // Default card type (from your HTML)
-    issueDate: '',
-    expiryDate: '',
-    transactionLimit: 10000, // Default limit (from your HTML)
+    type: CardKind.CREDIT,
+    requestedBrand: CardBrand.VISA,
     otpCode: ''
   };
-  cardTypes = Object.values(CardType); // For dropdown/radio options
-  CardType = CardType; // For template access
-  loading: boolean = false;
+
+  // Brand options filtered by selected account's type
+  allowedBrands: CardBrand[] = [];
+
+  CardKind = CardKind;
+  CardBrand = CardBrand;
+  AccountType = AccountType;
+
+  loading = false;
   errorMessage: string | null = null;
   successMessage: string | null = null;
 
@@ -43,70 +49,93 @@ export class CardIssuanceComponent implements OnInit {
     private authService: AuthService,
     private otpService: OtpService,
     private router: Router
-  ) { }
+  ) {}
 
   ngOnInit(): void {
-    const userId = this.authService.getIdentityClaims()?.sub;
-    if (userId) {
-      this.cardForm.userId = userId;
-      this.loadUserAccounts(userId);
-    } else {
-      this.errorMessage = 'User ID not found. Please log in again.';
-    }
-    this.setInitialDates();
-  }
-
-  loadUserAccounts(userId: string): void {
-    this.loading = true;
-    this.errorMessage = null;
-
-    this.accountService.getAccountsByUserId(userId).subscribe(
-      (data) => {
-        this.accounts = data.filter(acc => acc.status === 'ACTIVE'); // Only active accounts
-        this.loading = false;
-        if (this.accounts.length > 0) {
-          this.cardForm.accountId = this.accounts[0].accountId; // Select first active account by default
-        } else {
-          this.errorMessage = 'No active accounts found to link a card to. Please create an account first.';
-        }
-      },
-      (error) => {
-        console.error('Error loading accounts for card issuance:', error);
-        this.errorMessage = error.error?.message || 'Failed to load accounts.';
-        this.loading = false;
-      }
-    );
-  }
-
-  setInitialDates(): void {
-    const today = new Date();
-    const issueDate = today.toISOString().split('T')[0]; // YYYY-MM-DD
-    const expiryDate = new Date(today.setFullYear(today.getFullYear() + 5)).toISOString().split('T')[0]; // 5 years from now
-
-    this.cardForm.issueDate = issueDate;
-    this.cardForm.expiryDate = expiryDate;
-  }
-
-  generateOtp(): void {
-    this.errorMessage = null;
     const userId = this.authService.getIdentityClaims()?.sub;
     if (!userId) {
       this.errorMessage = 'User ID not found. Please log in again.';
       return;
     }
+    this.applicationForm.userId = userId;
+    this.loadUserAccounts(userId);
+  }
+
+  private loadUserAccounts(userId: string): void {
+    this.loading = true;
+    this.accountService.getAccountsByUserId(userId).subscribe({
+      next: (data) => {
+        this.accounts = (data || []).filter(acc => acc.status === 'ACTIVE');
+        if (this.accounts.length === 0) {
+          this.errorMessage = 'No active accounts found. Please create an account first.';
+          this.loading = false;
+          return;
+        }
+        // Default select first account
+        this.applicationForm.accountId = this.accounts[0].accountId;
+        this.refreshAllowedBrands();
+        this.loading = false;
+      },
+      error: (err) => {
+        console.error('Error loading accounts:', err);
+        this.errorMessage = err?.error?.message || 'Failed to load accounts.';
+        this.loading = false;
+      }
+    });
+  }
+
+  onAccountChange(): void {
+    this.refreshAllowedBrands();
+  }
+
+  onTypeChange(): void {
+    // No brand list change by type; brand constraints are by account type
+    // Keep method if future logic needs it
+  }
+
+  private refreshAllowedBrands(): void {
+    const acc = this.accounts.find(a => a.accountId === this.applicationForm.accountId);
+    if (!acc) {
+      this.allowedBrands = [];
+      return;
+    }
+    this.allowedBrands = this.allowedBrandsForAccountType(acc.accountType);
+
+    // Ensure currently selected brand is within allowed brands
+    if (!this.allowedBrands.includes(this.applicationForm.requestedBrand)) {
+      this.applicationForm.requestedBrand = this.allowedBrands[0];
+    }
+  }
+
+  private allowedBrandsForAccountType(accountType: AccountType): CardBrand[] {
+    if (accountType === AccountType.SALARY_CORPORATE) {
+      return [CardBrand.AMEX, CardBrand.MASTERCARD, CardBrand.DISCOVERY];
+    }
+    // SAVINGS
+    return [CardBrand.VISA, CardBrand.RUPAY];
+  }
+
+  generateOtp(): void {
+    this.errorMessage = null;
+    this.successMessage = null;
+    const userId = this.applicationForm.userId;
+    if (!userId || !this.applicationForm.accountId) {
+      this.errorMessage = 'Select an account first.';
+      return;
+    }
     const req: GenerateOtpRequest = {
       userId,
-      purpose: 'CARD_OPERATION',
+      purpose: 'CARD_ISSUANCE',
       channels: ['EMAIL'],
-      contextId: null
+      contextId: this.applicationForm.accountId
     };
     this.otpService.generate(req).subscribe({
       next: () => {
-        this.successMessage = 'OTP has been sent to your registered email. Please enter it below.';
+        this.successMessage = 'OTP sent to your registered email.';
       },
       error: (err) => {
         console.error('Failed to generate OTP', err);
-        this.errorMessage = err.error?.message || 'Failed to generate OTP. Please try again.';
+        this.errorMessage = err?.error?.message || 'Failed to generate OTP.';
       }
     });
   }
@@ -116,48 +145,31 @@ export class CardIssuanceComponent implements OnInit {
     this.errorMessage = null;
     this.successMessage = null;
 
-    if (!this.cardForm.userId || !this.cardForm.accountId) {
+    if (!this.applicationForm.userId || !this.applicationForm.accountId) {
       this.errorMessage = 'User ID or Account ID is missing.';
       this.loading = false;
       return;
     }
-    if (this.cardForm.transactionLimit <= 0) {
-      this.errorMessage = 'Transaction limit must be positive.';
-      this.loading = false;
-      return;
-    }
-
-    if (!this.cardForm.otpCode) {
+    if (!this.applicationForm.otpCode || this.applicationForm.otpCode.trim().length === 0) {
       this.errorMessage = 'Please enter the OTP sent to your email.';
       this.loading = false;
       return;
     }
 
-    this.cardService.issueCard(this.cardForm).subscribe(
-      (response: CardResponse) => {
-        this.successMessage = `Card ${response.cardNumber.slice(-4)} (${response.cardType}) issued successfully! Status: ${response.status}.`;
+    this.cardService.submitApplication(this.applicationForm).subscribe({
+      next: (resp: CardApplicationResponse) => {
+        this.successMessage = `Application submitted for ${resp.requestedBrand} ${resp.type}. Status: ${resp.status}.`;
         this.loading = false;
-        this.resetForm();
-        this.router.navigate(['/cards/manage']); // Redirect to card management
+        // Reset only OTP, keep selections for another application if needed
+        this.applicationForm.otpCode = '';
+        // Navigate to manage cards or applications list (manage for now)
+        this.router.navigate(['/cards/manage']);
       },
-      (error) => {
-        console.error('Card issuance failed:', error);
-        this.errorMessage = error.error?.message || 'Card issuance failed. Please try again.';
+      error: (err) => {
+        console.error('Application submission failed:', err);
+        this.errorMessage = err?.error?.message || 'Application submission failed.';
         this.loading = false;
       }
-    );
-  }
-
-  resetForm(): void {
-    this.cardForm = {
-      userId: this.cardForm.userId, // Keep user ID
-      accountId: this.accounts.length > 0 ? this.accounts[0].accountId : '',
-      cardType: CardType.VISA, // Reset to default type
-      issueDate: '',
-      expiryDate: '',
-      transactionLimit: 10000,
-      otpCode: ''
-    };
-    this.setInitialDates();
+    });
   }
 }

@@ -6,8 +6,8 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
   CardResponse,
-  CardRequest,
-  CardStatus // Import CardStatus for update methods
+  CardApplicationResponse,
+  CreateCardApplicationRequestDto
 } from '../../shared/models/card.model';
 
 @Injectable({
@@ -15,74 +15,60 @@ import {
 })
 export class CardService {
 
-  private cardsApiUrl = `${environment.apiUrl}/cards`; // Base URL for Card Microservice
+  private cardsApiUrl = `${environment.apiUrl}/cards`; // Base URL for CreditCardService behind API Gateway
 
   constructor(private http: HttpClient) { }
 
   /**
-   * Issues a new card.
-   * POST /cards/issue
-   * @param request The card issuance request payload.
-   * @returns An Observable of the created CardResponse.
+   * Submit a new card application (CREDIT or DEBIT).
+   * POST /cards/applications
    */
-  issueCard(request: CardRequest): Observable<CardResponse> {
-    return this.http.post<CardResponse>(`${this.cardsApiUrl}/issue`, request);
+  submitApplication(request: CreateCardApplicationRequestDto): Observable<CardApplicationResponse> {
+    return this.http.post<CardApplicationResponse>(`${this.cardsApiUrl}/applications`, request);
   }
 
   /**
-   * Retrieves all cards for a specific user.
-   * GET /cards/user/{userId}
-   * @param userId The ID of the user.
-   * @returns An Observable of a list of CardResponse.
+   * List my card applications (for the logged-in user).
+   * GET /cards/applications/mine?userId={id}
    */
-  getCardsByUserId(userId: string): Observable<CardResponse[]> {
-    return this.http.get<CardResponse[]>(`${this.cardsApiUrl}/user/${userId}`);
+  listMyApplications(userId: string): Observable<CardApplicationResponse[]> {
+    return this.http.get<CardApplicationResponse[]>(
+      `${this.cardsApiUrl}/applications/mine`,
+      { params: { userId } }
+    );
   }
 
   /**
-   * Retrieves a card by its ID.
-   * GET /cards/{cardId}
-   * @param cardId The ID of the card.
-   * @returns An Observable of the CardResponse.
+   * List my issued cards (masked PAN, month/year, brand, status).
+   * GET /cards/mine?userId={id}
    */
-  getCardById(cardId: string): Observable<CardResponse> {
-    return this.http.get<CardResponse>(`${this.cardsApiUrl}/${cardId}`);
+  listMyCards(userId: string): Observable<CardResponse[]> {
+    return this.http.get<CardResponse[]>(
+      `${this.cardsApiUrl}/mine`,
+      { params: { userId } }
+    );
   }
 
   /**
-   * Blocks a card.
-   * PUT /cards/{cardId}/block
-   * @param cardId The ID of the card to block.
-   * @returns An Observable of the updated CardResponse.
+   * Reveal full PAN for a user's own DEBIT card after OTP verification.
+   * POST /cards/{id}/reveal-pan
    */
-  blockCard(cardId: string, otpCode: string): Observable<CardResponse> {
-    return this.http.put<CardResponse>(`${this.cardsApiUrl}/${cardId}/block?otpCode=${encodeURIComponent(otpCode)}`, {});
+  revealPan(cardId: string, body: { userId: string; otpCode: string }): Observable<{ cardId: string; fullPan: string; message: string }> {
+    return this.http.post<{ cardId: string; fullPan: string; message: string }>(
+      `${this.cardsApiUrl}/${cardId}/reveal-pan`,
+      body
+    );
   }
 
   /**
-   * Unblocks a card.
-   * PUT /cards/{cardId}/unblock
-   * @param cardId The ID of the card to unblock.
-   * @returns An Observable of the updated CardResponse.
+   * Regenerate CVV for a user's own DEBIT card after OTP verification.
+   * Returns one-time plaintext CVV in the response. Client must not persist it.
+   * POST /cards/{id}/regenerate-cvv
    */
-  unblockCard(cardId: string, otpCode: string): Observable<CardResponse> {
-    return this.http.put<CardResponse>(`${this.cardsApiUrl}/${cardId}/unblock?otpCode=${encodeURIComponent(otpCode)}`, {});
+  regenerateCvv(cardId: string, body: { userId: string; otpCode: string }): Observable<{ cardId: string; cvv: string; message: string }> {
+    return this.http.post<{ cardId: string; cvv: string; message: string }>(
+      `${this.cardsApiUrl}/${cardId}/regenerate-cvv`,
+      body
+    );
   }
-
-  /**
-   * Updates the transaction limit for a card.
-   * PUT /cards/{cardId}/limit
-   * @param cardId The ID of the card.
-   * @param newLimit The new transaction limit.
-   * @returns An Observable of the updated CardResponse.
-   */
-  updateTransactionLimit(cardId: string, newLimit: number): Observable<CardResponse> {
-    // Backend expects @RequestParam, but for PUT, a body is often sent.
-    // If backend expects @RequestParam, you might need to adjust this.
-    // Assuming backend can handle it as a request param or simple body.
-    return this.http.put<CardResponse>(`${this.cardsApiUrl}/${cardId}/limit?newLimit=${newLimit}`, {});
-  }
-
-  // Note: getTransactionsByCardId is in the TransactionService (backend)
-  // If frontend needs to display card transactions, it would call TransactionService directly.
 }

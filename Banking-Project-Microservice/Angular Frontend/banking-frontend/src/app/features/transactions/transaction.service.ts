@@ -51,6 +51,14 @@ export class TransactionService {
   }
 
   /**
+   * Withdraws funds using a DEBIT card (CVV + OTP required).
+   * POST /transactions/debit-card/withdraw
+   */
+  debitCardWithdraw(request: import('../../shared/models/transaction.model').DebitCardWithdrawRequest): Observable<TransactionResponse> {
+    return this.http.post<TransactionResponse>(`${this.transactionsApiUrl}/debit-card/withdraw`, request);
+  }
+
+  /**
    * Retrieves transaction history for a specific account.
    * GET /transactions/account/{accountId}
    * @param accountId The ID of the account.

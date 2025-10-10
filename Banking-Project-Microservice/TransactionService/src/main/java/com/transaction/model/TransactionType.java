@@ -1,8 +1,9 @@
 package com.transaction.model;
 
 public enum TransactionType {
-	 DEPOSIT,
+     DEPOSIT,
      WITHDRAW,
+     INTERNAL_DEBIT,
      TRANSFER,
      FINE
 }

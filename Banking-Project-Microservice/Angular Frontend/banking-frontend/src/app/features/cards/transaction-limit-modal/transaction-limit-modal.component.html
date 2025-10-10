@@ -1,44 +1,67 @@
 <div class="modal" [class.show]="true">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h2>Update Transaction Limit</h2>
-            <span class="close" (click)="onCloseModal()">&times;</span>
-        </div>
-        <div class="modal-body">
-            <div class="account-info">
-                <i class="fas fa-credit-card"></i>
-                <!-- FIX: Removed optional chaining -->
-                <span>Card Number: <strong id="modalCardNumber">{{ card.cardNumber | slice:0:4 }} •••• •••• {{
-                        card.cardNumber | slice:-4 }}</strong></span>
-            </div>
-
-            <div class="input-group">
-                <label for="newLimit">New Transaction Limit</label>
-                <div class="input-wrapper">
-                    <span class="currency-symbol">₹</span>
-                    <input type="number" id="newLimit" name="newLimit" [(ngModel)]="newLimit"
-                        placeholder="Enter new limit" min="1000" max="10000000" step="1000">
-                </div>
-                <div class="input-help">
-                    <small>Minimum: ₹1,000 | Maximum: ₹10,00,000</small>
-                </div>
-            </div>
-
-            <div class="current-limit">
-                <!-- FIX: Removed optional chaining -->
-                <span>Current Limit: <strong id="currentLimitDisplay">{{ card.transactionLimit |
-                        currency:'INR':'symbol':'1.2-2' }}</strong></span>
-            </div>
-        </div>
-        <div class="modal-footer">
-            <button class="btn btn-cancel" (click)="onCloseModal()">Cancel</button>
-            <button class="btn btn-update" (click)="onUpdateLimit()">Update Limit</button>
-        </div>
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>Card Details</h2>
+      <span class="close" (click)="onCloseModal()">&times;</span>
     </div>
+
+    <div class="modal-body">
+      <div class="account-info">
+        <i class="fas fa-credit-card"></i>
+        <span>Masked PAN: <strong id="modalMaskedPan">{{ card.maskedPan }}</strong></span>
+      </div>
+
+      <div class="info-grid">
+        <div class="field">
+          <i class="fas fa-tag field-icon"></i>
+          <div class="field-content">
+            <strong>Type</strong>
+            <span>{{ card.type }}</span>
+          </div>
+        </div>
+
+        <div class="field">
+          <i class="fas fa-tags field-icon"></i>
+          <div class="field-content">
+            <strong>Brand</strong>
+            <span>{{ card.brand }}</span>
+          </div>
+        </div>
+
+        <div class="field">
+          <i class="fas fa-calendar-plus field-icon"></i>
+          <div class="field-content">
+            <strong>Issue (MM/YY)</strong>
+            <span>{{ card.issueMonth | number:'2.0-0' }}/{{ (card.issueYear % 100) | number:'2.0-0' }}</span>
+          </div>
+        </div>
+
+        <div class="field">
+          <i class="fas fa-calendar-times field-icon"></i>
+          <div class="field-content">
+            <strong>Expiry (MM/YY)</strong>
+            <span>{{ card.expiryMonth | number:'2.0-0' }}/{{ (card.expiryYear % 100) | number:'2.0-0' }}</span>
+          </div>
+        </div>
+
+        <div class="field" *ngIf="card.type === 'CREDIT' && card.creditLimit != null">
+          <i class="fas fa-wallet field-icon"></i>
+          <div class="field-content">
+            <strong>Credit Limit</strong>
+            <span>{{ card.creditLimit | currency:'INR':'symbol':'1.2-2' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="note">
+        <small>Note: Card operations like block/unblock and limit updates are handled by admin after approval.</small>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-cancel" (click)="onCloseModal()">Close</button>
+    </div>
+  </div>
 </div>
 
-<!-- Success Toast -->
-<div class="toast" [class.show]="showToast">
-    <i class="fas fa-check-circle"></i>
-    <span>Transaction limit updated successfully!</span>
-</div>
+<!-- Minimal toast removed since no action occurs in this modal -->

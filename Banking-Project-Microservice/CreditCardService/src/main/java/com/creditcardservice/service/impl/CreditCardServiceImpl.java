@@ -77,8 +77,8 @@ public class CreditCardServiceImpl implements CreditCardService {
         // 3. Verify OTP for card operation
         OtpVerifyRequest otpReq = new OtpVerifyRequest(
             requestDTO.getUserId(),
-            "CARD_OPERATION",
-            null,
+            "CARD_ISSUANCE",
+            requestDTO.getAccountId(),
             requestDTO.getOtpCode()
         );
         OtpVerifyResponse otpRes = otpServiceClient.verify(otpReq);

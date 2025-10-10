@@ -36,6 +36,12 @@ import com.transaction.proxyService.UserServiceClient;
 import com.transaction.proxyService.OtpServiceClient;
 import com.transaction.dto.OtpVerifyRequest;
 import com.transaction.dto.OtpVerifyResponse;
+import com.transaction.dto.InternalDebitRequest;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.transaction.dto.DebitCardWithdrawRequest;
+import com.transaction.dto.DebitCardValidationRequest;
+import com.transaction.dto.DebitCardValidationResponse;
+import com.transaction.proxyService.CreditCardServiceClient;
 
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 
@@ -51,6 +57,9 @@ public class TransactionServiceImpl implements TransactionService {
     
     @Autowired
     private OtpServiceClient otpServiceClient;
+
+    @Autowired
+    private CreditCardServiceClient creditCardServiceClient;
 
     @Autowired
     public TransactionServiceImpl(TransactionRepository transactionRepository,
@@ -415,6 +424,204 @@ public class TransactionServiceImpl implements TransactionService {
             System.err.println("recordFine: notification publish failed: " + e.getMessage());
             return transaction;
         }
+    }
+
+    @Override
+    @Transactional
+    public Transaction internalDebit(InternalDebitRequest request) {
+        Transaction transaction = new Transaction();
+        transaction.setFromAccountId(request.getAccountId());
+        transaction.setToAccountId(null);
+        transaction.setAmount(request.getAmount());
+        transaction.setType(TransactionType.INTERNAL_DEBIT);
+        transaction.setStatus(TransactionStatus.PENDING);
+        transaction.setTransactionDate(LocalDateTime.now());
+        transaction.setReason(request.getReason());
+        try {
+            if (request.getMetadata() != null) {
+                transaction.setMetadataJson(new ObjectMapper().writeValueAsString(request.getMetadata()));
+            }
+        } catch (Exception e) {
+            transaction.setMetadataJson(null);
+        }
+        transaction = transactionRepository.save(transaction);
+
+        try {
+            AccountDto account = accountServiceClient.getAccountById(request.getAccountId());
+            if (account == null) {
+                throw new AccountNotFoundException("Account not found with ID: " + request.getAccountId());
+            }
+            if (account.getBalance() < request.getAmount()) {
+                throw new InsufficientFundsException("Insufficient funds in account: " + request.getAccountId());
+            }
+
+            WithdrawRequestDto withdrawRequestDto = new WithdrawRequestDto(transaction.getTransactionId(), request.getAmount());
+            accountServiceClient.withdrawFunds(request.getAccountId(), withdrawRequestDto);
+
+            transaction.setStatus(TransactionStatus.SUCCESS);
+            transaction = transactionRepository.save(transaction);
+
+            String brand = request.getMetadata() != null ? request.getMetadata().get("brand") : null;
+            String cardType = request.getMetadata() != null ? request.getMetadata().get("type") : null;
+            String reason = request.getReason() != null ? request.getReason() : "internal operation";
+            String suffix = (brand != null || cardType != null) ? (" (" + (cardType != null ? cardType : "") + (brand != null ? "-" + brand : "") + ")") : "";
+
+            String notificationMessage = "An internal debit of INR " + request.getAmount()
+                + " was applied to your account " + account.getAccountNumber()
+                + " for " + reason + suffix + ". Transaction ID: " + transaction.getTransactionId();
+
+            publishTransactionCompletedEvent(
+                transaction.getTransactionId(),
+                account.getUserId(),
+                account.getAccountId(),
+                request.getAmount(),
+                transaction.getType().name(),
+                transaction.getStatus().name(),
+                notificationMessage
+            );
+
+        } catch (HttpClientErrorException e) {
+            transaction.setStatus(TransactionStatus.FAILED);
+            transactionRepository.save(transaction);
+            throw new TransactionProcessingException("Internal debit failed due to Account Service error: " + e.getResponseBodyAsString(), e);
+        } catch (AccountNotFoundException | InsufficientFundsException e) {
+            transaction.setStatus(TransactionStatus.FAILED);
+            transactionRepository.save(transaction);
+            throw e;
+        } catch (Exception e) {
+            transaction.setStatus(TransactionStatus.FAILED);
+            transactionRepository.save(transaction);
+            throw new TransactionProcessingException("Internal debit failed unexpectedly: " + e.getMessage(), e);
+        }
+        return transaction;
+    }
+
+    @Override
+    @Transactional
+    public Transaction debitCardWithdraw(DebitCardWithdrawRequest request) {
+        Transaction transaction = new Transaction();
+        transaction.setFromAccountId(null);
+        transaction.setToAccountId(null);
+        transaction.setAmount(request.getAmount());
+        transaction.setType(TransactionType.WITHDRAW);
+        transaction.setStatus(TransactionStatus.PENDING);
+        transaction.setTransactionDate(LocalDateTime.now());
+        transaction.setReason("DEBIT_CARD_WITHDRAW");
+        try {
+            java.util.Map<String, String> meta = new java.util.HashMap<>();
+            meta.put("method", "DEBIT_CARD");
+            transaction.setMetadataJson(new ObjectMapper().writeValueAsString(meta));
+        } catch (Exception e) {
+            transaction.setMetadataJson(null);
+        }
+        transaction = transactionRepository.save(transaction);
+
+        try {
+            // Validate card with CreditCardService
+            DebitCardValidationResponse validation = creditCardServiceClient.validateDebitTransaction(
+                new DebitCardValidationRequest(request.getCardNumber(), request.getCvv())
+            );
+            if (validation == null || !validation.isValid()) {
+                transaction.setStatus(TransactionStatus.FAILED);
+                transactionRepository.save(transaction);
+                throw new TransactionProcessingException("Debit card validation failed: " + (validation != null ? validation.getMessage() : "no response"));
+            }
+
+            // Update transaction with resolved account and metadata
+            transaction.setFromAccountId(validation.getAccountId());
+            try {
+                java.util.Map<String, String> meta2 = new java.util.HashMap<>();
+                meta2.put("method", "DEBIT_CARD");
+                if (validation.getBrand() != null) meta2.put("brand", validation.getBrand());
+                if (validation.getMaskedPan() != null) meta2.put("panMasked", validation.getMaskedPan());
+                transaction.setMetadataJson(new ObjectMapper().writeValueAsString(meta2));
+            } catch (Exception ignore) {}
+            transaction = transactionRepository.save(transaction);
+
+            AccountDto sourceAccount = accountServiceClient.getAccountById(validation.getAccountId());
+            if (sourceAccount == null) {
+                throw new AccountNotFoundException("Source account not found: " + validation.getAccountId());
+            }
+
+            // Enforce per-transaction limits by account type
+            if (sourceAccount.getAccountType() == AccountDto.AccountType.SAVINGS) {
+                if (request.getAmount() > 200000) {
+                    throw new InvalidTransactionException("Withdrawal exceeds maximum per-transaction limit of 200000 INR for SAVINGS account.");
+                }
+            } else if (sourceAccount.getAccountType() == AccountDto.AccountType.SALARY_CORPORATE) {
+                if (request.getAmount() > 500000) {
+                    throw new InvalidTransactionException("Withdrawal exceeds maximum per-transaction limit of 500000 INR for SALARY/CORPORATE account.");
+                }
+            }
+
+            if (sourceAccount.getBalance() < request.getAmount()) {
+                throw new InsufficientFundsException("Insufficient funds in account: " + validation.getAccountId());
+            }
+
+            // OTP verification before proceeding
+            OtpVerifyRequest otpReq = new OtpVerifyRequest(
+                validation.getUserId(),
+                "WITHDRAWAL",
+                null,
+                request.getOtpCode()
+            );
+            OtpVerifyResponse otpRes = otpServiceClient.verify(otpReq);
+            if (otpRes == null || !otpRes.isVerified()) {
+                transaction.setStatus(TransactionStatus.FAILED);
+                transactionRepository.save(transaction);
+                throw new TransactionProcessingException("OTP verification failed: " + (otpRes != null ? otpRes.getMessage() : "no response"));
+            }
+
+            WithdrawRequestDto withdrawRequestDto = new WithdrawRequestDto(transaction.getTransactionId(), request.getAmount());
+            accountServiceClient.withdrawFunds(validation.getAccountId(), withdrawRequestDto);
+
+            transaction.setStatus(TransactionStatus.SUCCESS);
+            transaction = transactionRepository.save(transaction);
+
+            String brand = validation.getBrand();
+            String maskedPan = validation.getMaskedPan();
+            StringBuilder usingPart = new StringBuilder();
+            if (brand != null || maskedPan != null) {
+                usingPart.append(" using");
+                if (brand != null) {
+                    usingPart.append(" ").append(brand);
+                }
+                usingPart.append(" card");
+                if (maskedPan != null) {
+                    usingPart.append(" ").append(maskedPan);
+                }
+            }
+
+            String notificationMessage = "A debit-card withdrawal of " + request.getAmount()
+                + " has been made from your account " + sourceAccount.getAccountNumber()
+                + usingPart.toString()
+                + ". Transaction ID: " + transaction.getTransactionId();
+
+            publishTransactionCompletedEvent(
+                transaction.getTransactionId(),
+                sourceAccount.getUserId(),
+                sourceAccount.getAccountId(),
+                request.getAmount(),
+                transaction.getType().name(),
+                transaction.getStatus().name(),
+                notificationMessage
+            );
+
+        } catch (HttpClientErrorException e) {
+            transaction.setStatus(TransactionStatus.FAILED);
+            transactionRepository.save(transaction);
+            throw new TransactionProcessingException("Debit-card withdrawal failed due to Account Service error: " + e.getResponseBodyAsString(), e);
+        } catch (AccountNotFoundException | InsufficientFundsException | InvalidTransactionException e) {
+            transaction.setStatus(TransactionStatus.FAILED);
+            transactionRepository.save(transaction);
+            throw e;
+        } catch (Exception e) {
+            transaction.setStatus(TransactionStatus.FAILED);
+            transactionRepository.save(transaction);
+            throw new TransactionProcessingException("Debit-card withdrawal failed unexpectedly: " + e.getMessage(), e);
+        }
+
+        return transaction;
     }
 
     @CircuitBreaker(name = "kafkaNotificationPublisher", fallbackMethod = "publishTransactionCompletedEventFallback")

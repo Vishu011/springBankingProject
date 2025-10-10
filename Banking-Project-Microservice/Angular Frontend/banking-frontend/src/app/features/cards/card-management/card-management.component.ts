@@ -2,22 +2,21 @@
 
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms'; // For update limit form
+import { FormsModule } from '@angular/forms';
 import { CardService } from '../card.service';
+import { OtpService, GenerateOtpRequest } from '../../otp/otp.service';
 
 
 import { AccountService } from '../../accounts/account.service'; // To get account numbers for display
-import { CardResponse, CardStatus, CardType } from '../../../shared/models/card.model';
+import { CardResponse, CardStatus, CardBrand } from '../../../shared/models/card.model';
 import { AccountResponse } from '../../../shared/models/account.model';
 import { AuthService } from '../../../core/services/auth.service';
-import { TransactionLimitModalComponent } from '../transaction-limit-modal/transaction-limit-modal.component';
-import { OtpService } from '../../otp/otp.service';
 
 
 @Component({
   selector: 'app-card-management',
   standalone: true,
-  imports: [CommonModule, FormsModule, TransactionLimitModalComponent], // Add modal component
+  imports: [CommonModule, FormsModule], // Standalone
   templateUrl: './card-management.component.html',
   styleUrls: ['./card-management.component.css']
 })
@@ -30,13 +29,8 @@ export class CardManagementComponent implements OnInit {
 
   userAccounts: AccountResponse[] = []; // To map accountId to accountNumber
 
-  // For modal control
-  isModalOpen: boolean = false;
+  // Accordion active row
   currentCardForLimitUpdate: CardResponse | null = null;
-
-  // OTP state per card for CARD_OPERATIONs
-  rowOtpCodes: { [cardId: string]: string } = {};
-  generatingRowOtp: { [cardId: string]: boolean } = {};
 
   constructor(
     private cardService: CardService,
@@ -59,26 +53,26 @@ export class CardManagementComponent implements OnInit {
     if (userId) {
       // Load accounts first to map accountIds to numbers
       this.accountService.getAccountsByUserId(userId).subscribe(
-        (accountsData) => {
+        (accountsData: AccountResponse[]) => {
           this.userAccounts = accountsData || [];
 
           // Then load cards
-          this.cardService.getCardsByUserId(userId).subscribe(
-            (cardsData) => {
+          this.cardService.listMyCards(userId).subscribe(
+            (cardsData: CardResponse[]) => {
               this.userCards = cardsData || [];
               this.loading = false;
               if (this.userCards.length === 0) {
                 this.successMessage = 'You have no cards issued.';
               }
             },
-            (error) => {
+            (error: any) => {
               console.error('Error loading user cards:', error);
               this.errorMessage = error.error?.message || 'Failed to load your cards.';
               this.loading = false;
             }
           );
         },
-        (error) => {
+        (error: any) => {
           console.error('Error loading user accounts for card management:', error);
           this.errorMessage = error.error?.message || 'Failed to load associated accounts.';
           this.loading = false;
@@ -93,6 +87,212 @@ export class CardManagementComponent implements OnInit {
   getAccountNumber(accountId: string): string {
     const account = this.userAccounts.find(acc => acc.accountId === accountId);
     return account ? account.accountNumber : 'N/A';
+  }
+
+  // OTP + Reveal PAN state
+  revealedPan: { [cardId: string]: string | undefined } = {};
+  revealOtp: { [cardId: string]: string } = {};
+  revealing: { [cardId: string]: boolean } = {};
+  genOtpLoading: { [cardId: string]: boolean } = {};
+  genOtpCooldownSec: { [cardId: string]: number } = {};
+  private genOtpTimers: { [cardId: string]: any } = {};
+
+  // CVV Regeneration state
+  regeneratedCvv: { [cardId: string]: string | undefined } = {};
+  regenOtp: { [cardId: string]: string } = {};
+  regenLoading: { [cardId: string]: boolean } = {};
+  regenOtpLoading: { [cardId: string]: boolean } = {};
+  regenOtpCooldownSec: { [cardId: string]: number } = {};
+  private regenOtpTimers: { [cardId: string]: any } = {};
+
+  generateRevealOtp(card: CardResponse): void {
+    this.errorMessage = null;
+    this.successMessage = null;
+
+    const id = card.cardId;
+    if (this.genOtpLoading[id] || (this.genOtpCooldownSec[id] && this.genOtpCooldownSec[id] > 0)) {
+      return;
+    }
+
+    const userId = this.authService.getIdentityClaims()?.sub;
+    if (!userId) {
+      this.errorMessage = 'User ID not found. Please log in again.';
+      return;
+    }
+
+    this.genOtpLoading[id] = true;
+    const req: GenerateOtpRequest = {
+      userId,
+      purpose: 'CARD_OPERATION',
+      channels: ['EMAIL'],
+      contextId: card.accountId
+    };
+    this.otpService.generate(req).subscribe({
+      next: () => {
+        this.successMessage = 'OTP sent to your registered email. Enter it and click Reveal.';
+        this.genOtpLoading[id] = false;
+        this.startCardOtpCooldown(id, 60);
+      },
+      error: (err) => {
+        console.error('Failed to generate OTP for PAN reveal', err);
+        this.errorMessage = err?.error?.message || 'Failed to generate OTP.';
+        this.genOtpLoading[id] = false;
+      }
+    });
+  }
+
+  private startCardOtpCooldown(cardId: string, seconds: number = 60): void {
+    this.genOtpCooldownSec[cardId] = seconds;
+    if (this.genOtpTimers[cardId]) {
+      clearInterval(this.genOtpTimers[cardId]);
+    }
+    this.genOtpTimers[cardId] = setInterval(() => {
+      const remaining = (this.genOtpCooldownSec[cardId] || 0) - 1;
+      this.genOtpCooldownSec[cardId] = remaining > 0 ? remaining : 0;
+      if (this.genOtpCooldownSec[cardId] === 0) {
+        clearInterval(this.genOtpTimers[cardId]);
+        this.genOtpTimers[cardId] = null;
+      }
+    }, 1000);
+  }
+
+  revealPan(card: CardResponse): void {
+    this.errorMessage = null;
+    this.successMessage = null;
+    const userId = this.authService.getIdentityClaims()?.sub;
+    if (!userId) {
+      this.errorMessage = 'User ID not found. Please log in again.';
+      return;
+    }
+    const code = this.revealOtp[card.cardId];
+    if (!code || code.trim().length === 0) {
+      this.errorMessage = 'Enter the OTP received on your email.';
+      return;
+    }
+    this.revealing[card.cardId] = true;
+    this.cardService.revealPan(card.cardId, { userId, otpCode: code }).subscribe({
+      next: (resp) => {
+        this.revealedPan[card.cardId] = resp.fullPan;
+        this.successMessage = 'Card number revealed for this session.';
+        this.revealOtp[card.cardId] = '';
+        this.revealing[card.cardId] = false;
+      },
+      error: (err) => {
+        console.error('Reveal PAN failed', err);
+        this.errorMessage = err?.error?.message || 'Reveal failed. Check OTP and try again.';
+        this.revealing[card.cardId] = false;
+      }
+    });
+  }
+
+  generateRegenOtp(card: CardResponse): void {
+    this.errorMessage = null;
+    this.successMessage = null;
+
+    const id = card.cardId;
+    if (this.regenOtpLoading[id] || (this.regenOtpCooldownSec[id] && this.regenOtpCooldownSec[id] > 0)) {
+      return;
+    }
+
+    const userId = this.authService.getIdentityClaims()?.sub;
+    if (!userId) {
+      this.errorMessage = 'User ID not found. Please log in again.';
+      return;
+    }
+
+    this.regenOtpLoading[id] = true;
+    const req: GenerateOtpRequest = {
+      userId,
+      purpose: 'CARD_OPERATION',
+      channels: ['EMAIL'],
+      contextId: card.accountId
+    };
+    this.otpService.generate(req).subscribe({
+      next: () => {
+        this.successMessage = 'OTP sent to your registered email. Enter it and click Generate CVV.';
+        this.regenOtpLoading[id] = false;
+        this.startRegenOtpCooldown(id, 60);
+      },
+      error: (err) => {
+        console.error('Failed to generate OTP for CVV regenerate', err);
+        this.errorMessage = err?.error?.message || 'Failed to generate OTP.';
+        this.regenOtpLoading[id] = false;
+      }
+    });
+  }
+
+  private startRegenOtpCooldown(cardId: string, seconds: number = 60): void {
+    this.regenOtpCooldownSec[cardId] = seconds;
+    if (this.regenOtpTimers[cardId]) {
+      clearInterval(this.regenOtpTimers[cardId]);
+    }
+    this.regenOtpTimers[cardId] = setInterval(() => {
+      const remaining = (this.regenOtpCooldownSec[cardId] || 0) - 1;
+      this.regenOtpCooldownSec[cardId] = remaining > 0 ? remaining : 0;
+      if (this.regenOtpCooldownSec[cardId] === 0) {
+        clearInterval(this.regenOtpTimers[cardId]);
+        this.regenOtpTimers[cardId] = null;
+      }
+    }, 1000);
+  }
+
+  regenerateCvv(card: CardResponse): void {
+    this.errorMessage = null;
+    this.successMessage = null;
+
+    const userId = this.authService.getIdentityClaims()?.sub;
+    if (!userId) {
+      this.errorMessage = 'User ID not found. Please log in again.';
+      return;
+    }
+    const code = this.regenOtp[card.cardId];
+    if (!code || code.trim().length === 0) {
+      this.errorMessage = 'Enter the OTP received on your email.';
+      return;
+    }
+    this.regenLoading[card.cardId] = true;
+    this.cardService.regenerateCvv(card.cardId, { userId, otpCode: code }).subscribe({
+      next: (resp) => {
+        this.regeneratedCvv[card.cardId] = resp.cvv;
+        this.successMessage = 'New CVV generated. Copy it now. It will not be shown again.';
+        this.regenOtp[card.cardId] = '';
+        this.regenLoading[card.cardId] = false;
+      },
+      error: (err) => {
+        console.error('Regenerate CVV failed', err);
+        this.errorMessage = err?.error?.message || 'CVV regeneration failed. Check OTP and try again.';
+        this.regenLoading[card.cardId] = false;
+      }
+    });
+  }
+
+  copyToClipboard(text: string): void {
+    if (!text) { return; }
+    if (navigator && navigator.clipboard) {
+      navigator.clipboard.writeText(text).then(() => {
+        this.successMessage = 'Copied to clipboard.';
+        setTimeout(() => { if (this.successMessage === 'Copied to clipboard.') this.successMessage = null; }, 2000);
+      }).catch(() => {
+        this.errorMessage = 'Failed to copy.';
+        setTimeout(() => { if (this.errorMessage === 'Failed to copy.') this.errorMessage = null; }, 2000);
+      });
+    } else {
+      // Fallback
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      document.body.appendChild(textarea);
+      textarea.select();
+      try {
+        document.execCommand('copy');
+        this.successMessage = 'Copied to clipboard.';
+        setTimeout(() => { if (this.successMessage === 'Copied to clipboard.') this.successMessage = null; }, 2000);
+      } catch {
+        this.errorMessage = 'Failed to copy.';
+        setTimeout(() => { if (this.errorMessage === 'Failed to copy.') this.errorMessage = null; }, 2000);
+      } finally {
+        document.body.removeChild(textarea);
+      }
+    }
   }
 
   // Refactored from inline JS toggleAccordion
@@ -111,94 +311,11 @@ export class CardManagementComponent implements OnInit {
     }
   }
 
-  generateOtpForCardOperation(cardId: string): void {
-    this.errorMessage = null;
-    this.successMessage = null;
-    const userId = this.authService.getIdentityClaims()?.sub;
-    if (!userId) {
-      this.errorMessage = 'User not logged in. Cannot generate OTP.';
-      return;
-    }
-    this.generatingRowOtp[cardId] = true;
-    this.otpService.generate({
-      userId,
-      purpose: 'CARD_OPERATION',
-      channels: ['EMAIL'],
-      contextId: null
-    }).subscribe(
-      () => {
-        this.successMessage = 'OTP sent to your registered email.';
-        this.generatingRowOtp[cardId] = false;
-      },
-      (error) => {
-        console.error('Error generating OTP for card operation:', error);
-        this.errorMessage = error.error?.message || 'Failed to generate OTP.';
-        this.generatingRowOtp[cardId] = false;
-      }
-    );
-  }
 
-  // Refactored from inline JS blockCard
-  blockCard(cardId: string, cardNumber: string): void {
-    const otp = this.rowOtpCodes[cardId];
-    if (!otp || otp.trim().length === 0) {
-      this.errorMessage = 'Please enter OTP to block the card.';
-      return;
-    }
-    if (confirm(`Are you sure you want to BLOCK card ${cardNumber}?`)) {
-      this.cardService.blockCard(cardId, otp).subscribe(
-        (response) => {
-          this.successMessage = `Card ${response.cardNumber.slice(-4)} blocked successfully.`;
-          this.rowOtpCodes[cardId] = '';
-          this.loadUserCardsAndAccounts(); // Reload list
-        },
-        (error) => {
-          console.error('Error blocking card:', error);
-          this.errorMessage = error.error?.message || 'Failed to block card.';
-        }
-      );
-    }
-  }
 
-  // Refactored from inline JS unblockCard
-  unblockCard(cardId: string, cardNumber: string): void {
-    const otp = this.rowOtpCodes[cardId];
-    if (!otp || otp.trim().length === 0) {
-      this.errorMessage = 'Please enter OTP to unblock the card.';
-      return;
-    }
-    if (confirm(`Are you sure you want to UNBLOCK card ${cardNumber}?`)) {
-      this.cardService.unblockCard(cardId, otp).subscribe(
-        (response) => {
-          this.successMessage = `Card ${response.cardNumber.slice(-4)} unblocked successfully.`;
-          this.rowOtpCodes[cardId] = '';
-          this.loadUserCardsAndAccounts(); // Reload list
-        },
-        (error) => {
-          console.error('Error unblocking card:', error);
-          this.errorMessage = error.error?.message || 'Failed to unblock card.';
-        }
-      );
-    }
-  }
 
-  // Refactored from inline JS openTransactionLimitModal
-  openUpdateLimitModal(card: CardResponse): void {
-    this.currentCardForLimitUpdate = card; // Set the card for the modal
-    this.isModalOpen = true; // Open the modal
-  }
 
-  // Handler for modal close event
-  onModalClose(): void {
-    this.isModalOpen = false;
-    this.currentCardForLimitUpdate = null;
-  }
 
-  // Handler for limit updated event from modal
-  onLimitUpdated(updatedCard: CardResponse): void {
-    this.successMessage = `Limit for card ${updatedCard.cardNumber.slice(-4)} updated to ₹${updatedCard.transactionLimit.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}.`;
-    this.loadUserCardsAndAccounts(); // Reload cards to show updated limit
-  }
 
   getCardStatusClass(status: CardStatus): string {
     switch (status) {
@@ -208,26 +325,24 @@ export class CardManagementComponent implements OnInit {
     }
   }
 
-  getCardBrandIconClass(cardType: CardType): string {
-    switch (cardType) {
-      case CardType.VISA: return 'fab fa-cc-visa visa';
-      case CardType.MASTERCARD: return 'fab fa-cc-mastercard mastercard';
-      case CardType.RUPAY: return 'fas fa-credit-card rupay'; // Font Awesome doesn't have fab fa-cc-rupay
-      case CardType.AMERICAN_EXPRESS: return 'fab fa-cc-amex amex';
-      case CardType.DISCOVER: return 'fab fa-cc-discover discover';
+  getCardBrandIconClass(brand: CardBrand): string {
+    switch (brand) {
+      case CardBrand.VISA: return 'fab fa-cc-visa visa';
+      case CardBrand.MASTERCARD: return 'fab fa-cc-mastercard mastercard';
+      case CardBrand.RUPAY: return 'fas fa-credit-card rupay'; // no direct icon
+      case CardBrand.AMEX: return 'fab fa-cc-amex amex';
+      case CardBrand.DISCOVERY: return 'fab fa-cc-discover discover';
       default: return 'fas fa-credit-card';
     }
   }
 
-  getCardLogoSrc(cardType: CardType): string {
-    // You'll need to place these images in your assets folder
-    // For now, these are placeholders. You can use SVG for better quality.
-    switch (cardType) {
-      case CardType.VISA: return 'assets/images/visa.png';
-      case CardType.MASTERCARD: return 'assets/images/mastercard.png';
-      case CardType.RUPAY: return 'assets/images/rupay.png';
-      case CardType.AMERICAN_EXPRESS: return 'assets/images/amex.png';
-      case CardType.DISCOVER: return 'assets/images/discover.png';
+  getCardLogoSrc(brand: CardBrand): string {
+    switch (brand) {
+      case CardBrand.VISA: return 'assets/images/visa.png';
+      case CardBrand.MASTERCARD: return 'assets/images/mastercard.png';
+      case CardBrand.RUPAY: return 'assets/images/rupay.png';
+      case CardBrand.AMEX: return 'assets/images/amex.png';
+      case CardBrand.DISCOVERY: return 'assets/images/discover.png';
       default: return '';
     }
   }

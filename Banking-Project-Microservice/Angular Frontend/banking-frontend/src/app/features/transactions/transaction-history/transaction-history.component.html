@@ -22,6 +22,7 @@
                 <tr>
                     <th>ID</th>
                     <th>Type</th>
+                    <th>Method</th>
                     <th>Amount</th>
                     <th>From Account</th>
                     <th>To Account</th>
@@ -33,6 +34,7 @@
                 <tr *ngFor="let transaction of transactions">
                     <td>{{ transaction.transactionId | slice:0:8 }}...</td>
                     <td><span [ngClass]="getTransactionTypeClass(transaction.type)">{{ transaction.type }}</span></td>
+                    <td>{{ getMethodDetails(transaction) }}</td>
                     <td>{{ transaction.amount | currency:'INR':'symbol':'1.2-2' }}</td>
                     <td>{{ getAccountDisplayName(transaction.fromAccountId) }}</td>
                     <td>{{ getAccountDisplayName(transaction.toAccountId) }}</td>

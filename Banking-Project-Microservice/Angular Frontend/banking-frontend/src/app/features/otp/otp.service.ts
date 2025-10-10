@@ -6,7 +6,7 @@ import { Observable } from 'rxjs';
 
 export interface GenerateOtpRequest {
   userId: string;
-  purpose: 'LOGIN' | 'WITHDRAWAL' | 'LOAN_SUBMISSION' | 'CARD_OPERATION' | 'ACCOUNT_OPERATION' | 'CONTACT_VERIFICATION';
+  purpose: 'LOGIN' | 'WITHDRAWAL' | 'LOAN_SUBMISSION' | 'CARD_OPERATION' | 'ACCOUNT_OPERATION' | 'CONTACT_VERIFICATION' | 'CARD_ISSUANCE';
   channels?: string[]; // default EMAIL
   contextId?: string | null;
   ttlSeconds?: number;
@@ -19,7 +19,7 @@ export interface GenerateOtpResponse {
 
 export interface VerifyOtpRequest {
   userId: string;
-  purpose: 'LOGIN' | 'WITHDRAWAL' | 'LOAN_SUBMISSION' | 'CARD_OPERATION' | 'ACCOUNT_OPERATION' | 'CONTACT_VERIFICATION';
+  purpose: 'LOGIN' | 'WITHDRAWAL' | 'LOAN_SUBMISSION' | 'CARD_OPERATION' | 'ACCOUNT_OPERATION' | 'CONTACT_VERIFICATION' | 'CARD_ISSUANCE';
   contextId?: string | null;
   code: string;
 }

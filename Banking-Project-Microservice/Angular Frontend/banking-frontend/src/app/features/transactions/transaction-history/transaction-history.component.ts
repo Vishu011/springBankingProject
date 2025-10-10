@@ -111,6 +111,31 @@ export class TransactionHistoryComponent implements OnInit {
       default: return '';
     }
   }
+
+  getMethodDetails(tx: TransactionResponse): string {
+    if (!tx?.metadataJson) return '-';
+    try {
+      const meta = JSON.parse(tx.metadataJson);
+      const method = meta?.method || null;
+      const brand = meta?.brand || null;
+      const panMasked = meta?.panMasked || null;
+
+      if ((method && method.toString().toUpperCase() === 'DEBIT_CARD') || panMasked || brand) {
+        const parts: string[] = [];
+        parts.push('Debit Card');
+        if (brand) parts.push(brand);
+        const head = parts.join(' • ');
+        return panMasked ? head + ' • ' + panMasked : head;
+      }
+      if (method && method.toString().toUpperCase() === 'ACCOUNT') {
+        return 'Account';
+      }
+      return method || '-';
+    } catch {
+      return '-';
+    }
+  }
+
   getAccountDisplayName(accountId: string | null): string {
     if (!accountId) return '-';
 

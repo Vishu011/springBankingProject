@@ -8,16 +8,17 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-// Enums mirroring backend Account.java
-enum AccountType {
-    SAVINGS,
-    CURRENT,
-}
-
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class AccountDto {
+
+    // Enum mirroring backend Account.java (made inner and public for cross-package access)
+    public enum AccountType {
+        SAVINGS,
+        SALARY_CORPORATE
+    }
+
     private String accountId;
     private String userId;
     private String accountNumber;

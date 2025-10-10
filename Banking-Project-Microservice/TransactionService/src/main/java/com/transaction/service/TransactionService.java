@@ -12,6 +12,8 @@ import com.transaction.exceptions.InsufficientFundsException;
 import com.transaction.exceptions.InvalidTransactionException;
 import com.transaction.exceptions.TransactionProcessingException;
 import com.transaction.model.Transaction;
+import com.transaction.dto.InternalDebitRequest;
+import com.transaction.dto.DebitCardWithdrawRequest;
 
 public interface TransactionService {
 
@@ -50,6 +52,10 @@ public interface TransactionService {
      * Used by Account Service to persist fines applied or recovered.
      */
     Transaction recordFine(FineRequest request);
+
+    Transaction internalDebit(InternalDebitRequest request);
+
+    Transaction debitCardWithdraw(DebitCardWithdrawRequest request);
 
     /**
      * Retrieves a transaction by its ID.

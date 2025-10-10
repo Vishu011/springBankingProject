@@ -41,4 +41,12 @@ public class Transaction {
     @Column(name = "transaction_date", nullable = false)
     private LocalDateTime transactionDate;
 
+    // Optional: reason for internal debits or similar (e.g., CARD_ISSUANCE_FEE)
+    @Column(name = "reason")
+    private String reason;
+
+    // Optional: metadata stored as JSON for internal operations (e.g., {"type":"CREDIT","brand":"VISA"})
+    @Column(name = "metadata_json", length = 2000)
+    private String metadataJson;
+
 }
