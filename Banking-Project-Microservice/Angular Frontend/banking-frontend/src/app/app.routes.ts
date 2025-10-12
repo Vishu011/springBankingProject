@@ -23,6 +23,11 @@ import { KycFormComponent } from './features/kyc/kyc-form/kyc-form.component';
 import { kycVerifiedGuard } from './core/guards/kyc.guard';
 import { SalaryApplicationComponent } from './features/accounts/salary-application/salary-application.component';
 import { SalaryApplicationsListComponent } from './features/accounts/salary-application/salary-applications-list.component';
+import { SelfServiceDashboardComponent } from './features/self-service/self-service-dashboard.component';
+import { SelfServiceNomineesComponent } from './features/self-service/nominees.component';
+import { SelfServiceContactComponent } from './features/self-service/contact.component';
+import { SelfServiceRequestsComponent } from './features/self-service/requests.component';
+import { ProfileComponent } from './features/profile/profile.component';
 
 export const routes: Routes = [
     // Public routes (no layout)
@@ -59,6 +64,13 @@ export const routes: Routes = [
             { path: 'kyc', component: KycFormComponent },
             { path: 'accounts/salary/apply', component: SalaryApplicationComponent, canActivate: [kycVerifiedGuard] },
             { path: 'accounts/salary/applications', component: SalaryApplicationsListComponent, canActivate: [kycVerifiedGuard] },
+            { path: 'self-service', component: SelfServiceDashboardComponent, canActivate: [kycVerifiedGuard] },
+            // Temporary route wiring so tiles do not redirect to home.
+            // These can later be replaced with dedicated components for each section.
+            { path: 'self-service/nominees', component: SelfServiceNomineesComponent, canActivate: [kycVerifiedGuard] },
+            { path: 'self-service/contact', component: SelfServiceContactComponent, canActivate: [kycVerifiedGuard] },
+            { path: 'self-service/requests', component: SelfServiceRequestsComponent, canActivate: [kycVerifiedGuard] },
+            { path: 'profile', component: ProfileComponent, canActivate: [kycVerifiedGuard] },
 
         ]
     },

@@ -5,9 +5,9 @@ spring:
     name: notification-service
 
   datasource:
-    url: jdbc:oracle:thin:@localhost:1521:orcl
-    username: hr
-    password: hr
+    url: jdbc:oracle:thin:@//localhost:1521/ORCL
+    username: NOTIFY_MS
+    password: notify123
     driver-class-name: oracle.jdbc.OracleDriver
 
   jpa:
@@ -29,6 +29,29 @@ spring:
           jwk-set-uri: http://localhost:8080/realms/bank-realm/protocol/openid-connect/certs
           # Alternatively, you can use issuer-uri if you prefer. Spring will discover JWKS from here.
           # issuer-uri: http://localhost:8080/realms/bank-realm
+
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: faizaltest204@gmail.com
+    password: xytyyekfjvqtrmna
+    properties:
+      mail.smtp.auth: true
+      mail.smtp.starttls.enable: true
+      mail.smtp.ssl.trust: smtp.gmail.com
+      mail.debug: true
+
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: notification-service-group
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      properties:
+        spring.json.type.mapping: transaction-events:com.notification.event.TransactionCompletedEvent,kyc-status-events:com.notification.event.KycStatusUpdatedEvent,loan-status-events:com.notification.event.LoanStatusUpdatedEvent
+        spring.json.trusted.packages: "com.notification.event"
+        spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JsonDeserializer
+      auto-offset-reset: latest
 
 server:
   port: 8002
@@ -58,4 +81,10 @@ management:
   tracing:
     sampling:
       probability: 1.0
-     
+
+keycloak:
+  service-client:
+    url: http://localhost:8080
+    realm: bank-realm
+    client-id: notification-service-client
+    client-secret: UQCtpCaZ02y9DQK8sMUcm03G9A6p88vD

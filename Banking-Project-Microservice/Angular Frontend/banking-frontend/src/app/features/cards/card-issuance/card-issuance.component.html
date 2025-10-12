@@ -53,6 +53,23 @@
         </select>
         <small class="help-text">
           Savings: VISA, RUPAY (CVV 3) • Salary/Corporate: AMEX, MASTERCARD, DISCOVERY (CVV 4).
+      </small>
+      </div>
+
+      <!-- Issuance Fee -->
+      <div class="form-group fee-group">
+        <label>Issuance Fee</label>
+        <div *ngIf="loadingFee" class="loading-message">Loading fee...</div>
+        <div *ngIf="feeError" class="message error-message">{{ feeError }}</div>
+        <div *ngIf="!loadingFee && !feeError">
+          <span *ngIf="issuanceFeeAmount !== null">
+            {{ issuanceFeeAmount | currency:(issuanceFeeCurrency || 'INR'):'symbol':'1.2-2' }}
+            <span *ngIf="issuanceFeeDescription">- {{ issuanceFeeDescription }}</span>
+          </span>
+          <span *ngIf="issuanceFeeAmount === null">Fee not available.</span>
+        </div>
+        <small class="help-text">
+          The issuance fee will be debited at approval or as per bank policy.
         </small>
       </div>
 

@@ -24,3 +24,7 @@ Banking-Project-Microservice/UserMicroservice/uploads/
 **/.env
 **/application-local.properties
 **/application-local.yaml
+
+# Ignore uploaded artifacts
+Banking-Project-Microservice/AccountMicroservice/uploads/
+Banking-Project-Microservice/SelfService/uploads/

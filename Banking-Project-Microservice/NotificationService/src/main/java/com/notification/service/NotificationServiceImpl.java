@@ -96,7 +96,7 @@ public class NotificationServiceImpl implements NotificationService {
         NotificationRequest notificationRequest = new NotificationRequest();
         notificationRequest.setUserId(event.getUserId());
         notificationRequest.setContent(event.getNotificationMessage());
-        notificationRequest.setType(NotificationType.EMAIL);
+        notificationRequest.setType("EMAIL");
 
         try {
             sendNotificationInternal(notificationRequest);
@@ -120,7 +120,7 @@ public class NotificationServiceImpl implements NotificationService {
         NotificationRequest notificationRequest = new NotificationRequest();
         notificationRequest.setUserId(event.getUserId());
         notificationRequest.setContent(event.getMessage());
-        notificationRequest.setType(NotificationType.EMAIL);
+        notificationRequest.setType("EMAIL");
 
         try {
             sendNotificationInternal(notificationRequest);
@@ -144,7 +144,7 @@ public class NotificationServiceImpl implements NotificationService {
         NotificationRequest notificationRequest = new NotificationRequest();
         notificationRequest.setUserId(event.getUserId());
         notificationRequest.setContent(event.getMessage());
-        notificationRequest.setType(NotificationType.EMAIL);
+        notificationRequest.setType("EMAIL");
 
         try {
             sendNotificationInternal(notificationRequest);
@@ -158,14 +158,22 @@ public class NotificationServiceImpl implements NotificationService {
     private NotificationResponse sendNotificationInternal(NotificationRequest request) {
         Notification notification = new Notification();
         notification.setUserId(request.getUserId());
-        notification.setType(request.getType());
         notification.setContent(request.getContent());
         notification.setSentAt(LocalDateTime.now());
         notification.setStatus(NotificationStatus.PENDING);
 
+        NotificationType typeEnum;
+        try {
+            typeEnum = request.getType() != null ? NotificationType.valueOf(request.getType().trim().toUpperCase()) : NotificationType.EMAIL;
+        } catch (IllegalArgumentException ex) {
+            typeEnum = NotificationType.EMAIL;
+        }
+
+        notification.setType(typeEnum);
+
         NotificationResponse response = new NotificationResponse();
         response.setUserId(request.getUserId());
-        response.setType(request.getType());
+        response.setType(typeEnum);
         response.setContent(request.getContent());
         response.setSentAt(notification.getSentAt());
 
@@ -176,31 +184,36 @@ public class NotificationServiceImpl implements NotificationService {
             if (request.getToEmail() != null && !request.getToEmail().isBlank()) {
                 recipientEmail = request.getToEmail().trim();
             } else {
-                // Fallback: resolve via User Service using userId
-                if (serviceAccessToken == null || serviceAccessToken.isBlank()) {
-                    System.out.println("Notification Service: serviceAccessToken is empty. Refreshing token before user lookup...");
-                    refreshServiceAccessToken();
-                }
-
-                if (request.getUserId() != null) {
-                    UserDto userProfile = userServiceClient.getUserById(request.getUserId(), "Bearer " + serviceAccessToken);
-                    if (userProfile != null && userProfile.getEmail() != null) {
-                        recipientEmail = userProfile.getEmail();
-                    } else {
-                        System.err.println("User profile or email not found for userId: " + request.getUserId() + ". Cannot send email.");
-                        throw new NotificationProcessingException("User email not found for notification.");
-                    }
+                // If userId appears to be an email, use it directly (supports public OTP flows)
+                if (request.getUserId() != null && request.getUserId().contains("@")) {
+                    recipientEmail = request.getUserId().trim();
                 } else {
-                    System.err.println("User ID is null and toEmail not provided. Cannot send email notification.");
-                    throw new NotificationProcessingException("Recipient email missing for notification.");
+                    // Fallback: resolve via User Service using userId
+                    if (serviceAccessToken == null || serviceAccessToken.isBlank()) {
+                        System.out.println("Notification Service: serviceAccessToken is empty. Refreshing token before user lookup...");
+                        refreshServiceAccessToken();
+                    }
+
+                    if (request.getUserId() != null) {
+                        UserDto userProfile = userServiceClient.getUserById(request.getUserId(), "Bearer " + serviceAccessToken);
+                        if (userProfile != null && userProfile.getEmail() != null) {
+                            recipientEmail = userProfile.getEmail();
+                        } else {
+                            System.err.println("User profile or email not found for userId: " + request.getUserId() + ". Cannot send email.");
+                            throw new NotificationProcessingException("User email not found for notification.");
+                        }
+                    } else {
+                        System.err.println("User ID is null and toEmail not provided. Cannot send email notification.");
+                        throw new NotificationProcessingException("Recipient email missing for notification.");
+                    }
                 }
             }
 
             System.out.println("Notification Service: Resolved recipient email for userId " + request.getUserId() + " -> " + recipientEmail);
 
-            if (request.getType() == NotificationType.EMAIL) {
-                sendEmail(recipientEmail, "Banking Alert: " + request.getType().name() + " Update", request.getContent());
-            } else if (request.getType() == NotificationType.SMS) {
+            if (typeEnum == NotificationType.EMAIL) {
+                sendEmail(recipientEmail, "Banking Alert: " + typeEnum.name() + " Update", request.getContent());
+            } else if (typeEnum == NotificationType.SMS) {
                 System.out.println("SMS sending is not implemented yet. Content: " + request.getContent());
             }
 

@@ -1,7 +1,7 @@
 // src/app/features/transactions/transaction.service.ts
 
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
@@ -9,6 +9,9 @@ import {
   DepositRequest,
   WithdrawRequest,
   TransferRequest, // Ensure this is the updated interface
+  StatementInitiateRequest,
+  StatementInitiateResponse,
+  StatementVerifyRequest
 } from '../../shared/models/transaction.model';
 
 @Injectable({
@@ -76,5 +79,24 @@ export class TransactionService {
    */
   getTransactionById(transactionId: string): Observable<TransactionResponse> {
     return this.http.get<TransactionResponse>(`${this.transactionsApiUrl}/${transactionId}`);
+  }
+
+  /**
+   * Initiate account statement OTP to provided email (or fallback to user email).
+   * POST /transactions/statements/initiate
+   */
+  initiateStatement(req: StatementInitiateRequest): Observable<StatementInitiateResponse> {
+    return this.http.post<StatementInitiateResponse>(`${this.transactionsApiUrl}/statements/initiate`, req);
+  }
+
+  /**
+   * Verify OTP, generate password-protected PDF and email to recipient.
+   * POST /transactions/statements/verify
+   */
+  verifyStatement(req: StatementVerifyRequest): Observable<HttpResponse<string>> {
+    return this.http.post(`${this.transactionsApiUrl}/statements/verify`, req, {
+      observe: 'response',
+      responseType: 'text'
+    });
   }
 }

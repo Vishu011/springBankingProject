@@ -85,7 +85,7 @@
                   </button>
                   <button
                     type="button"
-                    [disabled]="revealing[card.cardId] || !(revealOtp[card.cardId]?.trim())"
+                    [disabled]="revealing[card.cardId] || !((revealOtp[card.cardId] || '').trim())"
                     (click)="revealPan(card)"
                     class="btn btn-primary">
                     <i class="fas fa-eye"></i>
@@ -131,7 +131,7 @@
                   </button>
                   <button
                     type="button"
-                    [disabled]="regenLoading[card.cardId] || !(regenOtp[card.cardId]?.trim())"
+                    [disabled]="regenLoading[card.cardId] || !((regenOtp[card.cardId] || '').trim())"
                     (click)="regenerateCvv(card)"
                     class="btn btn-primary">
                     <i class="fas fa-sync"></i>

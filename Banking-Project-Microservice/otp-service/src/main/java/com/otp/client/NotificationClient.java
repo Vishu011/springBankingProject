@@ -1,7 +1,7 @@
 package com.otp.client;
 
 import com.otp.client.dto.NotificationRequest;
-import com.otp.client.dto.NotificationResponse;
+import org.springframework.http.ResponseEntity;
 import com.otp.config.FeignClientConfiguration;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -11,5 +11,5 @@ import org.springframework.web.bind.annotation.RequestBody;
 public interface NotificationClient {
 
     @PostMapping("/send-email")
-    NotificationResponse sendEmail(@RequestBody NotificationRequest request);
+    ResponseEntity<Void> sendEmail(@RequestBody NotificationRequest request);
 }

@@ -109,6 +109,16 @@ public class TransactionServiceImpl implements TransactionService {
             if (targetAccount == null) {
                 throw new AccountNotFoundException("Target account not found with ID: " + request.getAccountId());
             }
+            // Add metadata: account-based operation (deposit into target)
+            try {
+                java.util.Map<String, String> meta = new java.util.HashMap<>();
+                meta.put("method", "ACCOUNT");
+                if (targetAccount.getAccountNumber() != null) {
+                    meta.put("toAccountNumber", targetAccount.getAccountNumber());
+                    meta.put("toAccountMasked", maskAccount(targetAccount.getAccountNumber()));
+                }
+                transaction.setMetadataJson(new ObjectMapper().writeValueAsString(meta));
+            } catch (Exception ignore) {}
 
             checkKycStatus(targetAccount.getUserId());
 
@@ -179,6 +189,16 @@ public class TransactionServiceImpl implements TransactionService {
             if (sourceAccount == null) {
                 throw new AccountNotFoundException("Source account not found with ID: " + request.getAccountId());
             }
+            // Add metadata: account-based operation (withdraw from source)
+            try {
+                java.util.Map<String, String> meta = new java.util.HashMap<>();
+                meta.put("method", "ACCOUNT");
+                if (sourceAccount.getAccountNumber() != null) {
+                    meta.put("fromAccountNumber", sourceAccount.getAccountNumber());
+                    meta.put("fromAccountMasked", maskAccount(sourceAccount.getAccountNumber()));
+                }
+                transaction.setMetadataJson(new ObjectMapper().writeValueAsString(meta));
+            } catch (Exception ignore) {}
 
             checkKycStatus(sourceAccount.getUserId());
 
@@ -277,6 +297,21 @@ public class TransactionServiceImpl implements TransactionService {
             transaction.setFromAccountId(sourceAccount.getAccountId());
             transaction.setToAccountId(targetAccount.getAccountId());
             transaction = transactionRepository.save(transaction); // Save again with resolved IDs
+
+            // Add metadata: account-based transfer (from -> to)
+            try {
+                java.util.Map<String, String> meta = new java.util.HashMap<>();
+                meta.put("method", "ACCOUNT");
+                if (sourceAccount.getAccountNumber() != null) {
+                    meta.put("fromAccountNumber", sourceAccount.getAccountNumber());
+                    meta.put("fromAccountMasked", maskAccount(sourceAccount.getAccountNumber()));
+                }
+                if (targetAccount.getAccountNumber() != null) {
+                    meta.put("toAccountNumber", targetAccount.getAccountNumber());
+                    meta.put("toAccountMasked", maskAccount(targetAccount.getAccountNumber()));
+                }
+                transaction.setMetadataJson(new ObjectMapper().writeValueAsString(meta));
+            } catch (Exception ignore) {}
 
             // Perform KYC check for both source and target users
             checkKycStatus(sourceAccount.getUserId());
@@ -389,7 +424,8 @@ public class TransactionServiceImpl implements TransactionService {
      */
     @Override
     public List<Transaction> getTransactionsByAccountId(String accountId) {
-        return transactionRepository.findByFromAccountIdOrToAccountId(accountId, accountId);
+        // Ensure latest transactions appear first
+        return transactionRepository.findByFromAccountIdOrToAccountIdOrderByTransactionDateDesc(accountId, accountId);
     }
 
     @Override
@@ -450,6 +486,21 @@ public class TransactionServiceImpl implements TransactionService {
             AccountDto account = accountServiceClient.getAccountById(request.getAccountId());
             if (account == null) {
                 throw new AccountNotFoundException("Account not found with ID: " + request.getAccountId());
+            }
+            // Ensure metadata for account-based internal debit if not provided
+            if (transaction.getMetadataJson() == null || transaction.getMetadataJson().isBlank()) {
+                try {
+                    java.util.Map<String, String> meta = new java.util.HashMap<>();
+                    meta.put("method", "ACCOUNT");
+                    if (account.getAccountNumber() != null) {
+                        meta.put("fromAccountNumber", account.getAccountNumber());
+                        meta.put("fromAccountMasked", maskAccount(account.getAccountNumber()));
+                    }
+                    if (request.getReason() != null) {
+                        meta.put("reason", request.getReason());
+                    }
+                    transaction.setMetadataJson(new ObjectMapper().writeValueAsString(meta));
+                } catch (Exception ignore) {}
             }
             if (account.getBalance() < request.getAmount()) {
                 throw new InsufficientFundsException("Insufficient funds in account: " + request.getAccountId());
@@ -622,6 +673,18 @@ public class TransactionServiceImpl implements TransactionService {
         }
 
         return transaction;
+    }
+
+    // Helper to mask an account number, showing only last 4 digits
+    private String maskAccount(String acc) {
+        if (acc == null) return null;
+        String digits = acc.replaceAll("\\s", "");
+        int n = digits.length();
+        if (n <= 4) return digits;
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < n - 4; i++) sb.append('•');
+        sb.append(digits.substring(n - 4));
+        return sb.toString();
     }
 
     @CircuitBreaker(name = "kafkaNotificationPublisher", fallbackMethod = "publishTransactionCompletedEventFallback")

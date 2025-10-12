@@ -20,6 +20,7 @@ public class UserUpdateRequest {
     private String email;
     private UserRole role;
     private String firstName;
+    private String middleName; // added
     private String lastName;
     private LocalDate dateOfBirth;
     private String address;

@@ -2,6 +2,7 @@ package com.transaction.proxyService;
 
 
 import org.springframework.cloud.openfeign.FeignClient;
+import com.transaction.config.FeignClientConfiguration;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -12,7 +13,7 @@ import io.github.resilience4j.retry.annotation.Retry;
 
 // @FeignClient annotation specifies the name of the target service (as registered in Eureka)
 // The name "notification-service" should match the 'spring.application.name' in the Notification Service's application.yml
-@FeignClient(name = "notification-service", path = "/notifications")
+@FeignClient(name = "notification-service", path = "/notifications", configuration = FeignClientConfiguration.class)
 public interface NotificationServiceClient {
 
     /**

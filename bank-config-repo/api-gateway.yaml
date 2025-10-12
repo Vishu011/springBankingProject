@@ -45,6 +45,14 @@ spring:
           filters:
             - RewritePath=/notifications(?<segment>/?.*), /notifications$\{segment} # Preserves /notifications path for the notification-service
 
+        # Self Service Routes (new microservice base path /self-service)
+        - id: self_service
+          uri: lb://self-service
+          predicates:
+            - Path=/self-service/**
+          filters:
+            - RewritePath=/self-service(?<segment>/?.*), /self-service$\{segment} # Preserve /self-service prefix for backend mapping
+
         # Loan Service Routes (Assuming loan-service on port 8004, base path /loans)
         - id: loan_service
           uri: lb://loan-service
@@ -100,4 +108,3 @@ management:
   tracing:
     sampling:
       probability: 1.0
-     

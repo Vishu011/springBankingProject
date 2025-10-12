@@ -53,9 +53,12 @@ public class KycController {
             @RequestParam("city") String city,
             @RequestParam("state") String state,
             @RequestParam("postalCode") String postalCode,
-            @RequestParam(value = "documents", required = false) MultipartFile[] documents) {
+            @RequestParam(value = "documents", required = true) MultipartFile[] documents) {
 
         String userId = authentication.getName();
+        if (documents == null || documents.length == 0) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
         KycApplication app = kycService.submitApplication(
                 userId,
                 aadharNumber,

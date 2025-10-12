@@ -66,6 +66,11 @@ public class SalaryAccountApplicationServiceImpl implements SalaryAccountApplica
                     + (otpRes != null && otpRes.getMessage() != null ? " - " + otpRes.getMessage() : ""));
         }
 
+        // Enforce mandatory documents for salary/corporate application (JSON flow)
+        if (request.getDocuments() == null || request.getDocuments().isEmpty()) {
+            throw new AccountProcessingException("Documents are required for Salary/Corporate account application.");
+        }
+
         SalaryAccountApplication app = new SalaryAccountApplication();
         app.setUserId(request.getUserId());
         app.setCorporateEmail(request.getCorporateEmail());

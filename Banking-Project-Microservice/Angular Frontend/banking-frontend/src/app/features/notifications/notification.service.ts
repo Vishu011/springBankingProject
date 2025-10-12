@@ -12,7 +12,7 @@ import { NotificationResponse } from '../../shared/models/notification.model';
 })
 export class NotificationService {
 
-  private notificationsApiUrl = `${environment.apiUrl}/notification-service/notifications`; // Route via Gateway discovery ID
+  private notificationsApiUrl = `${environment.apiUrl}/notifications`; // Matches API Gateway route: Path=/notifications/** -> lb://notification-service
 
   constructor(private http: HttpClient) { }
 

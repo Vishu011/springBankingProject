@@ -47,5 +47,10 @@ public interface TransactionRepository extends JpaRepository<Transaction, String
      */
     List<Transaction> findByTypeAndStatus(TransactionType type, TransactionStatus status);
 
+    /**
+     * Finds all transactions involving a specific account, ordered by transactionDate desc (latest first).
+     */
+    List<Transaction> findByFromAccountIdOrToAccountIdOrderByTransactionDateDesc(String accountId, String accountId2);
+
     // You can add more custom query methods as needed for your business logic.
 }

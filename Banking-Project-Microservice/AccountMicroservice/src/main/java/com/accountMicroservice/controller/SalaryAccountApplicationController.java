@@ -75,7 +75,7 @@ public class SalaryAccountApplicationController {
             @RequestPart("userId") String userId,
             @RequestPart("corporateEmail") String corporateEmail,
             @RequestPart("otpCode") String otpCode,
-            @RequestPart(value = "documents", required = false) MultipartFile[] documents) {
+            @RequestPart(value = "documents", required = true) MultipartFile[] documents) {
         SalaryApplicationResponse resp = service.submitApplicationMultipart(userId, corporateEmail, otpCode, documents);
         return new ResponseEntity<>(resp, HttpStatus.CREATED);
     }

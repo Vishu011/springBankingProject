@@ -133,6 +133,18 @@ export class AuthenticatedLayoutComponent {
             icon: 'fas fa-plus-square',
             route: '/cards/issue',
             description: 'Request a new debit or credit card'
+        },
+        {
+            title: 'Self Service',
+            icon: 'fas fa-user-cog',
+            route: '/self-service',
+            description: 'Manage nominees, contact details, and change requests'
+        },
+        {
+            title: 'My Profile',
+            icon: 'fas fa-user',
+            route: '/profile',
+            description: 'View your profile and upload photo; quick links to edit name/DOB/address and contact'
         }
     ];
 

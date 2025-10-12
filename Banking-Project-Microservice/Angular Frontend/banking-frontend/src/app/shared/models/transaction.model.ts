@@ -53,3 +53,28 @@ export interface DebitCardWithdrawRequest {
     amount: number;
     otpCode: string;
 }
+
+/**
+ * Account statement OTP + generation DTOs
+ */
+export interface StatementInitiateRequest {
+    userId: string;
+    accountId: string;
+    fromDate: string; // yyyy-MM-dd
+    toDate: string;   // yyyy-MM-dd
+    toEmail?: string; // optional override recipient
+}
+
+export interface StatementInitiateResponse {
+    requestId?: string | null;
+    expiresAt?: string | null; // ISO date-time
+}
+
+export interface StatementVerifyRequest {
+    userId: string;
+    accountId: string;
+    fromDate: string; // yyyy-MM-dd
+    toDate: string;   // yyyy-MM-dd
+    code: string;     // OTP code
+    toEmail?: string; // optional override recipient
+}

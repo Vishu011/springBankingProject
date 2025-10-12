@@ -24,8 +24,14 @@ public class UserResponse {
     private UserRole role;
     private LocalDateTime createdAt;
     private String firstName;
+    private String middleName; // added
     private String lastName;
     private LocalDate dateOfBirth;
+    private String address;     // added
     private String phoneNumber;
     private KycStatus kycStatus;
+
+    // Read-only identity fields sourced from latest APPROVED KYC application
+    private String aadharNumber;
+    private String panNumber;
 }

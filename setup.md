@@ -96,6 +96,7 @@ This script creates/grants schemas:
 - CARD_MS/card123
 - NOTIFY_MS/notify123
 - OTP_MS/otp123
+- SELF_SERVICE_MS/selfservice123
 
 Ensure microservices point to:
 - URL: jdbc:oracle:thin:@//localhost:1521/ORCL
@@ -189,7 +190,12 @@ mvn spring-boot:run -->
 - NotificationService/
 <!-- cd Banking-Project-Microservice/NotificationService
 mvn spring-boot:run -->
-
+- OTP-Service/
+<!-- cd Banking-Project-Microservice/otp-service
+mvn spring-boot:run -->
+- Self Service/
+<!-- cd Banking-Project-Microservice/SelfService
+mvn spring-boot:run -->
 
 Each service should register with Eureka at http://localhost:8761 and use the Oracle schema noted above. Check application.yaml for:
 - eureka.client.serviceUrl.defaultZone: http://localhost:8761/eureka

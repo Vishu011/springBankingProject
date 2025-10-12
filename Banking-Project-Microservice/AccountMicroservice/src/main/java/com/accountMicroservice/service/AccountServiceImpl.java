@@ -8,7 +8,6 @@ import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpClientErrorException;
 
@@ -35,7 +34,6 @@ import com.accountMicroservice.proxyService.TransactionServiceClient;
 import com.accountMicroservice.dto.NotificationRequest;
 import com.accountMicroservice.dto.FineRequest;
 
-@Service
 public class AccountServiceImpl implements AccountService {
 
     private final AccountRepository accountRepository;

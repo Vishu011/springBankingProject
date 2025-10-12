@@ -2,6 +2,7 @@ package com.notification.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;                                                                                                                                                                                                                                 
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -22,6 +23,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(authorize -> authorize
                 .requestMatchers("/actuator/**").permitAll() // Allow Prometheus to scrape
                 .requestMatchers("/h2-console/**").permitAll() // If using H2 for dev
+                .requestMatchers(HttpMethod.POST, "/notifications/send-email").permitAll() // Allow internal S2S without JWT (OTP, fallbacks)
                 .anyRequest().authenticated() // All other requests require authentication
             )
             .oauth2ResourceServer(oauth2 -> oauth2

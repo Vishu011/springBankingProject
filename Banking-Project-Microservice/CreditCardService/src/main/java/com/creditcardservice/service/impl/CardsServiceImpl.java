@@ -19,6 +19,7 @@ import com.creditcardservice.service.CardsService;
 import com.creditcardservice.util.CardNumberUtil;
 import com.creditcardservice.util.CvvUtil;
 import com.creditcardservice.util.HashUtil;
+import com.creditcardservice.dto.FeeResponse;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -628,6 +629,15 @@ public class CardsServiceImpl implements CardsService {
             resp.setOneTimeCvv(oneTimeCvv);
         }
         return resp;
+    }
+
+    @Override
+    public FeeResponse getIssuanceFee(String accountType, String kind) {
+        AccountType at = AccountType.valueOf(accountType.trim().toUpperCase());
+        CardKind ck = CardKind.valueOf(kind.trim().toUpperCase());
+        double fee = issuanceFee(at, ck);
+        String desc = "Issuance fee for " + at + " " + ck + " card";
+        return new FeeResponse(fee, "INR", desc);
     }
 
     private CardResponse toCardResponse(Card c) {

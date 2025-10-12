@@ -10,6 +10,7 @@ import com.creditcardservice.dto.RevealPanRequest;
 import com.creditcardservice.dto.RevealPanResponse;
 import com.creditcardservice.dto.RegenerateCvvRequest;
 import com.creditcardservice.dto.RegenerateCvvResponse;
+import com.creditcardservice.dto.FeeResponse;
 import com.creditcardservice.model.CardApplication.ApplicationStatus;
 import com.creditcardservice.service.CardsService;
 import jakarta.validation.Valid;
@@ -17,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
@@ -100,5 +102,14 @@ public class CardsController {
             @Valid @RequestBody ReviewCardApplicationRequest request) {
         CardApplicationResponse resp = cardsService.reviewApplication(id, request);
         return ResponseEntity.ok(resp);
+    }
+
+    // FEES: expose issuance fee based on account type and card kind for UI display
+    // Example: GET /cards/fees?accountType=SAVINGS&kind=DEBIT
+    @GetMapping("/fees")
+    public ResponseEntity<FeeResponse> getIssuanceFee(@RequestParam String accountType,
+                                                      @RequestParam String kind) {
+        FeeResponse fee = cardsService.getIssuanceFee(accountType, kind);
+        return ResponseEntity.ok(fee);
     }
 }

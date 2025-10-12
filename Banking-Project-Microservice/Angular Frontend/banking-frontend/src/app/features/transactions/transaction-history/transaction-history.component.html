@@ -15,6 +15,57 @@
         </select>
     </div>
 
+    <!-- Statement Download (OTP + Email PDF) -->
+    <div class="statement-section" *ngIf="!loading && accounts.length > 0">
+        <h3>Download Account Statement (Password-protected PDF)</h3>
+
+        <div *ngIf="statementLoading" class="loading-message">Processing...</div>
+        <div *ngIf="statementError" class="message error-message">{{ statementError }}</div>
+        <div *ngIf="statementSuccess" class="message success-message">{{ statementSuccess }}</div>
+
+        <div class="statement-form">
+            <div class="row">
+                <label for="fromDate">From</label>
+                <input id="fromDate" type="date" [(ngModel)]="fromDate">
+            </div>
+            <div class="row">
+                <label for="toDate">To</label>
+                <input id="toDate" type="date" [(ngModel)]="toDate">
+            </div>
+            <div class="row">
+                <label for="toEmail">Send To (optional)</label>
+                <input id="toEmail" type="email" [(ngModel)]="toEmail" placeholder="Leave blank to use your registered email">
+            </div>
+
+            <div class="row actions">
+                <button type="button"
+                        (click)="initiateStatement()"
+                        [disabled]="statementLoading || !selectedAccountId">
+                    Send OTP to Email
+                </button>
+            </div>
+
+            <div class="row" *ngIf="statementOtpSent">
+                <label for="otpCode">Enter OTP</label>
+                <input id="otpCode"
+                       type="text"
+                       [(ngModel)]="otpCode"
+                       maxlength="6"
+                       pattern="[0-9]{6}"
+                       placeholder="6-digit code">
+                <button type="button"
+                        (click)="verifyAndSendStatement()"
+                        [disabled]="statementLoading || !otpCode || otpCode.trim().length !== 6">
+                    Verify & Email PDF
+                </button>
+            </div>
+
+            <small class="help-text">
+                The PDF will be password protected. Password = FIRST 4 LETTERS of your first name (uppercase) + YEAR of birth (e.g., ABCD2003).
+            </small>
+        </div>
+    </div>
+
     <div *ngIf="!loading && selectedAccountId && transactions.length > 0" class="transaction-list">
         <h3>Transactions for {{ getSelectedAccountNumber() }}</h3>
         <table>

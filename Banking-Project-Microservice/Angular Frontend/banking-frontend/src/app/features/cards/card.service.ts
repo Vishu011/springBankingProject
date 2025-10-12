@@ -71,4 +71,15 @@ export class CardService {
       body
     );
   }
+
+  /**
+   * Fetch issuance fee for selected account type and card kind so user can see charges upfront.
+   * GET /cards/fees?accountType=SAVINGS|SALARY_CORPORATE&kind=DEBIT|CREDIT
+   */
+  getIssuanceFee(accountType: string, kind: string): Observable<{ amount: number; currency: string; description: string }> {
+    return this.http.get<{ amount: number; currency: string; description: string }>(
+      `${this.cardsApiUrl}/fees`,
+      { params: { accountType, kind } }
+    );
+  }
 }

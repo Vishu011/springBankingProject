@@ -26,5 +26,9 @@ export const routes: Routes = [
     { path: 'card-applications', canActivate: [authGuard], loadComponent: () => import('./features/card-applications/card-applications-list.component').then(m => m.CardApplicationsListComponent) },
     { path: 'card-applications/:id', canActivate: [authGuard], loadComponent: () => import('./features/card-applications/card-application-detail.component').then(m => m.CardApplicationDetailComponent) },
 
+    // User Profile Requests (Self Service) - Admin
+    { path: 'self-service-requests', canActivate: [authGuard], loadComponent: () => import('./features/self-service-requests/self-service-requests-list.component').then(m => m.SelfServiceRequestsListComponent) },
+    { path: 'self-service-requests/:id', canActivate: [authGuard], loadComponent: () => import('./features/self-service-requests/self-service-request-detail.component').then(m => m.SelfServiceRequestDetailComponent) },
+
     { path: '**', redirectTo: '/admin-dashboard' },
 ];

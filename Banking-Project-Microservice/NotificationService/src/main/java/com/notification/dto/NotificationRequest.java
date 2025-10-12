@@ -1,32 +1,22 @@
 package com.notification.dto;
 
-import com.notification.model.NotificationType;
-
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * DTO for incoming requests to send a notification.
- * This defines the payload that clients will send to the Notification Service.
+ * Request payload for sending notifications via NotificationService.
+ * - userId: the user to notify (used to resolve email if toEmail is not provided)
+ * - type: "EMAIL" | "SMS" (currently only EMAIL is implemented)
+ * - content: message body
+ * - toEmail: optional explicit email; if null, service will look up user's email
  */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class NotificationRequest {
-
-    @NotBlank(message = "User ID cannot be empty")
     private String userId;
-
-    // Optional: direct recipient email for public flows (e.g., registration OTP)
-    // If provided, NotificationService will use this email directly and skip user lookup.
-    private String toEmail;
-
-    @NotNull(message = "Notification type cannot be null")
-    private NotificationType type; // e.g., EMAIL, SMS, IN_APP, PUSH
-
-    @NotBlank(message = "Notification content cannot be empty")
+    private String type;
     private String content;
+    private String toEmail;
 }

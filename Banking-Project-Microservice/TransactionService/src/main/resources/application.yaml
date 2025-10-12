@@ -38,6 +38,21 @@ spring:
         # Important for JSON serialization without adding __TypeId__ header, which simplifies deserialization
         spring.json.add.type.headers: false
 
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: faizaltest204@gmail.com
+    password: xytyyekfjvqtrmna # set an env var MAIL_PASSWORD with your Gmail App Password
+    properties:
+      mail.smtp.auth: true
+      mail.smtp.starttls.enable: true
+      mail.smtp.starttls.required: true
+      mail.smtp.ssl.trust: smtp.gmail.com
+      mail.smtp.connectiontimeout: 5000
+      mail.smtp.timeout: 5000
+      mail.smtp.writetimeout: 5000
+      mail.smtp.from: faizaltest204@gmail.com
+
 server:
   port: 8001
 
@@ -128,3 +143,10 @@ management:
   tracing:
     sampling:
       probability: 1.0
+
+keycloak:
+  service-client:
+    url: http://localhost:8080
+    realm: bank-realm
+    client-id: notification-service-client
+    client-secret: UQCtpCaZ02y9DQK8sMUcm03G9A6p88vD

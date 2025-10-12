@@ -1,0 +1,71 @@
+spring:
+  application:
+    name: self-service
+  datasource:
+    url: jdbc:oracle:thin:@localhost:1521:orcl
+    driver-class-name: oracle.jdbc.OracleDriver
+    username: SELF_SERVICE_MS
+    password: selfservice123
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.OracleDialect
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 20MB
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: http://localhost:8080/realms/bank-realm/protocol/openid-connect/certs
+
+# Oracle example (comment H2 above when using Oracle)
+#spring:
+#  datasource:
+#    url: jdbc:oracle:thin:@localhost:1521:orcl
+#    username: SELF_SERVICE_MS
+#    password: self_service
+#    driver-class-name: oracle.jdbc.OracleDriver
+#  jpa:
+#    hibernate:
+#      ddl-auto: update
+#    show-sql: true
+#    properties:
+#      hibernate:
+#        format_sql: true
+#        dialect: org.hibernate.dialect.OracleDialect
+
+server:
+  port: 8007
+
+uploads:
+  root: uploads/self-service
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://localhost:8761/eureka/
+    register-with-eureka: true
+    fetch-registry: true
+  instance:
+    preferIpAddress: true
+
+logging:
+  level:
+    org.springframework.web: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    io.github.resilience4j: DEBUG
+    org.springframework.security: DEBUG
+  pattern:
+    level: "%5p [${spring.application.name:},%X{traceId:-},%X{spanId:-}]"
+
+management:
+  tracing:
+    sampling:
+      probability: 1.0

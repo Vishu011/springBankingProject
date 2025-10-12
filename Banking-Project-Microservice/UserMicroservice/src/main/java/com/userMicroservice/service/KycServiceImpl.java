@@ -20,6 +20,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.userMicroservice.dao.KycApplicationRepository;
 import com.userMicroservice.dto.KycStatusUpdateRequest;
+import com.userMicroservice.dto.UserUpdateRequest;
 import com.userMicroservice.exceptions.UserNotFoundException;
 import com.userMicroservice.model.KycApplication;
 import com.userMicroservice.model.KycReviewStatus;
@@ -169,6 +170,22 @@ public class KycServiceImpl implements KycService {
         // Update user's KYC status accordingly and emit notification via existing flow
         if (decision == KycReviewStatus.APPROVED) {
             userService.updateKycStatus(app.getUserId(), new KycStatusUpdateRequest(KycStatus.VERIFIED, null));
+            // Also persist the verified KYC address into the User profile so it reflects everywhere
+            try {
+                String formatted = java.util.stream.Stream.of(
+                        app.getAddressLine1(),
+                        app.getAddressLine2(),
+                        app.getCity(),
+                        app.getState(),
+                        app.getPostalCode()
+                ).filter(s -> s != null && !s.isBlank())
+                 .collect(java.util.stream.Collectors.joining(", "));
+                if (!formatted.isBlank()) {
+                    UserUpdateRequest upd = new UserUpdateRequest();
+                    upd.setAddress(formatted);
+                    userService.updateUserProfile(app.getUserId(), upd);
+                }
+            } catch (Exception ignore) { }
         } else if (decision == KycReviewStatus.REJECTED) {
             userService.updateKycStatus(app.getUserId(), new KycStatusUpdateRequest(KycStatus.REJECTED, adminComment));
         }

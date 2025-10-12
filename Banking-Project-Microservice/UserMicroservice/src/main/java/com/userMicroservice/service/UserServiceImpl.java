@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.userMicroservice.dao.UserRepository;
+import com.userMicroservice.dao.KycApplicationRepository;
 import com.userMicroservice.dto.KycStatusUpdateRequest;
 import com.userMicroservice.dto.UserCreationRequest;
 import com.userMicroservice.dto.UserResponse;
@@ -40,12 +41,14 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final Keycloak keycloakAdminClient;
     private final KafkaTemplate<String, KycStatusUpdatedEvent> kafkaTemplate; // Inject KafkaTemplate
+    private final KycApplicationRepository kycApplicationRepository;
 
     @Autowired
-    public UserServiceImpl(UserRepository userRepository, Keycloak keycloakAdminClient, KafkaTemplate<String, KycStatusUpdatedEvent> kafkaTemplate) { // Add KafkaTemplate
+    public UserServiceImpl(UserRepository userRepository, Keycloak keycloakAdminClient, KafkaTemplate<String, KycStatusUpdatedEvent> kafkaTemplate, KycApplicationRepository kycApplicationRepository) {
         this.userRepository = userRepository;
         this.keycloakAdminClient = keycloakAdminClient;
         this.kafkaTemplate = kafkaTemplate;
+        this.kycApplicationRepository = kycApplicationRepository;
     }
 
     /**
@@ -189,9 +192,10 @@ public class UserServiceImpl implements UserService {
         });
         Optional.ofNullable(request.getRole()).ifPresent(existingUser::setRole);
         Optional.ofNullable(request.getFirstName()).ifPresent(existingUser::setFirstName);
+        Optional.ofNullable(request.getMiddleName()).ifPresent(existingUser::setMiddleName);
         Optional.ofNullable(request.getLastName()).ifPresent(existingUser::setLastName);
         Optional.ofNullable(request.getDateOfBirth()).ifPresent(existingUser::setDateOfBirth);
-        
+        Optional.ofNullable(request.getAddress()).ifPresent(existingUser::setAddress);
         Optional.ofNullable(request.getPhoneNumber()).ifPresent(existingUser::setPhoneNumber);
         Optional.ofNullable(request.getKycStatus()).ifPresent(existingUser::setKycStatus);
 
@@ -309,18 +313,48 @@ public class UserServiceImpl implements UserService {
      * Helper method to map User entity to UserResponse DTO.
      */
     private UserResponse mapToUserResponse(User user) {
-        return new UserResponse(
-                user.getUserId(),
-                user.getUsername(),
-                user.getEmail(),
-                user.getRole(),
-                user.getCreatedAt(),
-                user.getFirstName(),
-                user.getLastName(),
-                user.getDateOfBirth(),
-                user.getPhoneNumber(),
-                user.getKycStatus()
-        );
+        UserResponse resp = new UserResponse();
+        resp.setUserId(user.getUserId());
+        resp.setUsername(user.getUsername());
+        resp.setEmail(user.getEmail());
+        resp.setRole(user.getRole());
+        resp.setCreatedAt(user.getCreatedAt());
+        resp.setFirstName(user.getFirstName());
+        resp.setMiddleName(user.getMiddleName());
+        resp.setLastName(user.getLastName());
+        resp.setDateOfBirth(user.getDateOfBirth());
+        resp.setAddress(user.getAddress());
+        resp.setPhoneNumber(user.getPhoneNumber());
+        resp.setKycStatus(user.getKycStatus());
+
+        // Enrich with latest APPROVED KYC details (Aadhaar/PAN) and fallback address if empty
+        try {
+            if (kycApplicationRepository != null) {
+                java.util.Optional<com.userMicroservice.model.KycApplication> latestApproved =
+                        kycApplicationRepository.findTopByUserIdAndReviewStatusOrderByReviewedAtDesc(
+                                user.getUserId(), com.userMicroservice.model.KycReviewStatus.APPROVED);
+                if (latestApproved.isPresent()) {
+                    com.userMicroservice.model.KycApplication app = latestApproved.get();
+                    resp.setAadharNumber(app.getAadharNumber());
+                    resp.setPanNumber(app.getPanNumber());
+                    if (resp.getAddress() == null || resp.getAddress().isBlank()) {
+                        String formatted = java.util.stream.Stream.of(
+                                app.getAddressLine1(),
+                                app.getAddressLine2(),
+                                app.getCity(),
+                                app.getState(),
+                                app.getPostalCode()
+                        ).filter(s -> s != null && !s.isBlank())
+                         .collect(java.util.stream.Collectors.joining(", "));
+                        if (!formatted.isBlank()) {
+                            resp.setAddress(formatted);
+                        }
+                    }
+                }
+            }
+        } catch (Exception ignore) {}
+
+        return resp;
     }
 
     /**

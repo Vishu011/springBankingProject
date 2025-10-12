@@ -43,6 +43,13 @@ export class CardIssuanceComponent implements OnInit {
   errorMessage: string | null = null;
   successMessage: string | null = null;
 
+  // Issuance fee display
+  loadingFee = false;
+  feeError: string | null = null;
+  issuanceFeeAmount: number | null = null;
+  issuanceFeeCurrency: string | null = null;
+  issuanceFeeDescription: string | null = null;
+
   constructor(
     private cardService: CardService,
     private accountService: AccountService,
@@ -74,6 +81,7 @@ export class CardIssuanceComponent implements OnInit {
         // Default select first account
         this.applicationForm.accountId = this.accounts[0].accountId;
         this.refreshAllowedBrands();
+        this.fetchFee();
         this.loading = false;
       },
       error: (err) => {
@@ -86,11 +94,13 @@ export class CardIssuanceComponent implements OnInit {
 
   onAccountChange(): void {
     this.refreshAllowedBrands();
+    this.fetchFee();
   }
 
   onTypeChange(): void {
     // No brand list change by type; brand constraints are by account type
     // Keep method if future logic needs it
+    this.fetchFee();
   }
 
   private refreshAllowedBrands(): void {
@@ -113,6 +123,36 @@ export class CardIssuanceComponent implements OnInit {
     }
     // SAVINGS
     return [CardBrand.VISA, CardBrand.RUPAY];
+  }
+
+  private fetchFee(): void {
+    this.feeError = null;
+    this.loadingFee = true;
+
+    const acc = this.accounts.find(a => a.accountId === this.applicationForm.accountId);
+    if (!acc) {
+      this.loadingFee = false;
+      this.issuanceFeeAmount = null;
+      this.issuanceFeeCurrency = null;
+      this.issuanceFeeDescription = null;
+      return;
+    }
+    const accountType = acc.accountType as unknown as string; // 'SAVINGS' | 'SALARY_CORPORATE'
+    const kind = this.applicationForm.type as unknown as string; // 'CREDIT' | 'DEBIT'
+
+    this.cardService.getIssuanceFee(accountType, kind).subscribe({
+      next: fee => {
+        this.issuanceFeeAmount = fee?.amount ?? null;
+        this.issuanceFeeCurrency = fee?.currency ?? 'INR';
+        this.issuanceFeeDescription = fee?.description ?? null;
+        this.loadingFee = false;
+      },
+      error: err => {
+        console.error('Failed to fetch issuance fee', err);
+        this.feeError = err?.error?.message || 'Failed to fetch issuance fee.';
+        this.loadingFee = false;
+      }
+    });
   }
 
   generateOtp(): void {
