@@ -1,0 +1,162 @@
+<div class="kyc-form-wrapper">
+  <h2>KYC Submission</h2>
+  <p class="subtitle">Provide your identification details and address proof to complete verification.</p>
+
+  <div *ngIf="errorMessage" class="alert alert-error">
+    <i class="fas fa-exclamation-circle"></i>
+    {{ errorMessage }}
+  </div>
+
+  <div *ngIf="successMessage" class="alert alert-success">
+    <i class="fas fa-check-circle"></i>
+    {{ successMessage }}
+  </div>
+
+  <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <!-- Identity Section -->
+    <div class="section">
+      <div class="section-header">
+        <i class="fas fa-id-card"></i>
+        <h3>Identity Information</h3>
+      </div>
+
+      <div class="grid">
+        <div class="form-group">
+          <label for="aadharNumber">Aadhar Number</label>
+          <input
+            id="aadharNumber"
+            type="text"
+            formControlName="aadharNumber"
+            placeholder="Enter 12-digit Aadhar number"
+            maxlength="12"
+            inputmode="numeric"
+            autocomplete="off"
+          />
+          <div class="hint">Must be exactly 12 digits.</div>
+          <div class="error" *ngIf="aadharNumber?.touched && aadharNumber?.invalid">
+            <span *ngIf="aadharNumber?.errors?.['required']">Aadhar number is required.</span>
+            <span *ngIf="aadharNumber?.errors?.['pattern']">Invalid Aadhar number format.</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="panNumber">PAN Number</label>
+          <input
+            id="panNumber"
+            type="text"
+            formControlName="panNumber"
+            placeholder="ABCDE1234F"
+            autocomplete="off"
+            (input)="onPanInput($event)"
+          />
+          <div class="hint">Format: 5 uppercase letters, 4 digits, 1 uppercase letter.</div>
+          <div class="error" *ngIf="panNumber?.touched && panNumber?.invalid">
+            <span *ngIf="panNumber?.errors?.['required']">PAN number is required.</span>
+            <span *ngIf="panNumber?.errors?.['pattern']">Invalid PAN format.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Address Section -->
+    <div class="section">
+      <div class="section-header">
+        <i class="fas fa-map-marker-alt"></i>
+        <h3>Address Details</h3>
+      </div>
+
+      <div class="grid">
+        <div class="form-group full">
+          <label for="addressLine1">Address Line 1</label>
+          <input id="addressLine1" type="text" formControlName="addressLine1" placeholder="House/Flat, Street" />
+          <div class="error" *ngIf="addressLine1?.touched && addressLine1?.invalid">
+            <span *ngIf="addressLine1?.errors?.['required']">Address Line 1 is required.</span>
+            <span *ngIf="addressLine1?.errors?.['minlength']">Must be at least 3 characters.</span>
+          </div>
+        </div>
+
+        <div class="form-group full">
+          <label for="addressLine2">Address Line 2 (optional)</label>
+          <input id="addressLine2" type="text" formControlName="addressLine2" placeholder="Area, Landmark" />
+        </div>
+
+        <div class="form-group">
+          <label for="city">City</label>
+          <input id="city" type="text" formControlName="city" placeholder="City" />
+          <div class="error" *ngIf="city?.touched && city?.invalid">
+            <span *ngIf="city?.errors?.['required']">City is required.</span>
+            <span *ngIf="city?.errors?.['minlength']">Must be at least 2 characters.</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="state">State</label>
+          <input id="state" type="text" formControlName="state" placeholder="State" />
+          <div class="error" *ngIf="state?.touched && state?.invalid">
+            <span *ngIf="state?.errors?.['required']">State is required.</span>
+            <span *ngIf="state?.errors?.['minlength']">Must be at least 2 characters.</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="postalCode">Postal Code</label>
+          <input
+            id="postalCode"
+            type="text"
+            formControlName="postalCode"
+            placeholder="6-digit PIN"
+            maxlength="6"
+            inputmode="numeric"
+            autocomplete="off"
+          />
+          <div class="error" *ngIf="postalCode?.touched && postalCode?.invalid">
+            <span *ngIf="postalCode?.errors?.['required']">Postal code is required.</span>
+            <span *ngIf="postalCode?.errors?.['pattern']">Postal code must be 6 digits.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Documents Section -->
+    <div class="section">
+      <div class="section-header">
+        <i class="fas fa-file-upload"></i>
+        <h3>Upload Documents</h3>
+      </div>
+
+      <div class="form-group full">
+        <label for="documents">Supported types: JPG, PNG, PDF (max 10MB per file)</label>
+        <input
+          id="documents"
+          type="file"
+          multiple
+          (change)="onFileSelected($event)"
+          accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf"
+        />
+      </div>
+
+      <div class="selected-files" *ngIf="selectedFiles.length">
+        <div class="file-item" *ngFor="let f of selectedFiles; let i = index">
+          <i class="fas fa-paperclip"></i>
+          <span class="name">{{ f.name }}</span>
+          <span class="size">{{ (f.size / (1024 * 1024) | number:'1.0-2') }} MB</span>
+          <button type="button" class="btn-link" (click)="removeFile(i)">
+            <i class="fas fa-times"></i>
+            Remove
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button type="button" class="btn-secondary" [routerLink]="['/dashboard']" [disabled]="submitting">
+        <i class="fas fa-arrow-left"></i>
+        Back to Dashboard
+      </button>
+      <button type="submit" class="btn-primary" [disabled]="submitting || form.invalid">
+        <i class="fas fa-paper-plane"></i>
+        {{ submitting ? 'Submitting...' : 'Submit KYC' }}
+      </button>
+    </div>
+  </form>
+</div>

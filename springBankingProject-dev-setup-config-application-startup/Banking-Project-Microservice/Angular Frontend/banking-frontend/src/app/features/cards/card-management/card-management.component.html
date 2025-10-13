@@ -1,0 +1,200 @@
+<div class="container">
+  <div class="header">
+    <h1>My Cards</h1>
+    <p>Your issued debit and credit cards</p>
+  </div>
+
+  <div *ngIf="loading" class="loading-message">Loading your cards...</div>
+  <div *ngIf="errorMessage" class="message error-message">{{ errorMessage }}</div>
+  <div *ngIf="successMessage" class="message success-message">{{ successMessage }}</div>
+
+  <div class="accordion" *ngIf="!loading && userCards.length > 0">
+    <div
+      class="accordion-item"
+      *ngFor="let card of userCards"
+      [class.active]="currentCardForLimitUpdate?.cardId === card.cardId"
+    >
+      <div class="accordion-header" (click)="toggleAccordion(card)">
+        <div class="header-left">
+          <div class="card-preview">
+            <i [class]="getCardBrandIconClass(card.brand) + ' card-brand-icon'"></i>
+          </div>
+          <div class="card-info">
+            <span class="card-number">{{ revealedPan[card.cardId] || card.maskedPan }}</span>
+            <span class="card-label">{{ card.type }} Card</span>
+          </div>
+        </div>
+        <div class="header-right">
+          <span class="status-badge" [ngClass]="getCardStatusClass(card.status)">{{ card.status }}</span>
+          <i class="fas fa-chevron-down accordion-arrow"></i>
+        </div>
+      </div>
+
+      <div class="accordion-body">
+        <div class="card-model">
+          <div class="card-top">
+            <div>{{ card.type }} CARD</div>
+            <img class="bank-logo" src="assets/images/BANKLOGO.jpeg" alt="Bank Logo" />
+          </div>
+          <div class="card-number-display">{{ revealedPan[card.cardId] || card.maskedPan }}</div>
+          <div class="card-details-row">
+            <div class="details-text">
+              <label>Valid From</label>
+              <span>{{ card.issueMonth | number:'2.0-0' }}/{{ (card.issueYear % 100) | number:'2.0-0' }}</span>
+            </div>
+            <div class="details-text">
+              <label>Expires</label>
+              <span>{{ card.expiryMonth | number:'2.0-0' }}/{{ (card.expiryYear % 100) | number:'2.0-0' }}</span>
+            </div>
+            <div class="card-bottom">
+              <img class="card-logo" [src]="getCardLogoSrc(card.brand)" [alt]="card.brand + ' Logo'" />
+            </div>
+          </div>
+        </div>
+
+        <div class="card-info-fields">
+          <div class="info-grid">
+            <div class="field">
+              <i class="fas fa-id-card field-icon"></i>
+              <div class="field-content">
+                <strong>Account Number</strong>
+                <span>{{ getAccountNumber(card.accountId) }}</span>
+              </div>
+            </div>
+
+            <div class="field">
+              <i class="fas fa-credit-card field-icon"></i>
+              <div class="field-content">
+                <strong>Card Number</strong>
+                <span *ngIf="!revealedPan[card.cardId]">{{ card.maskedPan }}</span>
+                <span *ngIf="revealedPan[card.cardId]">{{ revealedPan[card.cardId] }}</span>
+                <div class="reveal-row" style="margin-top: 6px;">
+                  <input type="text"
+                         placeholder="Enter OTP"
+                         [(ngModel)]="revealOtp[card.cardId]"
+                         style="max-width: 140px; margin-right: 8px;" />
+                  <button
+                    type="button"
+                    (click)="generateRevealOtp(card)"
+                    class="btn btn-secondary"
+                    style="margin-right: 6px;"
+                    [disabled]="genOtpLoading[card.cardId] || (genOtpCooldownSec[card.cardId] || 0) > 0">
+                    <span *ngIf="genOtpLoading[card.cardId]">Sending...</span>
+                    <span *ngIf="!genOtpLoading[card.cardId] && (genOtpCooldownSec[card.cardId] || 0) === 0">Get OTP</span>
+                    <span *ngIf="!genOtpLoading[card.cardId] && (genOtpCooldownSec[card.cardId] || 0) > 0">Resend in {{ genOtpCooldownSec[card.cardId] }}s</span>
+                  </button>
+                  <button
+                    type="button"
+                    [disabled]="revealing[card.cardId] || !((revealOtp[card.cardId] || '').trim())"
+                    (click)="revealPan(card)"
+                    class="btn btn-primary">
+                    <i class="fas fa-eye"></i>
+                    <span *ngIf="!revealing[card.cardId]"> Reveal</span>
+                    <span *ngIf="revealing[card.cardId]"> Revealing...</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div class="field">
+              <i class="fas fa-key field-icon"></i>
+              <div class="field-content">
+                <strong>CVV</strong>
+                <!-- One-time CVV display if recently regenerated -->
+                <div *ngIf="regeneratedCvv[card.cardId]; else maskedCvvBlock" class="one-time-cvv">
+                  <span class="cvv-value">{{ regeneratedCvv[card.cardId] }}</span>
+                  <button type="button" class="btn btn-secondary" (click)="copyToClipboard(regeneratedCvv[card.cardId]!)" style="margin-left:8px;">
+                    <i class="far fa-copy"></i> Copy
+                  </button>
+                  <small class="help-text" style="display:block; color:#b35;">Shown once. Do not share this CVV.</small>
+                </div>
+                <ng-template #maskedCvvBlock>
+                  <span>{{ card.maskedCvv || '***' }}</span>
+                  <small class="help-text" style="display:block; color:#777;">CVV is masked for security. Full CVV is not stored.</small>
+                </ng-template>
+
+                <!-- OTP input and actions for CVV regeneration (DEBIT only) -->
+                <div *ngIf="card.type === 'DEBIT'" class="reveal-row" style="margin-top: 6px;">
+                  <input type="text"
+                         placeholder="Enter OTP"
+                         [(ngModel)]="regenOtp[card.cardId]"
+                         style="max-width: 140px; margin-right: 8px;" />
+                  <button
+                    type="button"
+                    (click)="generateRegenOtp(card)"
+                    class="btn btn-secondary"
+                    style="margin-right: 6px;"
+                    [disabled]="regenOtpLoading[card.cardId] || (regenOtpCooldownSec[card.cardId] || 0) > 0">
+                    <span *ngIf="regenOtpLoading[card.cardId]">Sending...</span>
+                    <span *ngIf="!regenOtpLoading[card.cardId] && (regenOtpCooldownSec[card.cardId] || 0) === 0">Get OTP</span>
+                    <span *ngIf="!regenOtpLoading[card.cardId] && (regenOtpCooldownSec[card.cardId] || 0) > 0">Resend in {{ regenOtpCooldownSec[card.cardId] }}s</span>
+                  </button>
+                  <button
+                    type="button"
+                    [disabled]="regenLoading[card.cardId] || !((regenOtp[card.cardId] || '').trim())"
+                    (click)="regenerateCvv(card)"
+                    class="btn btn-primary">
+                    <i class="fas fa-sync"></i>
+                    <span *ngIf="!regenLoading[card.cardId]"> Generate CVV</span>
+                    <span *ngIf="regenLoading[card.cardId]"> Generating...</span>
+                  </button>
+                </div>
+                <div *ngIf="card.type !== 'DEBIT'" class="help-text" style="margin-top:6px; color:#777;">
+                  CVV regeneration is only available for DEBIT cards.
+                </div>
+              </div>
+            </div>
+
+            <div class="field">
+              <i class="fas fa-tags field-icon"></i>
+              <div class="field-content">
+                <strong>Brand</strong>
+                <span>{{ card.brand }}</span>
+              </div>
+            </div>
+
+            <div class="field">
+              <i class="fas fa-tag field-icon"></i>
+              <div class="field-content">
+                <strong>Type</strong>
+                <span>{{ card.type }}</span>
+              </div>
+            </div>
+
+            <div class="field">
+              <i class="fas fa-calendar-plus field-icon"></i>
+              <div class="field-content">
+                <strong>Issue (MM/YY)</strong>
+                <span>{{ card.issueMonth | number:'2.0-0' }}/{{ (card.issueYear % 100) | number:'2.0-0' }}</span>
+              </div>
+            </div>
+
+            <div class="field">
+              <i class="fas fa-calendar-times field-icon"></i>
+              <div class="field-content">
+                <strong>Expiry (MM/YY)</strong>
+                <span>{{ card.expiryMonth | number:'2.0-0' }}/{{ (card.expiryYear % 100) | number:'2.0-0' }}</span>
+              </div>
+            </div>
+
+            <div class="field" *ngIf="card.type === 'CREDIT' && card.creditLimit != null">
+              <i class="fas fa-wallet field-icon"></i>
+              <div class="field-content">
+                <strong>Credit Limit</strong>
+                <span>{{ card.creditLimit | currency:'INR':'symbol':'1.2-2' }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- All operations like block/unblock and transaction limit update have been removed.
+             They can be reintroduced when backend endpoints are available. -->
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="!loading && userCards.length === 0 && !successMessage" class="no-cards-message">
+    <p>You have no cards issued yet.</p>
+    <a routerLink="/cards/issue" class="issue-card-link">Apply for a Card</a>
+  </div>
+</div>

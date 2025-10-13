@@ -1,0 +1,80 @@
+<div class="accounts-container">
+    <h2>Your Bank Accounts</h2>
+
+    <div *ngIf="loading" class="loading-message">Loading your accounts...</div>
+    <div *ngIf="errorMessage" class="message error-message">{{ errorMessage }}</div>
+    <div *ngIf="successMessage" class="message success-message">{{ successMessage }}</div>
+
+    <div class="account-creation-section">
+        <h3>Create New Account</h3>
+        <form (ngSubmit)="createAccount()" #accountForm="ngForm">
+            <div class="form-group">
+                <label for="accountType">Account Type:</label>
+                <select id="accountType" name="accountType" [(ngModel)]="newAccount.accountType" required>
+                    <option *ngFor="let type of accountTypes" [value]="type">{{ type }}</option>
+                </select>
+            </div>
+            <div class="form-group" *ngIf="newAccount.accountType !== 'SALARY_CORPORATE'">
+                <label for="initialBalance">Initial Balance:</label>
+                <input type="number" id="initialBalance" name="initialBalance" [(ngModel)]="newAccount.initialBalance"
+                    required min="0">
+            </div>
+            <div class="form-group" *ngIf="newAccount.accountType !== 'SALARY_CORPORATE'">
+                <label for="otpCode">OTP:</label>
+                <div class="otp-row">
+                    <input type="text" id="otpCode" name="otpCode" maxlength="6" placeholder="Enter 6-digit OTP" [(ngModel)]="newAccount.otpCode" required>
+                    <button type="button" class="generate-otp-button" (click)="generateOtpForAccountCreation()" [disabled]="generatingCreateOtp">
+                        {{ generatingCreateOtp ? 'Sending...' : 'Generate OTP' }}
+                    </button>
+                </div>
+            </div>
+            <div class="form-group" *ngIf="newAccount.accountType === 'SALARY_CORPORATE'">
+                <p>Salary/Corporate accounts are created via an approval workflow after admin review.</p>
+                <button type="button" class="create-button" (click)="goToSalaryApplication()">Apply for Salary/Corporate Account</button>
+            </div>
+            <button *ngIf="newAccount.accountType !== 'SALARY_CORPORATE'" type="submit" [disabled]="!accountForm.valid || !newAccount.otpCode" class="create-button">Create Account</button>
+        </form>
+    </div>
+
+    <div *ngIf="!loading && accounts.length > 0" class="account-list">
+        <h3>Existing Accounts ({{ accounts.length }})</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Account Number</th>
+                    <th>Type</th>
+                    <th>Balance</th>
+                    <th>Status</th>
+                    <th>Created At</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let account of accounts">
+                    <td>{{ account.accountNumber }}</td>
+                    <td>{{ account.accountType }}</td>
+                    <td>{{ account.balance | currency:'INR':'symbol':'1.2-2' }}</td>
+                    <td><span [ngClass]="getAccountStatusClass(account.status)">{{ account.status }}</span></td>
+                    <td>{{ account.createdAt | date:'short' }}</td>
+                    <td class="actions">
+                        <div class="otp-inline">
+                            <input type="text" maxlength="6" placeholder="OTP" [(ngModel)]="rowOtpCodes[account.accountId]" name="otp_{{account.accountId}}">
+                            <button type="button" (click)="generateOtpForAccountOperation(account.accountId)" [disabled]="generatingRowOtp[account.accountId]">
+                                {{ generatingRowOtp[account.accountId] ? 'Sending...' : 'Generate OTP' }}
+                            </button>
+                        </div>
+                        <button (click)="blockAccount(account.accountId)" [disabled]="account.status === 'BLOCKED' || !rowOtpCodes[account.accountId]"
+                            class="action-button block">Block</button>
+                        <button (click)="unblockAccount(account.accountId)" [disabled]="account.status === 'ACTIVE' || !rowOtpCodes[account.accountId]"
+                            class="action-button unblock">Unblock</button>
+                        <button (click)="deleteAccount(account.accountId)" [disabled]="!rowOtpCodes[account.accountId]" class="action-button delete">Delete</button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div *ngIf="!loading && (accounts.length === 0) && !successMessage" class="no-accounts-message">
+        <p>You currently have no bank accounts. Use the form above to create one!</p>
+    </div>
+</div>

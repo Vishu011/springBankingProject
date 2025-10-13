@@ -1,0 +1,33 @@
+/* KYC Management styles */
+.container-fluid.fade-in {
+  animation: fadeIn 0.2s ease-in;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(2px); }
+  to { opacity: 1; transform: none; }
+}
+
+.status-select {
+  min-width: 180px;
+}
+
+.mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+.docs-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.5rem;
+}
+
+.doc-link {
+  padding: 0;
+}
+
+/* Badges for statuses */
+.badge {
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}

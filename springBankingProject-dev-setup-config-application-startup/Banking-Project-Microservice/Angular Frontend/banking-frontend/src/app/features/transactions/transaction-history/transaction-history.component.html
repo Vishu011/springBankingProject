@@ -1,0 +1,104 @@
+<div class="transaction-history-container">
+    <h2>Transaction History</h2>
+
+    <div *ngIf="loading" class="loading-message">Loading accounts and history...</div>
+    <div *ngIf="errorMessage" class="message error-message">{{ errorMessage }}</div>
+    <div *ngIf="successMessage" class="message success-message">{{ successMessage }}</div>
+
+    <div class="account-selection-section" *ngIf="!loading && accounts.length > 0">
+        <label for="accountSelect">Select Account:</label>
+        <select id="accountSelect" name="accountSelect" [(ngModel)]="selectedAccountId" (change)="onAccountChange()">
+            <option *ngFor="let account of accounts" [value]="account.accountId">
+                {{ account.accountNumber }} ({{ account.accountType }} - {{ account.balance |
+                currency:'INR':'symbol':'1.2-2' }})
+            </option>
+        </select>
+    </div>
+
+    <!-- Statement Download (OTP + Email PDF) -->
+    <div class="statement-section" *ngIf="!loading && accounts.length > 0">
+        <h3>Download Account Statement (Password-protected PDF)</h3>
+
+        <div *ngIf="statementLoading" class="loading-message">Processing...</div>
+        <div *ngIf="statementError" class="message error-message">{{ statementError }}</div>
+        <div *ngIf="statementSuccess" class="message success-message">{{ statementSuccess }}</div>
+
+        <div class="statement-form">
+            <div class="row">
+                <label for="fromDate">From</label>
+                <input id="fromDate" type="date" [(ngModel)]="fromDate">
+            </div>
+            <div class="row">
+                <label for="toDate">To</label>
+                <input id="toDate" type="date" [(ngModel)]="toDate">
+            </div>
+            <div class="row">
+                <label for="toEmail">Send To (optional)</label>
+                <input id="toEmail" type="email" [(ngModel)]="toEmail" placeholder="Leave blank to use your registered email">
+            </div>
+
+            <div class="row actions">
+                <button type="button"
+                        (click)="initiateStatement()"
+                        [disabled]="statementLoading || !selectedAccountId">
+                    Send OTP to Email
+                </button>
+            </div>
+
+            <div class="row" *ngIf="statementOtpSent">
+                <label for="otpCode">Enter OTP</label>
+                <input id="otpCode"
+                       type="text"
+                       [(ngModel)]="otpCode"
+                       maxlength="6"
+                       pattern="[0-9]{6}"
+                       placeholder="6-digit code">
+                <button type="button"
+                        (click)="verifyAndSendStatement()"
+                        [disabled]="statementLoading || !otpCode || otpCode.trim().length !== 6">
+                    Verify & Email PDF
+                </button>
+            </div>
+
+            <small class="help-text">
+                The PDF will be password protected. Password = FIRST 4 LETTERS of your first name (uppercase) + YEAR of birth (e.g., ABCD2003).
+            </small>
+        </div>
+    </div>
+
+    <div *ngIf="!loading && selectedAccountId && transactions.length > 0" class="transaction-list">
+        <h3>Transactions for {{ getSelectedAccountNumber() }}</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Type</th>
+                    <th>Method</th>
+                    <th>Amount</th>
+                    <th>From Account</th>
+                    <th>To Account</th>
+                    <th>Date</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let transaction of transactions">
+                    <td>{{ transaction.transactionId | slice:0:8 }}...</td>
+                    <td><span [ngClass]="getTransactionTypeClass(transaction.type)">{{ transaction.type }}</span></td>
+                    <td>{{ getMethodDetails(transaction) }}</td>
+                    <td>{{ transaction.amount | currency:'INR':'symbol':'1.2-2' }}</td>
+                    <td>{{ getAccountDisplayName(transaction.fromAccountId) }}</td>
+                    <td>{{ getAccountDisplayName(transaction.toAccountId) }}</td>
+                    <td>{{ transaction.transactionDate | date:'short' }}</td>
+                    <td><span [ngClass]="getTransactionStatusClass(transaction.status)">{{ transaction.status }}</span>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div *ngIf="!loading && accounts.length === 0" class="no-accounts-message">
+        <p>You need to create an account first to view transaction history.</p>
+        <a routerLink="/accounts" class="create-account-link">Go to Accounts</a>
+    </div>
+</div>

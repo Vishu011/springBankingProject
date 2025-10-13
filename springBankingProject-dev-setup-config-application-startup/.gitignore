@@ -1,0 +1,30 @@
+# Global ignores
+**/node_modules/
+**/dist/
+**/.angular/cache/
+**/.cache/
+**/.parcel-cache/
+
+# Build artifacts
+**/target/
+**/build/
+
+# IDE/editor
+**/.idea/
+**/.vscode/
+**/*.iml
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Local runtime data and env
+Banking-Project-Microservice/UserMicroservice/uploads/
+**/logs/
+**/.env
+**/application-local.properties
+**/application-local.yaml
+
+# Ignore uploaded artifacts
+Banking-Project-Microservice/AccountMicroservice/uploads/
+Banking-Project-Microservice/SelfService/uploads/

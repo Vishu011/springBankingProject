@@ -1,0 +1,108 @@
+<div class="withdraw-container">
+  <h2>Withdraw Funds</h2>
+
+  <div *ngIf="loadingAccounts" class="loading-message">Loading your accounts...</div>
+  <div *ngIf="errorMessage" class="message error-message">{{ errorMessage }}</div>
+  <div *ngIf="successMessage" class="message success-message">{{ successMessage }}</div>
+
+  <div *ngIf="!loadingAccounts && accounts.length > 0" class="withdraw-form-section">
+    <form (ngSubmit)="onSubmit()" #formRef="ngForm">
+      <div class="form-group">
+        <label for="mode">Withdraw Using:</label>
+        <select id="mode" name="mode" [(ngModel)]="mode">
+          <option value="ACCOUNT">Account</option>
+          <option value="DEBIT_CARD">Debit Card</option>
+        </select>
+      </div>
+
+      <!-- Account-based withdrawal -->
+      <div *ngIf="mode === 'ACCOUNT'">
+        <div class="form-group">
+          <label for="accountId">Select Account:</label>
+          <select id="accountId" name="accountId" [(ngModel)]="withdrawForm.accountId" required>
+            <option *ngFor="let account of accounts" [value]="account.accountId">
+              {{ account.accountNumber }} ({{ account.accountType }} - Current Balance: {{ account.balance |
+              currency:'INR':'symbol':'1.2-2' }})
+            </option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="amount">Amount (INR):</label>
+          <input type="number" id="amount" name="amount" [(ngModel)]="withdrawForm.amount" required min="0.01"
+            step="0.01">
+        </div>
+
+        <div class="form-group">
+          <label for="otpCode">Enter OTP:</label>
+          <div class="otp-row">
+            <input
+              type="text"
+              id="otpCode"
+              name="otpCode"
+              [(ngModel)]="withdrawForm.otpCode"
+              required
+              maxlength="6"
+              pattern="[0-9]{6}"
+              placeholder="6-digit code" />
+<button type="button" (click)="generateOtp()" class="generate-otp-button" [disabled]="genOtpLoading || otpCooldownSec > 0">
+  <span *ngIf="genOtpLoading">Sending...</span>
+  <span *ngIf="!genOtpLoading && otpCooldownSec === 0">Generate OTP</span>
+  <span *ngIf="!genOtpLoading && otpCooldownSec > 0">Resend in {{ otpCooldownSec }}s</span>
+</button>
+          </div>
+          <small class="help-text">A 6-digit OTP will be sent to your registered email.</small>
+        </div>
+      </div>
+
+      <!-- Debit card-based withdrawal -->
+      <div *ngIf="mode === 'DEBIT_CARD'">
+        <div class="form-group">
+          <label for="cardNumber">Debit Card Number:</label>
+          <input type="text" id="cardNumber" name="cardNumber" [(ngModel)]="debitCardForm.cardNumber" required maxlength="19" placeholder="Enter your debit card number">
+        </div>
+
+        <div class="form-group">
+          <label for="cvv">CVV:</label>
+          <input type="password" id="cvv" name="cvv" [(ngModel)]="debitCardForm.cvv" required maxlength="4" placeholder="3 or 4 digits">
+        </div>
+
+        <div class="form-group">
+          <label for="dcAmount">Amount (INR):</label>
+          <input type="number" id="dcAmount" name="dcAmount" [(ngModel)]="debitCardForm.amount" required min="0.01" step="0.01">
+        </div>
+
+        <div class="form-group">
+          <label for="dcOtp">Enter OTP:</label>
+          <div class="otp-row">
+            <input
+              type="text"
+              id="dcOtp"
+              name="dcOtp"
+              [(ngModel)]="debitCardForm.otpCode"
+              required
+              maxlength="6"
+              pattern="[0-9]{6}"
+              placeholder="6-digit code" />
+<button type="button" (click)="generateOtp()" class="generate-otp-button" [disabled]="genOtpLoading || otpCooldownSec > 0">
+  <span *ngIf="genOtpLoading">Sending...</span>
+  <span *ngIf="!genOtpLoading && otpCooldownSec === 0">Generate OTP</span>
+  <span *ngIf="!genOtpLoading && otpCooldownSec > 0">Resend in {{ otpCooldownSec }}s</span>
+</button>
+          </div>
+          <small class="help-text">A 6-digit OTP will be sent to your registered email.</small>
+        </div>
+      </div>
+
+<button type="submit" [disabled]="submitting || !formRef.valid" class="withdraw-button">
+  <span *ngIf="!submitting">Withdraw</span>
+  <span *ngIf="submitting">Processing...</span>
+</button>
+    </form>
+  </div>
+
+  <div *ngIf="!loadingAccounts && accounts.length === 0" class="no-accounts-message">
+    <p>You need an active account to withdraw funds from.</p>
+    <a routerLink="/accounts" class="create-account-link">Go to Accounts</a>
+  </div>
+</div>

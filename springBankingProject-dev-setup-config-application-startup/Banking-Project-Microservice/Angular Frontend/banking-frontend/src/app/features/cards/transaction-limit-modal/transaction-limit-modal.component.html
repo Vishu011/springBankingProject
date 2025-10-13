@@ -1,0 +1,67 @@
+<div class="modal" [class.show]="true">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>Card Details</h2>
+      <span class="close" (click)="onCloseModal()">&times;</span>
+    </div>
+
+    <div class="modal-body">
+      <div class="account-info">
+        <i class="fas fa-credit-card"></i>
+        <span>Masked PAN: <strong id="modalMaskedPan">{{ card.maskedPan }}</strong></span>
+      </div>
+
+      <div class="info-grid">
+        <div class="field">
+          <i class="fas fa-tag field-icon"></i>
+          <div class="field-content">
+            <strong>Type</strong>
+            <span>{{ card.type }}</span>
+          </div>
+        </div>
+
+        <div class="field">
+          <i class="fas fa-tags field-icon"></i>
+          <div class="field-content">
+            <strong>Brand</strong>
+            <span>{{ card.brand }}</span>
+          </div>
+        </div>
+
+        <div class="field">
+          <i class="fas fa-calendar-plus field-icon"></i>
+          <div class="field-content">
+            <strong>Issue (MM/YY)</strong>
+            <span>{{ card.issueMonth | number:'2.0-0' }}/{{ (card.issueYear % 100) | number:'2.0-0' }}</span>
+          </div>
+        </div>
+
+        <div class="field">
+          <i class="fas fa-calendar-times field-icon"></i>
+          <div class="field-content">
+            <strong>Expiry (MM/YY)</strong>
+            <span>{{ card.expiryMonth | number:'2.0-0' }}/{{ (card.expiryYear % 100) | number:'2.0-0' }}</span>
+          </div>
+        </div>
+
+        <div class="field" *ngIf="card.type === 'CREDIT' && card.creditLimit != null">
+          <i class="fas fa-wallet field-icon"></i>
+          <div class="field-content">
+            <strong>Credit Limit</strong>
+            <span>{{ card.creditLimit | currency:'INR':'symbol':'1.2-2' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="note">
+        <small>Note: Card operations like block/unblock and limit updates are handled by admin after approval.</small>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-cancel" (click)="onCloseModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Minimal toast removed since no action occurs in this modal -->

@@ -1,0 +1,143 @@
+<div class="container-fluid py-4 fade-in">
+  <!-- Header -->
+  <div class="row mb-3">
+    <div class="col-12">
+      <div class="card shadow-sm">
+        <div class="card-body d-flex justify-content-between align-items-center">
+          <div>
+            <h2 class="card-title mb-1 text-primary">
+              <i class="fas fa-shield-alt me-2"></i>
+              KYC Management
+            </h2>
+            <p class="text-muted mb-0">Review applications, view/download documents, and approve or reject with comments</p>
+          </div>
+          <div class="d-flex gap-2">
+<select class="form-select form-select-sm status-select" [(ngModel)]="selectedStatus" (ngModelChange)="loadApplications()">
+<option *ngFor="let s of statuses" [ngValue]="s">{{ s }}</option>
+            </select>
+            <button class="btn btn-outline-primary btn-sm" (click)="loadApplications()" [disabled]="loading">
+              <i class="fas fa-sync-alt me-1" [class.fa-spin]="loading"></i>
+              {{ loading ? 'Loading...' : 'Refresh' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Messages -->
+  <div class="row" *ngIf="errorMessage || successMessage">
+    <div class="col-12">
+      <div class="alert" [class.alert-danger]="!!errorMessage" [class.alert-success]="!!successMessage">
+        <i class="fas" [class.fa-exclamation-triangle]="!!errorMessage" [class.fa-check-circle]="!!successMessage"></i>
+        <span>{{ errorMessage || successMessage }}</span>
+        <button class="btn btn-sm btn-link float-end" (click)="clearMessages()">Dismiss</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div class="row" *ngIf="loading">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-body text-center py-5">
+          <i class="fas fa-spinner fa-spin fa-2x text-primary mb-3"></i>
+          <h5 class="mb-0 text-muted">Loading KYC applications...</h5>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Empty -->
+  <div class="row" *ngIf="!loading && applications.length === 0">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-body text-center py-5">
+          <i class="fas fa-inbox fa-2x text-secondary mb-3"></i>
+          <h5 class="mb-1">No {{ selectedStatus.toLowerCase() }} applications found</h5>
+          <p class="text-muted mb-0">Try a different status filter or refresh.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="row" *ngIf="!loading && applications.length > 0">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-body table-responsive">
+          <table class="table align-middle">
+            <thead>
+              <tr>
+                <th>Application ID</th>
+                <th>User ID</th>
+                <th>Aadhar</th>
+                <th>PAN</th>
+                <th>Address</th>
+                <th>Documents</th>
+                <th>Status</th>
+                <th class="text-end">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let app of applications; trackBy: trackByAppId">
+                <td class="small mono">{{ app.applicationId | slice:0:8 }}...</td>
+                <td class="small mono">{{ app.userId | slice:0:8 }}...</td>
+                <td>{{ maskAadhar(app.aadharNumber) }}</td>
+                <td>{{ maskPan(app.panNumber) }}</td>
+                <td>
+                  <div class="small">
+                    <div>{{ app.addressLine1 }}</div>
+                    <div *ngIf="app.addressLine2">{{ app.addressLine2 }}</div>
+                    <div>{{ app.city }}, {{ app.state }} - {{ app.postalCode }}</div>
+                  </div>
+                </td>
+                <td>
+                  <div class="docs-list">
+                    <ng-container *ngFor="let p of app.documentPaths">
+                      <button class="btn btn-link btn-sm" title="View" (click)="view(app, p)">
+                        <i class="fas fa-eye me-1"></i>
+                      </button>
+                      <button class="btn btn-link btn-sm doc-link" title="Download" (click)="download(app, p)">
+                        <i class="fas fa-paperclip me-1"></i>{{ p.split('/').pop() }}
+                      </button>
+                    </ng-container>
+                    <span *ngIf="!app.documentPaths || app.documentPaths.length === 0" class="text-muted small">No docs</span>
+                  </div>
+                </td>
+                <td>
+                  <span class="badge"
+                        [class.bg-warning]="app.reviewStatus === 'SUBMITTED'"
+                        [class.bg-success]="app.reviewStatus === 'APPROVED'"
+                        [class.bg-danger]="app.reviewStatus === 'REJECTED'">
+                    {{ app.reviewStatus }}
+                  </span>
+                </td>
+                <td class="text-end">
+                  <div class="btn-group">
+                    <button class="btn btn-sm btn-success"
+                            (click)="approve(app)"
+                            [disabled]="app.reviewStatus !== 'SUBMITTED'">
+                      <i class="fas fa-check me-1"></i>Approve
+                    </button>
+                    <button class="btn btn-sm btn-danger"
+                            (click)="reject(app)"
+                            [disabled]="app.reviewStatus !== 'SUBMITTED'">
+                      <i class="fas fa-times me-1"></i>Reject
+                    </button>
+                  </div>
+                  <div class="small text-muted mt-1" *ngIf="app.adminComment && app.reviewStatus === 'REJECTED'">
+                    <i class="fas fa-comment-dots me-1"></i>{{ app.adminComment }}
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="text-end small text-muted">
+            Showing {{ applications.length }} {{ selectedStatus.toLowerCase() }} application(s)
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
