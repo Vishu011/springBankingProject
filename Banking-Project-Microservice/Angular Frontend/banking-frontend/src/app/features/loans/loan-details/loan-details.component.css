@@ -6,8 +6,8 @@
 }
 
 :root {
-    --primary-gradient: linear-gradient(135deg, #333333 0%, #0769AD 100%);
-    --primary-color: #0769AD;
+    --primary-gradient: linear-gradient(135deg, #333333 0%, #A50034 100%);
+    --primary-color: #B22234;
     --secondary-color: #333333;
     --success-color: #28a745;
     --warning-color: #ffc107;
@@ -215,7 +215,7 @@
 
 .stat-content p {
     margin: 0;
-    color: #6c757d;
+    color: #7d6c6c;
     font-weight: 600;
 }
 

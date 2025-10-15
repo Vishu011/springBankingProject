@@ -12,7 +12,7 @@
     <form (ngSubmit)="onSubmit()" #applicationFormRef="ngForm" class="card-application-form">
       <!-- Account -->
       <div class="form-group">
-        <label for="accountId">Account</label>
+        <label for="accountId"></label>
         <select
           id="accountId"
           name="accountId"
@@ -27,23 +27,21 @@
       </div>
 
       <!-- Card Kind (CREDIT / DEBIT) -->
-      <div class="form-group">
-        <label>Card Type</label>
-        <div class="type-options">
-          <label class="radio">
-            <input type="radio" name="cardKind" [value]="CardKind.CREDIT" [(ngModel)]="applicationForm.type" (change)="onTypeChange()" required>
-            Credit
-          </label>
-          <label class="radio">
-            <input type="radio" name="cardKind" [value]="CardKind.DEBIT" [(ngModel)]="applicationForm.type" (change)="onTypeChange()" required>
-            Debit
-          </label>
-        </div>
+      <div class="card-type-toggle">
+        <input type="radio" id="credit" name="cardKind" [value]="CardKind.CREDIT" [(ngModel)]="applicationForm.type" required>
+        <label for="credit">Credit</label>
+
+        <input type="radio" id="debit" name="cardKind" [value]="CardKind.DEBIT" [(ngModel)]="applicationForm.type" required>
+        <label for="debit">Debit</label>
+
+        <div class="slider"></div>
       </div>
+
+
 
       <!-- Brand filtered by account type -->
       <div class="form-group">
-        <label for="brand">Brand</label>
+        <label for="brand"></label>
         <select
           id="brand"
           name="brand"
@@ -58,7 +56,7 @@
 
       <!-- Issuance Fee -->
       <div class="form-group fee-group">
-        <label>Issuance Fee</label>
+        <label></label>
         <div *ngIf="loadingFee" class="loading-message">Loading fee...</div>
         <div *ngIf="feeError" class="message error-message">{{ feeError }}</div>
         <div *ngIf="!loadingFee && !feeError">
@@ -75,7 +73,7 @@
 
       <!-- OTP -->
       <div class="form-group">
-        <label for="otpCode">OTP</label>
+        <label for="otpCode"></label>
         <div class="otp-row">
           <input
             id="otpCode"

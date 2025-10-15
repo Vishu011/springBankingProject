@@ -4,8 +4,8 @@ spring:
 
   datasource:
     url: jdbc:oracle:thin:@//localhost:1521/ORCL
-    username: OTP_MS
-    password: otp123
+    username: 
+    password: 
     driver-class-name: oracle.jdbc.OracleDriver
 
   jpa:
@@ -112,4 +112,4 @@ keycloak:
     url: http://localhost:8080
     realm: bank-realm
     client-id: notification-service-client
-    client-secret: UQCtpCaZ02y9DQK8sMUcm03G9A6p88vD
+    client-secret: 

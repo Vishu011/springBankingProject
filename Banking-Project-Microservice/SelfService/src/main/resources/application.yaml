@@ -4,8 +4,8 @@ spring:
   datasource:
     url: jdbc:oracle:thin:@localhost:1521:orcl
     driver-class-name: oracle.jdbc.OracleDriver
-    username: SELF_SERVICE_MS
-    password: selfservice123
+    username: 
+    password: 
   jpa:
     hibernate:
       ddl-auto: update

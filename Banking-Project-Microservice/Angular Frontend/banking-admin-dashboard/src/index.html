@@ -3,17 +3,57 @@
 
 <head>
   <meta charset="utf-8">
-  <title>BankingAdminDashboard</title>
+  <title>Banking Admin Dashboard</title>
   <base href="/">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
   <link rel="icon" type="image/x-icon" href="favicon.ico">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"
-    integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
 
-  <!-- Add FontAwesome for icons -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+  <!-- Webfont: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400..800&display=swap" rel="stylesheet">
+
+  <!-- Bootstrap CSS -->
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+    integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN"
+    crossorigin="anonymous" />
+
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
     integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw=="
-    crossorigin="anonymous">
+    crossorigin="anonymous" />
+
+  <!-- Theme bootstrap: apply dark/light early, enable global [data-theme-toggle] buttons -->
+  <script>
+    (function () {
+      try {
+        var storageKey = 'bank-admin-theme';
+        var root = document.documentElement;
+        function apply(t) {
+          if (t === 'dark') root.setAttribute('data-theme', 'dark');
+          else root.removeAttribute('data-theme'); // default light via CSS variables
+        }
+        var saved = localStorage.getItem(storageKey);
+        var theme = saved || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        apply(theme);
+
+        // Delegate clicks for any element with [data-theme-toggle]
+        window.addEventListener('click', function (e) {
+          var btn = e.target && e.target.closest && e.target.closest('[data-theme-toggle]');
+          if (!btn) return;
+          var next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+          apply(next);
+          localStorage.setItem(storageKey, next);
+        });
+      } catch (e) {
+        // no-op
+      }
+    })();
+  </script>
 </head>
 
 <body>

@@ -1,74 +1,301 @@
-/* You can add global styles to this file, and also import other style files */
+/* Global theme tokens, modern base styles, and component theming
+   Goal: Premium, minimal, dark-mode-ready UI without touching TS logic.
+   - Light theme is default; dark via [data-theme="dark"] (set in index.html script)
+   - Keep Bootstrap classes functional but re-skin to premium look
+*/
 
-
+/* 1) CSS Variables (Design Tokens) */
 :root {
-    --primary-color: #2563eb;
-    --success-color: #10b981;
-    --warning-color: #f59e0b;
-    --danger-color: #ef4444;
-    --secondary-color: #6b7280;
-    --light-bg: #f8fafc;
-    --dark-text: #1f2937;
+  /* Palette */
+  --primary: #6366f1;          /* indigo-500 */
+  --primary-600: #4f46e5;      /* indigo-600 */
+  --primary-700: #4338ca;      /* indigo-700 */
+  --accent: #22d3ee;           /* cyan-400 */
+
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger:  #ef4444;
+  --info:    #3b82f6;
+
+  /* Surface + Text (Light) */
+  --bg:            #f7f8fb;
+  --surface:       #ffffff;
+  --surface-2:     #f3f4f6;
+  --elev-shadow:   0 2px 10px rgba(15, 23, 42, 0.08);
+  --elev-shadow-lg:0 10px 30px rgba(15, 23, 42, 0.12);
+  --border:        #e5e7eb;
+  --text:          #0f172a;    /* slate-900 */
+  --muted:         #6b7280;    /* gray-500 */
+
+  /* Radii + Spacing */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+
+  /* Transitions */
+  --transition-fast: 150ms ease;
+  --transition: 220ms ease;
+
+  /* Focus ring */
+  --ring: 0 0 0 3px rgba(99, 102, 241, 0.35);
+
+  color-scheme: light dark;
+}
+
+:root[data-theme="dark"] {
+  --primary: #818cf8;          /* indigo-400 */
+  --primary-600: #6366f1;      /* indigo-500 */
+  --primary-700: #4f46e5;
+
+  --bg:            #0b1220;    /* deep slate/navy */
+  --surface:       #0f172a;    /* slate-900 */
+  --surface-2:     #111827;    /* gray-900 */
+  --elev-shadow:   0 2px 10px rgba(0,0,0,0.35);
+  --elev-shadow-lg:0 12px 32px rgba(0,0,0,0.5);
+  --border:        #1f2937;
+  --text:          #e5e7eb;
+  --muted:         #9ca3af;
+}
+
+/* 2) Base reset + typography */
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+html, body {
+  height: 100%;
 }
 
 body {
-    background-color: var(--light-bg);
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
-.btn {
-    border-radius: 8px;
-    font-weight: 500;
-    transition: all 0.2s ease;
+h1,h2,h3,h4,h5,h6 {
+  color: var(--text);
+  margin: 0 0 0.5rem 0;
+  letter-spacing: -0.01em;
 }
 
-.btn:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+p { color: var(--muted); margin: 0 0 1rem; }
+
+a {
+  color: var(--primary);
+  text-decoration: none;
+  transition: color var(--transition);
+}
+a:hover { color: var(--primary-600); }
+
+img { max-width: 100%; height: auto; display: block; }
+
+/* Focus ring */
+:where(button, [role="button"], a, input, select, textarea):focus-visible {
+  outline: none;
+  box-shadow: var(--ring);
+  border-radius: var(--radius-sm);
 }
 
+/* Scrollbars */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(120, 120, 120, 0.6) transparent;
+}
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-thumb {
+  background: rgba(120, 120, 120, 0.5);
+  border-radius: 10px;
+}
+*::-webkit-scrollbar-thumb:hover { background: rgba(120, 120, 120, 0.8); }
+
+/* 3) Card re-skin (Bootstrap-compatible) */
 .card {
-    border: none;
-    border-radius: 12px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
-    transition: box-shadow 0.2s ease;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--elev-shadow);
+  transition: transform var(--transition), box-shadow var(--transition), border-color var(--transition);
 }
-
 .card:hover {
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
+  box-shadow: var(--elev-shadow-lg);
+  border-color: color-mix(in oklab, var(--border), var(--primary) 20%);
+}
+.card .card-header {
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(180deg, color-mix(in oklab, var(--surface), var(--primary) 6%), var(--surface));
+  border-top-left-radius: var(--radius-lg);
+  border-top-right-radius: var(--radius-lg);
+  color: var(--text);
+}
+.card .card-body { color: var(--text); }
+
+/* 4) Buttons re-skin (Bootstrap-compatible) */
+.btn {
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast), background-color var(--transition), color var(--transition), border-color var(--transition);
+  will-change: transform;
+}
+.btn:hover { transform: translateY(-1px); }
+
+.btn:active { transform: translateY(0); }
+
+.btn-primary,
+.btn.btn-primary {
+  background: linear-gradient(180deg, var(--primary), var(--primary-600));
+  border: 1px solid var(--primary-600);
+  color: #fff;
+}
+.btn-primary:hover {
+  background: linear-gradient(180deg, var(--primary-600), var(--primary-700));
+  box-shadow: 0 10px 22px rgba(79, 70, 229, 0.35);
 }
 
+.btn-outline-primary {
+  color: var(--primary);
+  border: 1px solid color-mix(in oklab, var(--primary), var(--border) 60%);
+  background: transparent;
+}
+.btn-outline-primary:hover {
+  background: color-mix(in oklab, var(--primary), transparent 85%);
+  color: var(--primary-700);
+  border-color: var(--primary-600);
+  box-shadow: 0 10px 22px rgba(79, 70, 229, 0.25);
+}
+
+.btn-outline-success { color: var(--success); border-color: color-mix(in oklab, var(--success), var(--border) 60%); }
+.btn-outline-success:hover { background: color-mix(in oklab, var(--success), transparent 85%); }
+
+.btn-outline-info    { color: var(--info);    border-color: color-mix(in oklab, var(--info), var(--border) 60%); }
+.btn-outline-info:hover    { background: color-mix(in oklab, var(--info), transparent 85%); }
+
+.btn-outline-danger { color: var(--danger); border-color: color-mix(in oklab, var(--danger), var(--border) 60%); }
+.btn-outline-danger:hover { background: color-mix(in oklab, var(--danger), transparent 85%); }
+
+.btn-outline-warning { color: var(--warning); border-color: color-mix(in oklab, var(--warning), var(--border) 60%); }
+.btn-outline-warning:hover { background: color-mix(in oklab, var(--warning), transparent 85%); }
+
+/* Ghost button utility */
+.btn-ghost {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+.btn-ghost:hover {
+  background: color-mix(in oklab, var(--surface-2), transparent 70%);
+  border-color: color-mix(in oklab, var(--border), var(--primary) 25%);
+}
+
+/* 5) Table re-skin (Bootstrap-compatible) */
 .table {
-    border-radius: 8px;
-    overflow: hidden;
+  margin: 0;
+  background: var(--surface);
+  border-radius: var(--radius-md);
+  overflow: hidden;
 }
-
 .table thead th {
-    background-color: var(--primary-color);
-    color: white;
+    background: linear-gradient(180deg, color-mix(in oklab, var(--surface), var(--primary) 8%), var(--surface));
+    color: var(--text);
     border: none;
-    font-weight: 600;
+    font-weight: 700;
     text-transform: uppercase;
-    font-size: 0.85rem;
-    letter-spacing: 0.5px;
+    font-size: 0.75rem;
+    letter-spacing: 0.06em;
+    padding: 0.9rem 0.75rem;
 }
-
+.table tbody td, .table tbody th {
+  border-top-color: var(--border);
+  color: var(--text);
+}
+.table tbody tr {
+  transition: background-color var(--transition), transform var(--transition);
+}
 .table tbody tr:hover {
-    background-color: rgba(37, 99, 235, 0.05);
+  background-color: color-mix(in oklab, var(--primary), transparent 92%);
+  transform: translateY(-1px);
 }
 
+/* 6) Alerts, badges, chips */
+.alert {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--elev-shadow);
+}
+.alert-danger   { border-left: 4px solid var(--danger); }
+.alert-success  { border-left: 4px solid var(--success); }
+.alert-info     { border-left: 4px solid var(--info); }
+.alert-warning  { border-left: 4px solid var(--warning); }
+
+.badge {
+  border-radius: 9999px;
+  padding: 0.4em 0.7em;
+  font-weight: 600;
+}
+.badge[data-variant="pending"]  { background: color-mix(in oklab, var(--warning), transparent 85%); color: var(--warning); }
+.badge[data-variant="approved"] { background: color-mix(in oklab, var(--success), transparent 85%); color: var(--success); }
+.badge[data-variant="rejected"] { background: color-mix(in oklab, var(--danger),  transparent 85%); color: var(--danger); }
+
+/* 7) Animation utilities */
 .fade-in {
-    animation: fadeIn 0.5s ease-in;
+  animation: fadeInUp 420ms var(--transition) both;
+}
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.shimmer {
+  position: relative;
+  overflow: hidden;
+  background: color-mix(in oklab, var(--surface-2), transparent 40%);
+}
+.shimmer::after {
+  content: "";
+  position: absolute; inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.18), transparent);
+  transform: translateX(-100%);
+  animation: shimmer 1.2s infinite;
+}
+@keyframes shimmer {
+  100% { transform: translateX(100%); }
 }
 
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
-    }
+/* 8) Utility classes */
+.surface    { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); }
+.surface-2  { background: var(--surface-2); border-radius: var(--radius-lg); }
+.shadow-1   { box-shadow: var(--elev-shadow); }
+.shadow-2   { box-shadow: var(--elev-shadow-lg); }
+.rounded-lg { border-radius: var(--radius-lg); }
+.rounded-xl { border-radius: var(--radius-xl); }
 
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 1rem;
 }
+.stats-grid > * { grid-column: span 12; }
+@media (min-width: 768px) {
+  .stats-grid > .span-3 { grid-column: span 3; }
+  .stats-grid > .span-4 { grid-column: span 4; }
+  .stats-grid > .span-6 { grid-column: span 6; }
+}
+
+/* 9) Bootstrap compatibility refinements */
+.btn-sm:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.18);
+}
+.table-responsive { border-radius: 0 0 var(--radius-lg) var(--radius-lg); }
+
+/* 10) Keep existing class names from old styles for compatibility (no visual regressions) */
+.btn { border-radius: 8px; } /* narrower radius kept for legacy areas */
+
+/* End of global styles */

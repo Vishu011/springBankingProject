@@ -1,9 +1,94 @@
-<!-- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * -->
-<!-- * * * * * * * * * * * The content below * * * * * * * * * * * -->
-<!-- * * * * * * * * * * is only a placeholder * * * * * * * * * * -->
-<!-- * * * * * * * * * * and can be replaced.  * * * * * * * * * * -->
-<!-- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * -->
-<!-- * * * * * * * * * Delete the template below * * * * * * * * * -->
-<!-- * * * * * * * to get started with your project! * * * * * * * -->
-<!-- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * -->
-<router-outlet />
+<ng-container *ngIf="showShell">
+<!-- Premium App Shell: Sidebar + Topbar. Keeps router-outlet and all routes/services intact. -->
+<input id="nav-toggle" type="checkbox" hidden>
+
+<div class="app-shell">
+  <!-- Sidebar -->
+  <aside class="sidebar shadow-1">
+    <div class="brand">
+      <img src="/assets/images/BANKLOGO.png" alt="Bank Logo" class="brand-logo me-2">
+      <span class="brand-name">Bank Admin</span>
+    </div>
+
+    <nav class="nav">
+      <div class="nav-section">Main</div>
+      <a routerLink="/admin-dashboard" routerLinkActive="active" class="nav-link">
+        <i class="fa-solid fa-gauge-high"></i>
+        <span>Dashboard</span>
+      </a>
+
+      <div class="nav-section">Operations</div>
+      <a routerLink="/loan-management" routerLinkActive="active" class="nav-link">
+        <i class="fa-solid fa-file-invoice-dollar"></i>
+        <span>Loan Management</span>
+      </a>
+      <a routerLink="/account-management" routerLinkActive="active" class="nav-link">
+        <i class="fa-solid fa-university"></i>
+        <span>Account Management</span>
+      </a>
+      <a routerLink="/user-management" routerLinkActive="active" class="nav-link">
+        <i class="fa-solid fa-users-gear"></i>
+        <span>User Management</span>
+      </a>
+      <a routerLink="/kyc-management" routerLinkActive="active" class="nav-link">
+        <i class="fa-solid fa-shield-halved"></i>
+        <span>KYC Management</span>
+      </a>
+
+      <div class="nav-section">Applications</div>
+      <a routerLink="/salary-applications" routerLinkActive="active" class="nav-link">
+        <i class="fa-solid fa-briefcase"></i>
+        <span>Salary Applications</span>
+      </a>
+      <a routerLink="/card-applications" routerLinkActive="active" class="nav-link">
+        <i class="fa-solid fa-credit-card"></i>
+        <span>Card Applications</span>
+      </a>
+      <a routerLink="/self-service-requests" routerLinkActive="active" class="nav-link">
+        <i class="fa-solid fa-user-pen"></i>
+        <span>User Profile Requests</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="text-center small text-muted mt-2">&copy; <span id="year"></span> Admin</div>
+      <script>
+        (function(){try{var y=document.getElementById('year'); if(y){y.textContent=new Date().getFullYear();}}catch(e){}})();
+      </script>
+    </div>
+  </aside>
+
+  <!-- Main area -->
+  <div class="main">
+    <!-- Topbar -->
+    <header class="topbar shadow-1">
+      <div class="left">
+        <label for="nav-toggle" class="icon-btn d-inline-flex d-lg-none" aria-label="Toggle sidebar">
+          <i class="fa-solid fa-bars"></i>
+        </label>
+        <div class="portal-title">Admin Portal</div>
+      </div>
+
+      <div class="right">
+        <button class="icon-btn" type="button" data-theme-toggle title="Toggle theme">
+          <i class="fa-solid fa-sun"></i>
+        </button>
+        <a routerLink="/login" class="icon-btn" title="Go to Login">
+          <i class="fa-solid fa-user-shield"></i>
+        </a>
+      </div>
+    </header>
+
+    <!-- Routed views -->
+    <main class="content">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+</div>
+
+<!-- Backdrop for mobile sidebar -->
+<label for="nav-toggle" class="backdrop"></label>
+</ng-container>
+<ng-container *ngIf="!showShell">
+  <router-outlet></router-outlet>
+</ng-container>

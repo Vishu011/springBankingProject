@@ -5,8 +5,8 @@
 param(
     [string]$KeycloakHost = "http://localhost:8180",
     [string]$Realm = "bank-realm",
-    [string]$AdminUser = "admin",
-    [string]$AdminPass = "admin",
+    [string]$AdminUser = "",
+    [string]$AdminPass = "",
     [string]$ClientId = "bank-frontend",
     [string]$RedirectUri = "http://localhost:4200/*"
 )

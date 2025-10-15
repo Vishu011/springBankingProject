@@ -1,6 +1,7 @@
 export const environment = {
     production: false,
     apiUrl: 'http://localhost:9010', // Your API Gateway URL
+    orchestratorUrl: 'http://localhost:9101', // AI Orchestrator base URL
     keycloak: {
         issuer: 'http://localhost:8080/realms/bank-realm', // Keycloak Realm URL
         clientId: 'bank-admin-frontend', // Client ID for your Admin Angular app in Keycloak

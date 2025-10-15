@@ -1,218 +1,275 @@
+/* ===== Base Container ===== */
 .accounts-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 30px;
-    font-family: Arial, sans-serif;
-    background-color: #f8f9fa;
-    min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px 20px;
+  font-family: 'Inter', sans-serif;
+  background: linear-gradient(135deg, #f8f9fb, #ffffff);
+  min-height: 100vh;
+  animation: fadeIn 0.6s ease-in-out;
 }
 
+/* Headings */
 h2 {
-    color: #007bff;
-    margin-bottom: 25px;
-    font-size: 2em;
-}
-
-.loading-message, .no-accounts-message {
-    margin-top: 20px;
-    font-size: 1.1em;
-    color: #6c757d;
-}
-
-.message {
-    margin-top: 15px;
-    padding: 10px;
-    border-radius: 5px;
-    font-size: 0.95em;
-    text-align: center;
-    width: 100%;
-    max-width: 800px;
-}
-
-.success-message {
-    background-color: #d4edda;
-    color: #155724;
-    border: 1px solid #c3e6cb;
-}
-
-.error-message {
-    background-color: #f8d7da;
-    color: #721c24;
-    border: 1px solid #f5c6cb;
-}
-
-.account-creation-section,
-.account-list {
-    width: 100%;
-    max-width: 800px;
-    margin-top: 30px;
-    background-color: #fff;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-    overflow: hidden;
-    padding: 20px;
+  color: #A50034;
+  margin-bottom: 25px;
+  font-size: 2.2rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
 }
 
 h3 {
-    color: #343a40;
-    padding-bottom: 15px;
-    margin-top: 0;
-    margin-bottom: 20px;
-    border-bottom: 1px solid #eee;
+  color: #403434;
+  padding-bottom: 12px;
+  margin-top: 0;
+  margin-bottom: 20px;
+  border-bottom: 2px solid #eee;
+  font-weight: 600;
 }
 
-/* Form Styling */
+/* ===== Messages ===== */
+.loading-message,
+.no-accounts-message {
+  margin-top: 20px;
+  font-size: 1.05em;
+  color: #7d6c6c;
+  animation: fadeIn 0.3s ease;
+}
+
+.message {
+  margin-top: 15px;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 0.95em;
+  text-align: center;
+  width: 100%;
+  max-width: 800px;
+  animation: fadeIn 0.4s ease;
+}
+
+.success-message {
+  background: #d4edda;
+  color: #155724;
+  border-left: 4px solid #28a745;
+}
+
+.error-message {
+  background: #f8d7da;
+  color: #a70022;
+  border-left: 4px solid #dc3545;
+}
+
+/* ===== Card Sections ===== */
+.account-creation-section,
+.account-list {
+  width: 100%;
+  max-width: 850px;
+  margin-top: 35px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 16px;
+  box-shadow: 0 10px 35px rgba(0, 0, 0, 0.05);
+  padding: 25px 30px;
+  backdrop-filter: blur(10px);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.account-creation-section:hover,
+.account-list:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.08);
+}
+
+/* ===== Form Styling ===== */
 .form-group {
-    margin-bottom: 15px;
-    text-align: left;
+  margin-bottom: 18px;
+  text-align: left;
 }
 
 label {
-    display: block;
-    margin-bottom: 5px;
-    font-weight: bold;
-    color: #555;
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 600;
+  color: #444;
 }
 
 input[type="text"],
 input[type="number"],
 select {
-    width: calc(100% - 22px);
-    /* Adjust for padding and border */
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    box-sizing: border-box;
-    font-size: 1em;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  box-sizing: border-box;
+  font-size: 1em;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
-input[type="number"] {
-    -moz-appearance: textfield;
-    /* Firefox specific */
+input:focus,
+select:focus {
+  outline: none;
+  border-color: #A50034;
+  box-shadow: 0 0 0 3px rgba(165, 0, 52, 0.15);
 }
 
-input[type="number"]::-webkit-outer-spin-button,
-input[type="number"]::-webkit-inner-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
+/* ===== Buttons ===== */
+.create-button,
+.generate-otp-button {
+  background: linear-gradient(135deg, #D50032, #A50034);
+  color: #fff;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1em;
+  font-weight: 600;
+  transition: transform 0.2s ease, background 0.3s ease;
 }
 
-.create-button {
-    background-color: #007bff;
-    color: #fff;
-    padding: 12px 20px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 1em;
-    transition: background-color 0.3s ease;
+.create-button:hover:not(:disabled),
+.generate-otp-button:hover:not(:disabled) {
+  background: linear-gradient(135deg, #b4002e, #8c0029);
+  transform: translateY(-2px);
 }
 
-.create-button:hover:not(:disabled) {
-    background-color: #0056b3;
+.create-button:disabled,
+.generate-otp-button:disabled {
+  background: #f4c6cc;
+  cursor: not-allowed;
 }
 
-.create-button:disabled {
-    background-color: #a0c9ed;
-    cursor: not-allowed;
+/* OTP Row Styling */
+.otp-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
 }
 
-/* Table Styling */
+.otp-row input {
+  flex: 1;
+  text-align: center;
+  font-size: 1rem;
+  font-weight: 500;
+  letter-spacing: 2px;
+}
+
+/* ===== Table Styling ===== */
 table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 20px;
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+  animation: fadeIn 0.4s ease;
 }
 
 th,
 td {
-    padding: 12px 15px;
-    text-align: left;
-    border-bottom: 1px solid #dee2e6;
-    font-size: 0.9em;
+  padding: 14px 16px;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+  font-size: 0.95em;
 }
 
 th {
-    background-color: #f2f2f2;
-    font-weight: bold;
-    color: #495057;
+  background: #fafafa;
+  color: #444;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+tr {
+  transition: background-color 0.2s ease;
 }
 
 tr:hover {
-    background-color: #f8f9fa;
+  background-color: #fff5f5;
 }
 
+/* ===== Actions ===== */
 .actions {
-    white-space: nowrap;
-    /* Prevent buttons from wrapping */
+  white-space: nowrap;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.otp-inline {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 6px;
 }
 
 .action-button {
-    padding: 8px 12px;
-    font-size: 0.85em;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-    margin-right: 5px;
+  padding: 8px 14px;
+  font-size: 0.85em;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.3s ease, transform 0.2s ease;
+}
+
+.action-button:hover:not(:disabled) {
+  transform: translateY(-2px);
 }
 
 .action-button.block {
-    background-color: #ffc107;
-    /* Yellow */
-    color: #333;
+  background-color: #ffc107;
+  color: #333;
 }
 
 .action-button.block:hover {
-    background-color: #e0a800;
-}
-
-.action-button.block:disabled {
-    background-color: #ffe08a;
-    cursor: not-allowed;
+  background-color: #e0a800;
 }
 
 .action-button.unblock {
-    background-color: #17a2b8;
-    /* Cyan */
-    color: #fff;
+  background-color: #17a2b8;
+  color: #fff;
 }
 
 .action-button.unblock:hover {
-    background-color: #138496;
-}
-
-.action-button.unblock:disabled {
-    background-color: #89d3df;
-    cursor: not-allowed;
+  background-color: #138496;
 }
 
 .action-button.delete {
-    background-color: #dc3545;
-    /* Red */
-    color: #fff;
+  background-color: #dc3545;
+  color: #fff;
 }
 
 .action-button.delete:hover {
-    background-color: #c82333;
+  background-color: #b51f2d;
 }
 
-/* Status styling */
+.action-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ===== Account Status ===== */
 .status-active {
-    color: #28a745;
-    /* Green */
-    font-weight: bold;
+  color: #28a745;
+  font-weight: 700;
 }
 
 .status-closed {
-    color: #6c757d;
-    /* Gray */
-    font-weight: bold;
+  color: #7d6c6c;
+  font-weight: 700;
 }
 
 .status-blocked {
-    color: #ffc107;
-    /* Yellow */
-    font-weight: bold;
+  color: #e6b800;
+  font-weight: 700;
+}
+
+/* ===== Animations ===== */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

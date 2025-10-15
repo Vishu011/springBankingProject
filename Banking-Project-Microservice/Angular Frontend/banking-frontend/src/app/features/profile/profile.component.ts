@@ -38,119 +38,265 @@ type Nominee = {
   standalone: true,
   imports: [CommonModule, FormsModule, HttpClientModule],
   template: `
-  <div class="container">
-    <h2>My Profile</h2>
-    <div *ngIf="loading" class="muted">Loading...</div>
-    <div *ngIf="error" class="error">{{ error }}</div>
-    <div *ngIf="success" class="success">{{ success }}</div>
+  <div class="profile-container">
+  <h2>My Profile</h2>
 
-    <div class="grid" *ngIf="!loading && profile">
-      <!-- Photo -->
-      <div class="card photo-card">
-        <div class="card-header"><strong>Profile Photo</strong></div>
-        <div class="card-body">
-          <div class="photo-box">
-            <img [src]="photoSrc" alt="Profile photo" (error)="onImgError($event)" />
-          </div>
-          <div class="row">
-            <input type="file" (change)="onPhotoSelected($event)" />
-            <button class="btn btn-sm" (click)="uploadPhoto()" [disabled]="uploading || !selectedPhoto">Upload</button>
-          </div>
-          <div *ngIf="uploading" class="muted">Uploading...</div>
-        </div>
+  <!-- Messages -->
+  <div *ngIf="loading" class="muted">Loading...</div>
+  <div *ngIf="error" class="alert error">{{ error }}</div>
+  <div *ngIf="success" class="alert success">{{ success }}</div>
+
+  <!-- Dashboard Grid -->
+  <div class="dashboard-grid" *ngIf="!loading && profile">
+    
+    <!-- Profile Photo Card -->
+    <div class="card photo-card">
+      <div class="photo-box">
+        <img [src]="photoSrc" alt="Profile Photo" (error)="onImgError($event)">
       </div>
+      <input type="file" (change)="onPhotoSelected($event)">
+      <button class="btn upload-btn" [disabled]="uploading || !selectedPhoto" (click)="uploadPhoto()">
+        {{ uploading ? 'Uploading...' : 'Upload Photo' }}
+      </button>
+    </div>
 
-      <!-- Basic Info -->
-      <div class="card">
-        <div class="card-header"><strong>Basic Information</strong></div>
-        <div class="card-body">
-          <div class="row">
-            <div class="label">Name</div>
-            <div class="value">{{ fullName() }}</div>
-            <button class="icon-btn" title="Edit name" (click)="editName()">✏️</button>
-          </div>
-          <div class="row">
-            <div class="label">Date of Birth</div>
-            <div class="value">{{ profile?.dateOfBirth || '-' }}</div>
-            <button class="icon-btn" title="Edit DOB" (click)="editDob()">✏️</button>
-          </div>
-          <div class="row">
-            <div class="label">Email</div>
-            <div class="value">{{ profile?.email || '-' }}</div>
-            <button class="icon-btn" title="Change Email (OTP)" (click)="editEmail()">✏️</button>
-          </div>
-          <div class="row">
-            <div class="label">Phone</div>
-            <div class="value">{{ profile?.phoneNumber || '-' }}</div>
-            <button class="icon-btn" title="Change Phone (OTP to email)" (click)="editPhone()">✏️</button>
-          </div>
-          <div class="row">
-            <div class="label">Address</div>
-            <div class="value">{{ profile?.address || '-' }}</div>
-            <button class="icon-btn" title="Edit address" (click)="editAddress()">✏️</button>
-          </div>
-          <div class="row">
-            <div class="label">Aadhaar</div>
-            <div class="value">{{ profile?.aadharNumber || '-' }}</div>
-          </div>
-          <div class="row">
-            <div class="label">PAN</div>
-            <div class="value">{{ profile?.panNumber || '-' }}</div>
-          </div>
-        </div>
+    <!-- Basic Info Card -->
+    <div class="card info-card">
+      <div class="card-header">
+        <span>Basic Information</span>
+        <span *ngIf="profile.kycStatus" class="badge" [ngClass]="(profile.kycStatus?.toLowerCase() || '')">{{ profile.kycStatus }}</span>
       </div>
-
-      <!-- Nominees -->
-      <div class="card">
-        <div class="card-header">
-          <strong>Nominees ({{ nominees.length }})</strong>
-          <button class="btn btn-sm ms-2" (click)="goNominees()">Manage</button>
-        </div>
-        <div class="card-body">
-          <div *ngIf="nominees.length === 0" class="muted">No nominees added.</div>
-          <table *ngIf="nominees.length > 0" class="table">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Age</th>
-                <th>Gender</th>
-                <th>Relationship</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let n of nominees">
-                <td>{{ n.name }}</td>
-                <td>{{ n.age }}</td>
-                <td>{{ n.gender }}</td>
-                <td>{{ n.relationship }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+      <div class="card-body">
+        <div class="row"><span class="label">Full Name</span><span class="value">{{ fullName() }}</span><button class="icon-btn" (click)="editName()">✏️</button></div>
+        <div class="row"><span class="label">DOB</span><span class="value">{{ profile.dateOfBirth || '-' }}</span><button class="icon-btn" (click)="editDob()">✏️</button></div>
+        <div class="row"><span class="label">Email</span><span class="value">{{ profile.email || '-' }}</span><button class="icon-btn" (click)="editEmail()">✏️</button></div>
+        <div class="row"><span class="label">Phone</span><span class="value">{{ profile.phoneNumber || '-' }}</span><button class="icon-btn" (click)="editPhone()">✏️</button></div>
+        <div class="row"><span class="label">Address</span><span class="value">{{ profile.address || '-' }}</span><button class="icon-btn" (click)="editAddress()">✏️</button></div>
+        <div class="row"><span class="label">Aadhaar</span><span class="value">{{ profile.aadharNumber || '-' }}</span></div>
+        <div class="row"><span class="label">PAN</span><span class="value">{{ profile.panNumber || '-' }}</span></div>
       </div>
     </div>
+
+    <!-- Nominees Card -->
+    <div class="card nominees-card">
+      <div class="card-header">
+        <span>Nominees ({{ nominees.length }})</span>
+        <button class="btn btn-sm" (click)="goNominees()">Manage</button>
+      </div>
+      <div class="card-body">
+        <div *ngIf="nominees.length === 0" class="muted">No nominees added.</div>
+        <table *ngIf="nominees.length > 0" class="table">
+          <thead>
+            <tr><th>Name</th><th>Age</th><th>Gender</th><th>Relationship</th></tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let n of nominees">
+              <td>{{ n.name }}</td><td>{{ n.age }}</td><td>{{ n.gender }}</td><td>{{ n.relationship }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
   </div>
+</div>
+
   `,
   styles: [`
-    .container { padding: 1rem; }
-    .muted { color: #777; }
-    .error { color: #b00020; margin-bottom:.5rem; }
-    .success { color: #1b5e20; margin-bottom:.5rem; }
-    .grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:1rem; }
-    .card { border:1px solid #e0e0e0; border-radius:8px; background:#fff; }
-    .card-header { padding:.6rem .9rem; background:#f7f7f7; border-bottom:1px solid #eee; display:flex; align-items:center; }
-    .card-body { padding:.9rem; }
-    .row { display:flex; align-items:center; gap:.5rem; margin-bottom:.6rem; }
-    .label { width: 140px; color:#666; }
-    .value { flex: 1; font-weight:600; }
-    .icon-btn { border:none; background:transparent; cursor:pointer; font-size: 1rem; }
-    .btn { padding:.35rem .7rem; border:none; border-radius:4px; background:#0d6efd; color:#fff; cursor:pointer; }
-    .btn.btn-sm { padding:.25rem .5rem; font-size:.85rem; }
-    .ms-2 { margin-left:.5rem; }
-    .table { width:100%; border-collapse: collapse; }
-    .table th, .table td { border:1px solid #eee; padding:.4rem; text-align:left; }
-    .photo-card .photo-box { width: 160px; height: 160px; border:1px solid #ddd; border-radius:8px; overflow:hidden; display:flex; align-items:center; justify-content:center; margin-bottom:.5rem; background:#fafafa; }
-    .photo-card img { max-width:100%; max-height:100%; display:block; }
+    .container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+  font-family: 'Inter', Arial, sans-serif;
+  color: #333;
+}
+
+h2 {
+  text-align: center;
+  color: #A50034;
+  font-size: 2rem;
+  margin-bottom: 2rem;
+  font-weight: 700;
+}
+
+/* Messages */
+.muted {
+  color: #6c757d;
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.error {
+  color: #b00020;
+  background: #fdecea;
+  padding: 0.8rem 1rem;
+  border-radius: 8px;
+  text-align: center;
+  margin-bottom: 1rem;
+  font-weight: 500;
+}
+
+.success {
+  color: #155724;
+  background: #d4edda;
+  padding: 0.8rem 1rem;
+  border-radius: 8px;
+  text-align: center;
+  margin-bottom: 1rem;
+  font-weight: 500;
+}
+
+/* Grid layout */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1.5rem;
+}
+
+/* Cards */
+.card {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.05);
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+}
+
+.card-header {
+  padding: 0.75rem 1rem;
+  background: #f7f7f7;
+  border-bottom: 1px solid #eee;
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.card-body {
+  padding: 1rem;
+}
+
+/* Rows inside cards */
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.8rem;
+}
+
+.label {
+  color: #555;
+  font-weight: 500;
+  width: 140px;
+}
+
+.value {
+  flex: 1;
+  font-weight: 600;
+  word-break: break-word;
+}
+
+.icon-btn {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 1.1rem;
+  margin-left: 0.5rem;
+  transition: transform 0.2s ease;
+}
+
+.icon-btn:hover {
+  transform: scale(1.1);
+}
+
+/* Buttons */
+.btn {
+  padding: 0.35rem 0.7rem;
+  border: none;
+  border-radius: 6px;
+  background: #0d6efd;
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.btn:hover {
+  background: #0b5ed7;
+}
+
+.btn.btn-sm {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.85rem;
+}
+
+/* Manage nominees button */
+.ms-2 {
+  margin-left: 0.5rem;
+}
+
+/* Tables */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+
+.table th, .table td {
+  border: 1px solid #eee;
+  padding: 0.5rem;
+  text-align: left;
+}
+
+.table th {
+  background: #f2f2f2;
+  font-weight: 600;
+}
+
+/* Profile photo card */
+.photo-card .photo-box {
+  width: 160px;
+  height: 160px;
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1rem;
+  background: #fafafa;
+  border: 1px solid #ddd;
+}
+
+.photo-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  border-radius: 12px;
+}
+
+/* File input row */
+.photo-card .row input[type="file"] {
+  flex: 1;
+}
+
+.photo-card .row button {
+  margin-left: 0.5rem;
+  background: #28a745;
+}
+
+.photo-card .row button:hover {
+  background: #218838;
+}
+
+/* Responsive tweaks */
+@media (max-width: 480px) {
+  .label { width: 100px; }
+  .row { flex-direction: column; align-items: flex-start; gap: 0.3rem; }
+}
+
   `]
 })
 export class ProfileComponent implements OnInit {

@@ -1,0 +1,234 @@
+/* Premium App Shell Styles (Sidebar + Topbar + Content)
+   - Uses global CSS variables from styles.css
+   - Responsive, dark-mode-ready, smooth transitions
+*/
+
+/* Layout container */
+.app-shell {
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+  display: grid;
+  grid-template-columns: 260px 1fr;
+}
+
+/* Sidebar */
+.sidebar {
+  position: sticky;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  padding: 1rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  z-index: 1000;
+}
+
+/* Branding */
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  height: 56px;
+  padding: 0 0.5rem;
+  font-weight: 800;
+  letter-spacing: 0.2px;
+  user-select: none;
+}
+.brand .fa-building-columns {
+  color: var(--primary);
+}
+.brand-name {
+  background: linear-gradient(90deg, var(--primary), var(--accent));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Navigation */
+.nav {
+  margin-top: 0.25rem;
+  display: flex;
+  flex-direction: column;
+}
+.nav-section {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  text-transform: uppercase;
+  padding: 0.75rem 0.75rem 0.35rem;
+}
+
+.nav-link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 0.75rem;
+  margin: 0.1rem 0.35rem;
+  border-radius: 10px;
+  color: var(--muted);
+  text-decoration: none;
+  transition: background-color var(--transition), color var(--transition), transform var(--transition-fast), box-shadow var(--transition-fast);
+  will-change: transform;
+}
+.nav-link i {
+  width: 1.25rem;
+  text-align: center;
+  color: var(--muted);
+  transition: color var(--transition);
+}
+.nav-link:hover {
+  background: color-mix(in oklab, var(--surface-2), transparent 60%);
+  color: var(--text);
+  transform: translateX(2px);
+}
+.nav-link.active {
+  background: color-mix(in oklab, var(--primary), transparent 88%);
+  color: var(--primary);
+  box-shadow: 0 6px 18px rgba(99, 102, 241, 0.15) inset;
+}
+.nav-link.active i {
+  color: var(--primary);
+}
+
+/* Sidebar footer */
+.sidebar-footer {
+  margin-top: auto;
+  padding: 0.5rem 0.35rem 0.25rem;
+}
+
+/* Main area */
+.main {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Topbar */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 900;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1rem;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: saturate(140%) blur(6px);
+}
+.topbar .left,
+.topbar .right {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.portal-title {
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+/* Icon button (topbar + controls) */
+.icon-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform var(--transition-fast), background-color var(--transition), border-color var(--transition), box-shadow var(--transition-fast);
+}
+.icon-btn:hover {
+  transform: translateY(-1px);
+  background: color-mix(in oklab, var(--surface-2), transparent 70%);
+  border-color: color-mix(in oklab, var(--border), var(--primary) 25%);
+}
+.icon-btn:active {
+  transform: translateY(0);
+}
+
+/* Content wrapper */
+.content {
+  padding: 1rem;
+  width: 100%;
+}
+@media (min-width: 768px) {
+  .content { padding: 1.25rem 1.5rem; }
+}
+@media (min-width: 1200px) {
+  .content { padding: 1.5rem 2rem; }
+}
+
+/* Backdrop for mobile overlay */
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(2, 6, 23, 0.45);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--transition);
+  z-index: 800;
+}
+
+/* Responsive: mobile/ tablet (sidebar becomes drawer) */
+@media (max-width: 991.98px) {
+  .app-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    position: fixed;
+    transform: translateX(-102%);
+    transition: transform var(--transition), box-shadow var(--transition);
+    width: 280px;
+    max-width: 86vw;
+    height: 100dvh; /* mobile safe */
+    box-shadow: var(--elev-shadow-lg);
+  }
+
+  /* Toggle via hidden checkbox */
+  #nav-toggle:checked ~ .app-shell .sidebar {
+    transform: translateX(0);
+  }
+  #nav-toggle:checked ~ .backdrop {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+/* Improve scroll behavior for sidebar */
+.sidebar {
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+.sidebar::-webkit-scrollbar {
+  width: 10px;
+}
+.sidebar::-webkit-scrollbar-thumb {
+  background: rgba(120, 120, 120, 0.3);
+  border-radius: 8px;
+}
+
+/* Dark-mode specific touches (optional since variables handle most) */
+:root[data-theme="dark"] .topbar {
+  background: color-mix(in oklab, var(--surface), black 8%);
+}
+:root[data-theme="dark"] .icon-btn {
+  background: color-mix(in oklab, var(--surface), black 4%);
+}
+
+/* Utility: hide text on extremely small widths to keep icons visible (optional) */
+@media (max-width: 360px) {
+  .nav-link span {
+    display: none;
+  }
+}

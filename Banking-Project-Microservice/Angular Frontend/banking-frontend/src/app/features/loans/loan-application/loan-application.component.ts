@@ -286,7 +286,7 @@ export class LoanApplicationComponent implements OnInit {
   openTerms(event: Event): void {
     event.preventDefault();
     // In a real application, this would open a modal or navigate to terms page
-    alert('Terms and Conditions:\n\n1. All loan applications are subject to credit approval.\n2. Interest rates may vary based on credit score.\n3. Processing fees are non-refundable.\n4. Early repayment charges may apply.\n\nFor complete terms, please visit our website or contact customer service.');
+    alert('Terms and Conditions:\n\n1. All loan applications are subject to credit approval.\n2. Interest rates may vary based on credit score.\n3. Processing fees are non-refundable.\n4. Early closure charges may apply.\n\nFor complete terms, please visit our website or contact customer service.');
   }
 
   openPrivacyPolicy(event: Event): void {

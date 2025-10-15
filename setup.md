@@ -107,11 +107,13 @@ Ensure microservices point to:
 
 Start ZooKeeper (example):
 ```
-"c:\kafka\bin\windows\zookeeper-server-start.bat" "c:\kafka\config\zookeeper.properties"
+.\bin\windows\zookeeper-server-start.bat .\config\zookeeper.properties
+
 ```
 Start Kafka:
 ```
-"c:\kafka\bin\windows\kafka-server-start.bat" "c:\kafka\config\server.properties"
+.\bin\windows\kafka-server-start.bat .\config\server.properties
+
 ```
 Create topics:
 ```
@@ -119,13 +121,13 @@ Create topics:
 "c:\kafka\bin\windows\kafka-topics.bat" --bootstrap-server localhost:9092 --create --topic kyc-status-events --partitions 1 --replication-factor 1
 "c:\kafka\bin\windows\kafka-topics.bat" --bootstrap-server localhost:9092 --create --topic loan-status-events --partitions 1 --replication-factor 1
 ```
-
+Similarly create topics for all other services.
 
 ## 5) Keycloak setup (realm, roles, clients)
 
 Keycloak Admin Console:
 - URL: http://localhost:8080
-- Admin credentials: admin / admin
+- Admin credentials: Your credentials
 
 Realm:
 - Create realm: bank-realm (if not already created)
@@ -142,21 +144,9 @@ Clients:
   - user-service-admin-client (grant: realm-management/manage-users)
   - notification-service-client
 
-Automated creation of the Angular public clients (recommended):
-```
-pwsh -NoProfile -File "scripts/keycloak/setup-clients-rest.ps1" -KeycloakUrl http://localhost:8080 -Realm bank-realm -AdminUser admin -AdminPassword admin
-```
-This creates/updates:
-- bank-frontend: redirect http://localhost:4200/*, web origins http://localhost:4200
-- bank-admin-frontend: redirect http://localhost:4300/*, web origins http://localhost:4300
-- PKCE S256 enabled, Standard Flow enabled
-
-Known service client secrets (for reference; not used by human logins):
-- user-service-admin-client (confidential): SvHZfh0PCQrV22qhm3rHSvyhxdtfRgev
-- notification-service-client (confidential): UQCtpCaZ02y9DQK8sMUcm03G9A6p88vD
-
-JWKS endpoint (gateway uses it for JWT validation):
-- http://localhost:8080/realms/bank-realm/protocol/openid-connect/certs
+## Start Keycloak:
+Inside Keycloak\bin
+.\kc.bat start-dev
 
 
 ## 6) Start microservices
@@ -170,20 +160,16 @@ cd "Banking-Project-Microservice/<ServiceDir>"
 Services and directories:
 - UserMicroservice/
 <!-- cd Banking-Project-Microservice/UserMicroservice
-$env:SPRING_PROFILES_ACTIVE='local'
-.\mvnw.cmd spring-boot:run -->
+mvn spring-boot:run -->
 - AccountMicroservice/
 <!-- cd Banking-Project-Microservice/AccountMicroservice
-$env:SPRING_PROFILES_ACTIVE='local'
-.\mvnw.cmd spring-boot:run -->
+mvn spring-boot:run -->
 - TransactionService/
 <!-- cd Banking-Project-Microservice/TransactionService
-$env:SPRING_PROFILES_ACTIVE='local'
-.\mvnw.cmd spring-boot:run -->
+mvn spring-boot:run -->
 - loan-service/loan-service/
 <!-- cd Banking-Project-Microservice/loan-service/loan-service
-$env:SPRING_PROFILES_ACTIVE='local'
-.\mvnw.cmd spring-boot:run -->
+mvn spring-boot:run -->
 - CreditCardService/
 <!-- cd Banking-Project-Microservice/CreditCardService
 mvn spring-boot:run -->
@@ -195,6 +181,9 @@ mvn spring-boot:run -->
 mvn spring-boot:run -->
 - Self Service/
 <!-- cd Banking-Project-Microservice/SelfService
+mvn spring-boot:run -->
+- ai-orchestrator
+<!-- cd Banking-Project-Microservice/ai-orchestrator/ai-orchestrator
 mvn spring-boot:run -->
 
 Each service should register with Eureka at http://localhost:8761 and use the Oracle schema noted above. Check application.yaml for:
@@ -240,7 +229,7 @@ banking-frontend (Customer UI):
 ```
 cd "Banking-Project-Microservice/Angular Frontend/banking-frontend"
 npm ci
-npm start
+npm run start -- --port 4200
 # http://localhost:4200
 ```
 OIDC client: bank-frontend (public, Standard Flow)
@@ -248,7 +237,8 @@ OIDC client: bank-frontend (public, Standard Flow)
 banking-admin-dashboard (Admin UI):
 ```
 cd "Banking-Project-Microservice/Angular Frontend/banking-admin-dashboard"
-ng serve --port 4300
+npm ci
+npm run start -- --port 4300
 # http://localhost:4300
 ```
 OIDC client: bank-admin-frontend (public)
@@ -331,8 +321,8 @@ Verify logs for email send on consumed events. If services publish to specific t
 
 - Keycloak Admin Console:
   - URL: http://localhost:8080
-  - Username: admin
-  - Password: admin
+  - Username: <Your Username>
+  - Password: <Your Password>
 
 - Keycloak realm: bank-realm
 
@@ -342,10 +332,10 @@ Verify logs for email send on consumed events. If services publish to specific t
 
 - Service clients:
   - user-service-admin-client (confidential, service account)
-    - Secret: SvHZfh0PCQrV22qhm3rHSvyhxdtfRgev
+    - Secret: <Secret Key>
     - Granted: realm-management/manage-users
   - notification-service-client (confidential, service account)
-    - Secret: UQCtpCaZ02y9DQK8sMUcm03G9A6p88vD
+    - Secret: <Secret Key>
 
 - DB Schemas (Oracle ORCL):
   - AUTH_MS/auth123
@@ -353,7 +343,9 @@ Verify logs for email send on consumed events. If services publish to specific t
   - TRANSACT_MS/transact123
   - LOAN_MS/loan123
   - CARD_MS/card123
-  - NOTIFY_MS/<choose-password> (if required)
+  - NOTIFY_MS/notify123
+  - OTP_MS/otp123
+  - SELF_SERVICE_MS/selfservice123
 
 - Kafka Topics:
   - transaction-events

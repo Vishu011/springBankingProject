@@ -11,28 +11,31 @@
         <div class="col-lg-6 d-none d-lg-flex left-panel">
             <div class="branding-content">
                 <div class="logo-section" (click)="onLogoClick()">
-                    <i class="fas fa-university logo-icon"></i>
-                    <h1 class="brand-name">UGDI Bank</h1>
+                    <!-- <img src="/images/UGDI.png" alt="Bank Logo" class="logo-icon"> -->
+                     <i class="fas fa-university logo-icon"></i>
+                    <h1 class="brand-name">Omni Bank</h1>
                     <p class="brand-tagline">Professional Banking Solutions</p>
                 </div>
 
-                <div class="features-list" *ngIf="showWelcome">
-                    <div class="feature-item">
-                        <i class="fas fa-shield-alt feature-icon"></i>
-                        <span>Advanced Security</span>
-                    </div>
-                    <div class="feature-item">
-                        <i class="fas fa-chart-line feature-icon"></i>
-                        <span>Real-time Analytics</span>
-                    </div>
-                    <div class="feature-item">
-                        <i class="fas fa-users feature-icon"></i>
-                        <span>Customer Management</span>
-                    </div>
-                    <div class="feature-item">
-                        <i class="fas fa-cogs feature-icon"></i>
-                        <span>Administrative Controls</span>
-                    </div>
+                <div class="mt-3 d-none d-lg-block">
+                    <button type="button" class="btn btn-primary brand-login-btn" (click)="login()" [disabled]="isLoading">
+                        <span *ngIf="!isLoading" class="btn-content">
+                            <i class="fab fa-keycdn me-2"></i>
+                            Login with Keycloak
+                        </span>
+                        <span *ngIf="isLoading" class="btn-loading">
+                            <div class="spinner-border spinner-border-sm me-2"></div>
+                            Authenticating...
+                        </span>
+                    </button>
+                </div>
+
+                <div class="bank-anim" aria-hidden="true">
+                    <div class="ba-item ba-coin"><i class="fa-solid fa-coins"></i></div>
+                    <div class="ba-item ba-card"><i class="fa-solid fa-credit-card"></i></div>
+                    <div class="ba-item ba-shield"><i class="fa-solid fa-shield-halved"></i></div>
+                    <div class="ba-item ba-graph"><i class="fa-solid fa-chart-line"></i></div>
+                    <div class="ba-item ba-building"><i class="fa-solid fa-building-columns"></i></div>
                 </div>
             </div>
         </div>
@@ -44,8 +47,8 @@
 
                     <!-- Mobile Logo -->
                     <div class="mobile-logo d-lg-none">
-                        <i class="fas fa-university"></i>
-                        <h3>SecureBank Admin</h3>
+                        <img src="/assets/images/BANKLOGO.png" alt="Bank Logo" class="mobile-logo-img">
+                        <h3>Omni Bank Admin</h3>
                     </div>
 
                     <!-- Login Header -->
@@ -69,7 +72,7 @@
                         </div>
 
                         <!-- Login Button -->
-                        <button type="button" class="btn login-btn w-100" (click)="login()" [disabled]="isLoading">
+                        <button type="button" class="btn login-btn w-100 d-lg-none" (click)="login()" [disabled]="isLoading">
 
                             <span *ngIf="!isLoading" class="btn-content">
                                 <i class="fab fa-keycdn me-2"></i>
@@ -113,7 +116,7 @@
                             </a>
                         </div>
                         <p class="copyright">
-                            © 2024 SecureBank. All rights reserved.
+                            © 2024 Omni Bank. All rights reserved.
                         </p>
                     </div>
 

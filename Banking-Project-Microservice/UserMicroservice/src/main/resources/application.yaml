@@ -5,8 +5,8 @@ spring:
     name: user-service # This name will be used for Eureka registration
   datasource:
     url: jdbc:oracle:thin:@//localhost:1521/ORCL
-    username: AUTH_MS
-    password: auth123
+    username: 
+    password: 
     driver-class-name: oracle.jdbc.OracleDriver
 
   jpa:
@@ -130,9 +130,9 @@ keycloak:
     # and enable 'Service accounts enabled' for it.
     # Then go to its 'Service Account Roles' tab and assign 'realm-management' -> 'manage-users' role.
     client-id: user-service-admin-client # Client ID for service account
-    client-secret: SvHZfh0PCQrV22qhm3rHSvyhxdtfRgev # Get this from Keycloak client's 'Credentials' tab
+    client-secret:  # Get this from Keycloak client's 'Credentials' tab
     # Option 2: For Direct Admin User/Password (Simpler for Dev, less secure for Prod)
-    username: admin # Keycloak admin username
-    password: admin # Keycloak admin password
+    username:  # Keycloak admin username
+    password:  # Keycloak admin password
 
    

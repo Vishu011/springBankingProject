@@ -13,6 +13,7 @@ drop user TRANSACT_MS cascade;
 drop user NOTIFY_MS cascade;
 drop user LOAN_MS cascade;
 drop user CARD_MS cascade;
+drop user SELF_SERVICE_MS cascade;
 
 prompt Creating users...
 create user AUTH_MS identified by auth123;
@@ -22,6 +23,7 @@ create user NOTIFY_MS identified by notify123;
 create user LOAN_MS identified by loan123;
 create user CARD_MS identified by card123;
 CREATE USER OTP_MS IDENTIFIED BY otp123;
+CREATE USER SELF_SERVICE_MS IDENTIFIED BY selfservice123;
 
 prompt Unlocking accounts...
 alter user AUTH_MS account unlock;
@@ -31,6 +33,7 @@ alter user NOTIFY_MS account unlock;
 alter user LOAN_MS account unlock;
 alter user CARD_MS account unlock;
 alter user OTP_MS account unlock;
+alter user SELF_SERVICE_MS account unlock;
 
 prompt Granting privileges (sufficient for Spring JPA/Hibernate in dev)...
 grant create session to AUTH_MS;
@@ -96,6 +99,15 @@ grant create trigger to OTP_MS;
 grant connect to OTP_MS;
 grant resource to OTP_MS;
 
+grant create session to SELF_SERVICE_MS;
+grant create table to SELF_SERVICE_MS;
+grant create sequence to SELF_SERVICE_MS;
+grant create view to SELF_SERVICE_MS;
+grant create procedure to SELF_SERVICE_MS;
+grant create trigger to SELF_SERVICE_MS;
+grant connect to SELF_SERVICE_MS;
+grant resource to SELF_SERVICE_MS;
+
 prompt Granting unlimited quota on USERS tablespace (adjust if you use a different default TS)...
 alter user AUTH_MS quota unlimited on USERS;
 alter user ACCOUNT_MS quota unlimited on USERS;
@@ -104,5 +116,6 @@ alter user NOTIFY_MS quota unlimited on USERS;
 alter user LOAN_MS quota unlimited on USERS;
 alter user CARD_MS quota unlimited on USERS;
 alter user OTP_MS quota unlimited on USERS;
+alter user SELF_SERVICE_MS quota unlimited on USERS;
 
 prompt Done. Verify with: select username, account_status from dba_users where username in ('AUTH_MS','ACCOUNT_MS','TRANSACT_MS','NOTIFY_MS','LOAN_MS','CARD_MS','OTP_MS');

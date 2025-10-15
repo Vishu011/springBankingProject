@@ -10,11 +10,11 @@
 
 /* Header Styles */
 .notification-header {
-    background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+    background: linear-gradient(135deg, #A50034 0%, #D50032 100%);
     border-radius: 12px;
     padding: 1.5rem;
     margin-bottom: 2rem;
-    box-shadow: 0 4px 15px rgba(52, 152, 219, 0.2);
+    box-shadow: 0 4px 15px rgba(219, 52, 52, 0.2);
 }
 
 .header-content {
@@ -121,8 +121,8 @@
 
 .form-control:focus,
 .form-select:focus {
-    border-color: #3498db;
-    box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.15);
+    border-color: #D50032;
+    box-shadow: 0 0 0 0.2rem rgba(219, 52, 52, 0.15);
 }
 
 /* Notifications List */
@@ -253,12 +253,12 @@
 .page-link:hover {
     background-color: #e9ecef;
     border-color: #adb5bd;
-    color: #2980b9;
+    color: #D50032;
     transform: translateY(-1px);
 }
 
 .page-item.active .page-link {
-    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+    background: linear-gradient(135deg, #A50034 0%, #D50032 100%);
     border-color: #3498db;
 }
 
@@ -303,12 +303,12 @@
 }
 
 .alert-danger {
-    background: linear-gradient(135deg, #ff6b6b 0%, #e74c3c 100%);
+    background: linear-gradient(135deg, #ff6b6b 0%, #ef3e2a 100%);
     color: white;
 }
 
 .alert-info {
-    background: linear-gradient(135deg, #74b9ff 0%, #3498db 100%);
+    background: linear-gradient(135deg, #D50032 0%, #A50034 100%);
     color: white;
 }
 

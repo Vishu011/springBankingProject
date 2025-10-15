@@ -1,0 +1,136 @@
+<div class="agent-panel surface rounded">
+  <div class="header">
+    <h3>Agent Mode</h3>
+    <div class="actions">
+      <button class="btn" (click)="refreshStatus()" [disabled]="loading || saving">
+        {{ loading ? 'Loading...' : 'Refresh' }}
+      </button>
+      <button class="btn primary" (click)="runNow()" [disabled]="running || saving || loading">
+        {{ running ? 'Running...' : 'Run Now' }}
+      </button>
+    </div>
+  </div>
+
+  <div class="messages" *ngIf="errorMessage || successMessage">
+    <div *ngIf="errorMessage" class="alert error">
+      {{ errorMessage }}
+      <button class="icon-btn" (click)="clearMessages()" aria-label="Close">×</button>
+    </div>
+    <div *ngIf="successMessage" class="alert success">
+      {{ successMessage }}
+      <button class="icon-btn" (click)="clearMessages()" aria-label="Close">×</button>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <div class="row">
+        <label>Enabled</label>
+        <label class="switch">
+          <input type="checkbox"
+                 [checked]="status?.enabled"
+                 (change)="setEnabled(($event.target as HTMLInputElement).checked)">
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <div class="row">
+        <label>Mode</label>
+        <select [value]="status?.mode" (change)="setMode(($event.target as HTMLSelectElement).value as AgentMode)">
+          <option *ngFor="let m of availableModes" [value]="m">{{ m }}</option>
+        </select>
+      </div>
+
+      <div class="row">
+        <label>Polling</label>
+        <label class="switch">
+          <input type="checkbox"
+                 [checked]="status?.pollingEnabled"
+                 (change)="setPollingEnabled(($event.target as HTMLInputElement).checked)">
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <div class="row">
+        <label>Polling Interval (ms)</label>
+        <div class="inline">
+          <input type="number" min="1000" step="500" [(ngModel)]="desiredPollingMs">
+          <button class="btn" (click)="applyPollingInterval()" [disabled]="saving || loading">Apply</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>Workflows</h4>
+      <div class="row">
+        <label class="chk">
+          <input type="checkbox"
+                 [checked]="status?.workflows.kyc"
+                 (change)="setWorkflow('kyc', ($event.target as HTMLInputElement).checked)">
+          KYC
+        </label>
+      </div>
+      <div class="row">
+        <label class="chk">
+          <input type="checkbox"
+                 [checked]="status?.workflows.loans"
+                 (change)="setWorkflow('loans', ($event.target as HTMLInputElement).checked)">
+          Loans
+        </label>
+      </div>
+      <div class="row">
+        <label class="chk">
+          <input type="checkbox"
+                 [checked]="status?.workflows.salary"
+                 (change)="setWorkflow('salary', ($event.target as HTMLInputElement).checked)">
+          Salary
+        </label>
+      </div>
+      <div class="row">
+        <label class="chk">
+          <input type="checkbox"
+                 [checked]="status?.workflows.cards"
+                 (change)="setWorkflow('cards', ($event.target as HTMLInputElement).checked)">
+          Cards
+        </label>
+      </div>
+      <div class="row">
+        <label class="chk">
+          <input type="checkbox"
+                 [checked]="status?.workflows.selfService"
+                 (change)="setWorkflow('selfService', ($event.target as HTMLInputElement).checked)">
+          Self Service
+        </label>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>Queues</h4>
+      <div class="queue-grid" *ngIf="status?.queues; else noQueues">
+        <div class="q-item" *ngFor="let key of queueKeys()">
+          <div class="q-key">{{ key }}</div>
+          <div class="q-val">{{ queueValue(key) }}</div>
+        </div>
+      </div>
+      <ng-template #noQueues>
+        <div class="muted">No queue data</div>
+      </ng-template>
+    </div>
+
+    <div class="card">
+      <h4>Status</h4>
+      <div class="row">
+        <label>Last Run</label>
+        <div>{{ lastRunAt }}</div>
+      </div>
+      <div class="row">
+        <label>Mode</label>
+        <div>{{ status?.mode || '—' }}</div>
+      </div>
+      <div class="row">
+        <label>Enabled</label>
+        <div>{{ status?.enabled ? 'Yes' : 'No' }}</div>
+      </div>
+    </div>
+  </div>
+</div>

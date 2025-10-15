@@ -2,33 +2,38 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 30px;
-    font-family: Arial, sans-serif;
-    background-color: #f8f9fa;
+    padding: 40px 20px;
+    font-family: 'Inter', Arial, sans-serif;
+    background-color: #f5f6fa;
     min-height: 100vh;
 }
 
 h2 {
-    color: #007bff;
-    margin-bottom: 25px;
+    color: #A50034;
+    margin-bottom: 30px;
     font-size: 2em;
+    font-weight: 700;
+    text-align: center;
 }
 
+/* Messages */
 .loading-message,
 .no-accounts-message {
     margin-top: 20px;
     font-size: 1.1em;
     color: #6c757d;
+    text-align: center;
 }
 
 .message {
-    margin-top: 15px;
-    padding: 10px;
-    border-radius: 5px;
-    font-size: 0.95em;
+    margin-top: 20px;
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 1em;
     text-align: center;
     width: 100%;
     max-width: 600px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
 }
 
 .success-message {
@@ -43,37 +48,48 @@ h2 {
     border: 1px solid #f5c6cb;
 }
 
+/* Form Section */
 .withdraw-form-section {
     width: 100%;
     max-width: 600px;
-    margin-top: 20px;
+    margin-top: 25px;
     background-color: #fff;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    border-radius: 12px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.05);
+    overflow: hidden;
     padding: 30px;
+    transition: all 0.3s ease;
 }
 
 .form-group {
+    display: flex;
+    flex-direction: column;
     margin-bottom: 20px;
-    text-align: left;
 }
 
 label {
-    display: block;
+    font-weight: 600;
+    color: #495057;
     margin-bottom: 8px;
-    font-weight: bold;
-    color: #555;
 }
 
+input[type="text"],
 input[type="number"],
+input[type="password"],
 select {
-    width: calc(100% - 22px);
     padding: 12px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    box-sizing: border-box;
+    border-radius: 6px;
+    border: 1px solid #ced4da;
     font-size: 1em;
+    transition: all 0.3s;
     background-color: #fefefe;
+}
+
+input:focus,
+select:focus {
+    outline: none;
+    border-color: #A50034;
+    box-shadow: 0 0 0 3px rgba(165,0,52,0.15);
 }
 
 input[type="number"] {
@@ -86,39 +102,95 @@ input[type="number"]::-webkit-inner-spin-button {
     margin: 0;
 }
 
+/* OTP Row */
+.otp-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.generate-otp-button {
+    padding: 10px 16px;
+    background-color: #A50034;
+    color: #fff;
+    font-weight: 600;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.generate-otp-button:hover:not(:disabled) {
+    background-color: #B22234;
+    transform: translateY(-1px);
+}
+
+.generate-otp-button:disabled {
+    background-color: #d4c1ed;
+    cursor: not-allowed;
+}
+
+/* Withdraw Button */
 .withdraw-button {
     background-color: #fd7e14;
-    /* Orange */
     color: #fff;
     padding: 14px 25px;
     border: none;
     border-radius: 8px;
     cursor: pointer;
     font-size: 1.1em;
-    transition: background-color 0.3s ease;
+    font-weight: 600;
+    transition: background-color 0.3s ease, transform 0.2s ease;
     width: 100%;
 }
 
 .withdraw-button:hover:not(:disabled) {
     background-color: #e06c00;
+    transform: translateY(-1px);
 }
 
 .withdraw-button:disabled {
-    background-color: #ffcc99;
+    background-color: #ea8484;
     cursor: not-allowed;
 }
 
+/* Help text */
+.help-text {
+    font-size: 0.85em;
+    color: #6c757d;
+    margin-top: 4px;
+}
+
+/* No Accounts Link */
 .create-account-link {
     display: inline-block;
     margin-top: 15px;
-    padding: 10px 15px;
-    background-color: #007bff;
+    padding: 12px 20px;
+    background-color: #A50034;
     color: #fff;
     text-decoration: none;
-    border-radius: 5px;
-    transition: background-color 0.3s ease;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.3s;
 }
 
 .create-account-link:hover {
-    background-color: #0056b3;
+    background-color: #B22234;
+    transform: translateY(-1px);
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+    .withdraw-form-section {
+        padding: 25px 15px;
+    }
+
+    .otp-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .generate-otp-button {
+        width: 100%;
+    }
 }

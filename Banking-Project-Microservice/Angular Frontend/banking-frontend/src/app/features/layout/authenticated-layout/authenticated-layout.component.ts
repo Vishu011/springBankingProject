@@ -5,6 +5,7 @@ import { CommonModule } from '@angular/common';
 import { RouterOutlet } from '@angular/router';
 import { NavigationComponent } from '../navigation/navigation.component';
 import { SidebarComponent } from '../sidebar/sidebar.component';
+import { ChatbotComponent } from '../../chatbot/chatbot.component';
 
 
 @Component({
@@ -14,7 +15,8 @@ import { SidebarComponent } from '../sidebar/sidebar.component';
         CommonModule,
         RouterOutlet,
         NavigationComponent,
-        SidebarComponent
+        SidebarComponent,
+        ChatbotComponent
     ],
     template: `
     <div class="authenticated-layout">
@@ -32,6 +34,9 @@ import { SidebarComponent } from '../sidebar/sidebar.component';
           <router-outlet></router-outlet>
         </main>
       </div>
+      
+      <!-- Chatbot Widget -->
+      <app-chatbot></app-chatbot>
     </div>
   `,
     styles: [`

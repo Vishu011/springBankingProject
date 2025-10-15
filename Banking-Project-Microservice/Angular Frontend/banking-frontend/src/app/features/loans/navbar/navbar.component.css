@@ -25,15 +25,15 @@ nav a {
 }
 
 nav a:hover {
-  color: #667eea;
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+  color: #D50032;
+  background: linear-gradient(135deg, rgba(234, 102, 102, 0.1) 0%, rgba(162, 75, 75, 0.1) 100%);
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px -8px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 8px 25px -8px rgba(234, 102, 102, 0.3);
 }
 
 nav a.active {
   color: white;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #D50032 0%, #A50034 100%);
   box-shadow: 0 8px 25px -8px rgba(102, 126, 234, 0.4);
   transform: translateY(-1px);
 }
@@ -97,13 +97,13 @@ nav::after {
   transform: translateX(-50%);
   width: 60px;
   height: 3px;
-  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(90deg, #A50034 0%, #D50032 100%);
   border-radius: 2px;
 }
 
 hr {
   border: none;
   height: 1px;
-  background: linear-gradient(90deg, transparent 0%, rgba(102, 126, 234, 0.3) 50%, transparent 100%);
+  background: linear-gradient(90deg, transparent 0%, rgba(234, 102, 102, 0.3) 50%, transparent 100%);
   margin: 0;
 }

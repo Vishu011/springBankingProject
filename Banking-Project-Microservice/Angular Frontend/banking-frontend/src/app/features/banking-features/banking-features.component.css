@@ -17,7 +17,7 @@
 
 /* Content Header */
 .content-header {
-    background-color: #0769AD;
+    background: linear-gradient(135deg, #170a0c 0%, #A50034 100%);
     color: white;
     padding: 40px 0;
     margin-bottom: 30px;
@@ -48,7 +48,7 @@
 
 /* Section Titles */
 .section-title {
-    color: #495057;
+    color: #574949;
     font-weight: 600;
     margin-bottom: 20px;
     padding-bottom: 10px;
@@ -57,7 +57,7 @@
 
 /* Welcome Card */
 .welcome-card {
-    background: linear-gradient(135deg, #333333 0%, #0769AD 100%);
+    background: linear-gradient(135deg, #333333 0%, #D50032 100%);
     border-radius: 15px;
     box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
     color: white;
@@ -138,7 +138,7 @@
 .service-icon {
     width: 50px;
     height: 50px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #B22234 0%, #D50032 100%);
     border-radius: 10px;
     display: flex;
     align-items: center;
@@ -152,15 +152,17 @@
 .service-card .card-title {
     font-size: 1.2rem;
     font-weight: 600;
-    color: #495057;
+    color: #695757;
     margin: 0;
 }
 
 .service-card .card-text {
-    color: #6c757d;
+    color: #7d6c6c;
     line-height: 1.5;
     margin-bottom: 20px;
 }
+
+
 
 /* Statistics Cards */
 .stat-card {
@@ -201,12 +203,12 @@
     margin-top: 5px;
     font-size: 1rem;
     font-weight: 700;
-    color: #495057;
+    color: #574949;
     margin-bottom: 5px;
 }
 
 .stat-label {
-    color: #6c757d;
+    color: #7d6c6c;
     font-size: 0.9rem;
     font-weight: 500;
     margin: 0;
@@ -216,7 +218,7 @@
 
 /* Buttons */
 .btn-primary {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #A50034 0%, #D50032 100%);
     border: none;
     border-radius: 8px;
     font-weight: 500;
@@ -226,7 +228,7 @@
 
 .btn-primary:hover {
     transform: translateY(-1px);
-    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 4px 15px rgba(238, 70, 58, 0.68);
 }
 
 .btn-outline-secondary {

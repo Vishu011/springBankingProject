@@ -3,8 +3,8 @@ spring:
     name: credit-card-service # Must match FeignClient name in API Gateway
   datasource:
     url: jdbc:oracle:thin:@//localhost:1521/ORCL # Your database URL
-    username: CARD_MS # Your database username
-    password: card123 # Your database password
+    username:
+    password: 
     driver-class-name: oracle.jdbc.OracleDriver
 
   jpa:

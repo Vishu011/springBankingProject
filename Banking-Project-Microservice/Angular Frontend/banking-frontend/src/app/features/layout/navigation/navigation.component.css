@@ -32,7 +32,7 @@ body {
     width: 100%;
     /* Add this to ensure full width coverage */
     z-index: 1000;
-    border-bottom: 1px solid rgba(7, 105, 173, 0.12);
+    border-bottom: 1px solid rgba(173, 7, 7, 0.747);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
 }
@@ -74,7 +74,7 @@ body {
 .nav-logo {
     width: 58px;
     height: 58px;
-    background: linear-gradient(135deg, #0769AD 0%, #1e88e5 50%, #054a7a 100%);
+    background: linear-gradient(135deg, #D50032 0%, #B22234 50%, #A50034 100%);
     border-radius: 14px;
     display: flex;
     align-items: center;
@@ -104,7 +104,7 @@ body {
 
 .nav-logo:hover {
     transform: translateY(-1px);
-    box-shadow: 0 8px 25px rgba(7, 105, 173, 0.3);
+    box-shadow: 0 8px 25px rgba(173, 7, 7, 0.3);
 }
 
 .nav-logo-img {
@@ -127,7 +127,7 @@ body {
 }
 
 .nav-brand-text span {
-    color: #64748b;
+    color: #8b6464;
     font-size: 0.82rem;
     font-weight: 500;
     letter-spacing: 0.01em;
@@ -169,13 +169,13 @@ body {
 
 .user-welcome:hover {
     background: linear-gradient(135deg, rgba(7, 105, 173, 0.12) 0%, rgba(7, 105, 173, 0.18) 100%);
-    border-color: rgba(7, 105, 173, 0.2);
+    border-color: rgba(173, 7, 7, 0.2);
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(7, 105, 173, 0.15);
+    box-shadow: 0 4px 12px rgba(173, 7, 7, 0.15);
 }
 
 .user-avatar {
-    color: #0769AD;
+    color: #A50034;
     font-size: 1.75rem;
     transition: transform 0.2s ease;
 }
@@ -210,7 +210,7 @@ body {
 }
 
 .logout-button {
-    background: linear-gradient(135deg, #ef4444 0%, #dc2626 50%, #b91c1c 100%);
+    background: linear-gradient(135deg, #fc4747 0%, #eb0e0e 50%, #b91c1c 100%);
     color: white;
     border: none;
     padding: 12px 20px;
@@ -248,7 +248,7 @@ body {
     box-shadow:
         0 8px 25px rgba(239, 68, 68, 0.35),
         0 4px 12px rgba(239, 68, 68, 0.2);
-    background: linear-gradient(135deg, #f87171 0%, #ef4444 50%, #dc2626 100%);
+    background: linear-gradient(135deg, #f87171 0%, #ed2c2c 50%, #f21414 100%);
 }
 
 /* ... (existing CSS) ... */
@@ -265,14 +265,14 @@ body {
     position: relative;
     font-size: 1.5em;
     /* Icon size */
-    color: #6c757d;
+    color: #7d6c6c;
     text-decoration: none;
     transition: color 0.2s ease;
     cursor: pointer;
 }
 
 .notification-icon-link:hover {
-    color: #0769AD;
+    color: #D50032;
     /* Hover color */
 }
 
@@ -399,7 +399,7 @@ body {
 
     .nav-brand-text h3 {
         color: #f9fafb;
-        background: linear-gradient(135deg, #f9fafb 0%, #60a5fa 100%);
+        background: linear-gradient(135deg, #f9fafb 0%, #F7C6C7 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
@@ -410,8 +410,8 @@ body {
     }
 
     .user-welcome {
-        background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(59, 130, 246, 0.15) 100%);
-        border-color: rgba(59, 130, 246, 0.2);
+        background: linear-gradient(135deg, rgba(246, 59, 59, 0.26) 0%, rgba(246, 59, 59, 0.15) 100%);
+        border-color: rgba(246, 59, 59, 0.2);
     }
 
     .user-name {
@@ -423,7 +423,7 @@ body {
     }
 
     .user-avatar {
-        color: #60a5fa;
+        color: #F7C6C7;
     }
 }
 
@@ -447,10 +447,10 @@ body {
 /* Focus states for accessibility */
 .nav-brand:focus-visible,
 .logout-button:focus-visible {
-    outline: 2px solid #0769AD;
+    outline: 2px solid #D50032;
     outline-offset: 2px;
 }
 
 .logout-button:focus-visible {
-    outline-color: #ef4444;
+    outline-color: #ee1a1a;
 }

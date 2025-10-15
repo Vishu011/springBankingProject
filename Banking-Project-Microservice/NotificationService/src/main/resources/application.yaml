@@ -4,8 +4,8 @@ spring:
 
   datasource:
     url: jdbc:oracle:thin:@//localhost:1521/ORCL
-    username: NOTIFY_MS
-    password: notify123
+    username: 
+    password: 
     driver-class-name: oracle.jdbc.OracleDriver
 
   jpa:
@@ -133,4 +133,4 @@ keycloak:
     url: http://localhost:8080 # Keycloak server URL
     realm: bank-realm
     client-id: notification-service-client # Client ID created above
-    client-secret: UQCtpCaZ02y9DQK8sMUcm03G9A6p88vD # Secret from Keycloak
+    client-secret: 

@@ -1,414 +1,310 @@
+/* Login Page - Premium theme aligned with global tokens
+   - Uses global CSS variables from src/styles.css for proper light/dark contrast
+   - Improves readability and color harmony
+   - Places desktop login button under brand on left panel; mobile button remains in the form
+*/
 
-
-/* Root Variables */
-:root {
-    --primary-color: #2c3e50;
-    --secondary-color: #3498db;
-    --accent-color: #e74c3c;
-    --success-color: #27ae60;
-    --warning-color: #f39c12;
-    --light-bg: #ecf0f1;
-    --dark-text: #2c3e50;
-    --light-text: #7f8c8d;
-    --card-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
-    --hover-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+/* Map component-scoped variables to global tokens for easy reuse */
+:host {
+  --primary-color: var(--primary);
+  --secondary-color: var(--primary-600);
+  --accent-color: var(--accent);
+  --success-color: var(--success);
+  --warning-color: var(--warning);
+  --light-bg: var(--bg);
+  --dark-text: var(--text);
+  --light-text: var(--muted);
+  --card-shadow: var(--elev-shadow);
+  --hover-shadow: var(--elev-shadow-lg);
 }
 
-/* Main Container */
-.login-wrapper {
-    min-height: 100vh;
-    position: relative;
-    overflow: hidden;
-    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+/* Main Container background (harmonized with theme) */
+.container-fluid.h-100 {
+  min-height: 100vh;
+  background: linear-gradient(135deg, var(--primary-700), var(--primary-600));
+}
+:host-context(:root[data-theme="dark"]) .container-fluid.h-100 {
+  background: linear-gradient(135deg,
+    color-mix(in oklab, var(--bg), black 6%),
+    color-mix(in oklab, var(--bg), black 12%)
+  );
 }
 
 /* Background Animation */
 .background-animation {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 1;
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  z-index: 1;
 }
-
 .circle {
-    position: absolute;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.1);
-    animation: float 6s ease-in-out infinite;
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.10);
+  animation: float 6s ease-in-out infinite;
 }
-
-.circle-1 {
-    width: 100px;
-    height: 100px;
-    top: 10%;
-    left: 10%;
-    animation-delay: 0s;
-}
-
-.circle-2 {
-    width: 150px;
-    height: 150px;
-    top: 60%;
-    right: 10%;
-    animation-delay: 2s;
-}
-
-.circle-3 {
-    width: 80px;
-    height: 80px;
-    bottom: 20%;
-    left: 60%;
-    animation-delay: 4s;
-}
-
+.circle-1 { width: 100px; height: 100px; top: 10%; left: 10%; animation-delay: 0s; }
+.circle-2 { width: 150px; height: 150px; top: 60%; right: 10%; animation-delay: 2s; }
+.circle-3 { width: 80px; height: 80px; bottom: 20%; left: 60%; animation-delay: 4s; }
 @keyframes float {
-
-    0%,
-    100% {
-        transform: translateY(0px) rotate(0deg);
-    }
-
-    50% {
-        transform: translateY(-20px) rotate(180deg);
-    }
+  0%, 100% { transform: translateY(0) rotate(0); }
+  50% { transform: translateY(-20px) rotate(180deg); }
 }
 
 /* Left Panel - Branding */
 .left-panel {
-    background: rgba(0, 0, 0, 0.3);
-    backdrop-filter: blur(10px);
-    position: relative;
-    z-index: 2;
-    align-items: center;
-    justify-content: center;
+  background: rgba(2, 6, 23, 0.35);
+  backdrop-filter: blur(10px);
+  position: relative;
+  z-index: 2;
+  align-items: center;
+  justify-content: center;
 }
-
 .branding-content {
-    text-align: center;
-    color: white;
-    animation: slideInLeft 1s ease-out;
+  text-align: center;
+  color: #fff;
+  animation: slideInLeft 0.8s ease-out;
 }
-
 .logo-section {
-    margin-bottom: 3rem;
-    cursor: pointer;
-    transition: transform 0.3s ease;
+  margin-bottom: 2rem;
+  cursor: pointer;
+  transition: transform 0.25s ease;
 }
-
-.logo-section:hover {
-    transform: scale(1.05);
-}
-
+.logo-section:hover { transform: translateY(-2px); }
 .logo-icon {
-    font-size: 4rem;
-    margin-bottom: 1rem;
-    color: #fff;
-    text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
-    transition: all 0.3s ease;
+  font-size: 3.5rem;
+  margin-bottom: 0.75rem;
+  color: #fff;
+  text-shadow: 0 0 18px rgba(255,255,255,0.5);
+  transition: all 0.3s ease;
 }
-
 .logo-section:hover .logo-icon {
-    text-shadow: 0 0 30px rgba(255, 255, 255, 0.8);
-    transform: rotateY(360deg);
+  text-shadow: 0 0 28px rgba(255,255,255,0.8);
+  transform: rotateY(360deg);
 }
-
 .brand-name {
-    font-size: 2.5rem;
-    font-weight: 700;
-    margin-bottom: 0.5rem;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+  font-size: 2.4rem;
+  font-weight: 800;
+  margin-bottom: 0.35rem;
+  letter-spacing: -0.02em;
 }
-
 .brand-tagline {
-    font-size: 1.1rem;
-    opacity: 0.9;
-    margin-bottom: 0;
+  font-size: 1rem;
+  color: rgba(255,255,255,0.85);
+  margin-bottom: 0;
 }
 
-.features-list {
-    animation: fadeIn 0.8s ease-in 0.5s both;
+/* Desktop-only login button under brand */
+.brand-login-btn {
+  font-weight: 700;
+  border-radius: 12px;
+  padding: 0.9rem 1.2rem;
+  background: linear-gradient(180deg, var(--primary), var(--primary-600));
+  border: 1px solid var(--primary-600);
+  color: #fff;
+  box-shadow: 0 10px 22px rgba(79,70,229,0.35);
+  transition: transform 150ms ease, box-shadow 150ms ease, background-color 220ms ease, border-color 220ms ease;
+}
+.brand-login-btn:hover {
+  transform: translateY(-1px);
+  background: linear-gradient(180deg, var(--primary-600), var(--primary-700));
+  box-shadow: 0 14px 28px rgba(79,70,229,0.42);
+}
+.brand-login-btn:disabled {
+  background: color-mix(in oklab, var(--muted), var(--border) 40%);
+  border-color: color-mix(in oklab, var(--muted), var(--border) 60%);
+  box-shadow: none;
 }
 
+/* Features */
+.features-list { animation: fadeIn 0.6s ease-in 0.3s both; }
 .feature-item {
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    margin-bottom: 1.5rem;
-    padding: 1rem;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 12px;
-    backdrop-filter: blur(5px);
-    transition: all 0.3s ease;
+  display: flex; align-items: center; justify-content: flex-start;
+  margin-bottom: 1.1rem; padding: 0.9rem;
+  background: rgba(255,255,255,0.10);
+  border-radius: 12px; backdrop-filter: blur(5px);
+  transition: all 0.25s ease;
+  color: #fff;
 }
-
 .feature-item:hover {
-    background: rgba(255, 255, 255, 0.2);
-    transform: translateX(10px);
+  background: rgba(255,255,255,0.18);
+  transform: translateX(6px);
+}
+.feature-icon {
+  font-size: 1.25rem;
+  margin-right: 0.75rem;
+  color: #fde047; /* amber-300 for visibility on dark */
 }
 
-.feature-icon {
-    font-size: 1.5rem;
-    margin-right: 1rem;
-    color: var(--warning-color);
+/* Banking animated icons (replaces text features) */
+.bank-anim {
+  position: relative;
+  height: 180px;
+  margin-top: 1.25rem;
+}
+.ba-item {
+  position: absolute;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  opacity: 0.95;
+  filter: drop-shadow(0 8px 18px rgba(0,0,0,0.25));
+  animation: sway 6s ease-in-out infinite;
+  will-change: transform;
+}
+.ba-item i { font-size: 1.1rem; }
+
+/* Positions + themed gradients */
+.ba-coin     { left: 8%;  top: 10%; background: linear-gradient(135deg, #facc15, #f59e0b); animation-delay: 0s; }
+.ba-card     { left: 72%; top: 18%; background: linear-gradient(135deg, #22d3ee, #0891b2); animation-delay: .3s; }
+.ba-shield   { left: 22%; top: 62%; background: linear-gradient(135deg, #818cf8, #4f46e5); animation-delay: .6s; }
+.ba-graph    { left: 56%; top: 66%; background: linear-gradient(135deg, #34d399, #059669); animation-delay: .9s; }
+.ba-building { left: 40%; top: 30%; background: linear-gradient(135deg, #94a3b8, #334155); animation-delay: 1.2s; }
+
+@keyframes sway {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50%      { transform: translateY(-10px) rotate(3deg); }
+}
+
+/* Responsive visibility and sizing */
+@media (max-width: 991.98px) {
+  .bank-anim { height: 140px; }
+  .ba-item { width: 44px; height: 44px; }
+}
+@media (max-width: 575.98px) {
+  .bank-anim { display: none; }
 }
 
 /* Right Panel - Login */
 .login-panel {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 100vh;
-    padding: 2rem;
-    position: relative;
-    z-index: 2;
+  display: flex; align-items: center; justify-content: center;
+  min-height: 100vh; padding: 2rem; position: relative; z-index: 2;
 }
-
 .login-card {
-    background: white;
-    border-radius: 20px;
-    padding: 3rem;
-    box-shadow: var(--card-shadow);
-    max-width: 500px;
-    width: 100%;
-    animation: slideInRight 1s ease-out;
-    transition: box-shadow 0.3s ease;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 2.2rem;
+  box-shadow: var(--card-shadow);
+  max-width: 500px; width: 100%;
+  animation: slideInRight 0.8s ease-out;
+  transition: box-shadow 0.25s ease, border-color 0.25s ease, transform 0.15s ease;
 }
-
 .login-card:hover {
-    box-shadow: var(--hover-shadow);
+  box-shadow: var(--hover-shadow);
+  border-color: color-mix(in oklab, var(--border), var(--primary) 22%);
+  transform: translateY(-1px);
 }
 
 /* Mobile Logo */
 .mobile-logo {
-    text-align: center;
-    margin-bottom: 2rem;
-    color: var(--primary-color);
+  text-align: center; margin-bottom: 1.3rem; color: var(--primary);
 }
-
-.mobile-logo i {
-    font-size: 3rem;
-    margin-bottom: 0.5rem;
-}
-
-.mobile-logo h3 {
-    margin: 0;
-    font-weight: 600;
-}
+.mobile-logo i { font-size: 2.2rem; margin-bottom: 0.35rem; }
+.mobile-logo h3 { margin: 0; font-weight: 800; letter-spacing: -0.01em; }
 
 /* Login Header */
-.login-header {
-    text-align: center;
-    margin-bottom: 2.5rem;
-}
-
+.login-header { text-align: center; margin-bottom: 1.6rem; }
 .login-title {
-    color: var(--dark-text);
-    font-size: 1.8rem;
-    font-weight: 600;
-    margin-bottom: 0.5rem;
+  color: var(--dark-text);
+  font-size: 1.7rem; font-weight: 800; margin-bottom: 0.35rem; letter-spacing: -0.02em;
 }
+.login-subtitle { color: var(--light-text); font-size: 0.98rem; margin: 0; }
 
-.login-subtitle {
-    color: var(--light-text);
-    font-size: 1rem;
-    margin: 0;
-}
-
-/* Security Notice */
+/* Security Notice with theme-aware colors */
 .security-notice {
-    background: #e8f4fd;
-    color: #1f5582;
-    padding: 1rem;
-    border-radius: 12px;
-    margin-bottom: 2rem;
-    border-left: 4px solid var(--secondary-color);
-    font-size: 0.9rem;
-    display: flex;
-    align-items: center;
+  background: linear-gradient(180deg,
+    color-mix(in oklab, var(--surface), var(--info) 10%),
+    var(--surface)
+  );
+  color: color-mix(in oklab, var(--text), var(--info) 20%);
+  padding: 0.9rem; border-radius: 12px; margin-bottom: 1.3rem;
+  border-left: 4px solid var(--info);
+  font-size: 0.92rem; display: flex; align-items: center; gap: 0.5rem;
 }
 
-/* Login Button */
+/* Login Button in form (mobile only; desktop one is under brand) */
 .login-btn {
-    background: linear-gradient(135deg, var(--secondary-color), #5dade2);
-    border: none;
-    color: white;
-    font-size: 1.1rem;
-    font-weight: 600;
-    padding: 1rem 2rem;
-    border-radius: 12px;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
-    position: relative;
-    overflow: hidden;
+  background: linear-gradient(180deg, var(--primary), var(--primary-600));
+  border: 1px solid var(--primary-600);
+  color: #fff; font-size: 1.05rem; font-weight: 700;
+  padding: 0.9rem 1rem; border-radius: 12px;
+  transition: transform 150ms ease, box-shadow 150ms ease, background-color 220ms ease, border-color 220ms ease;
+  box-shadow: 0 8px 20px rgba(79,70,229,0.30);
+  position: relative; overflow: hidden;
 }
-
 .login-btn:before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-    transition: left 0.5s;
+  content: ""; position: absolute; inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.18), transparent);
+  transform: translateX(-100%);
+  transition: transform 0.5s;
 }
-
-.login-btn:hover:before {
-    left: 100%;
-}
-
+.login-btn:hover:before { transform: translateX(100%); }
 .login-btn:hover {
-    background: linear-gradient(135deg, #2980b9, var(--secondary-color));
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
+  background: linear-gradient(180deg, var(--primary-600), var(--primary-700));
+  transform: translateY(-1px);
+  box-shadow: 0 12px 26px rgba(79,70,229,0.40);
 }
-
 .login-btn:disabled {
-    background: #bdc3c7;
-    transform: none;
-    cursor: not-allowed;
+  background: color-mix(in oklab, var(--muted), var(--border) 40%);
+  border-color: color-mix(in oklab, var(--muted), var(--border) 60%);
+  transform: none; cursor: not-allowed; box-shadow: none;
 }
-
-.btn-content,
-.btn-loading {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
+.btn-content, .btn-loading { display: flex; align-items: center; justify-content: center; }
 
 /* Additional Info */
-.additional-info {
-    margin-top: 2rem;
-    padding-top: 1.5rem;
-    border-top: 1px solid #ecf0f1;
-}
-
+.additional-info { margin-top: 1.4rem; padding-top: 1.1rem; border-top: 1px solid var(--border); }
 .info-item {
-    display: flex;
-    align-items: center;
-    margin-bottom: 0.8rem;
-    color: var(--light-text);
-    font-size: 0.9rem;
+  display: flex; align-items: center; margin-bottom: 0.65rem;
+  color: var(--light-text); font-size: 0.92rem;
 }
-
-.info-item i {
-    color: var(--success-color);
-}
+.info-item i { color: var(--success-color); }
 
 /* Footer */
-.login-footer {
-    margin-top: 2rem;
-    padding-top: 1.5rem;
-    border-top: 1px solid #ecf0f1;
-    text-align: center;
-}
-
-.footer-links {
-    display: flex;
-    justify-content: center;
-    gap: 2rem;
-    margin-bottom: 1rem;
-    flex-wrap: wrap;
-}
-
+.login-footer { margin-top: 1.7rem; padding-top: 1.1rem; border-top: 1px solid var(--border); text-align: center; }
+.footer-links { display: flex; justify-content: center; gap: 1.4rem; margin-bottom: 0.8rem; flex-wrap: wrap; }
 .footer-link {
-    color: var(--light-text);
-    text-decoration: none;
-    font-size: 0.9rem;
-    transition: color 0.3s ease;
-    display: flex;
-    align-items: center;
+  color: var(--light-text); text-decoration: none; font-size: 0.9rem;
+  transition: color 0.2s ease; display: flex; align-items: center;
 }
-
-.footer-link:hover {
-    color: var(--secondary-color);
-    text-decoration: none;
-}
-
-.copyright {
-    color: var(--light-text);
-    font-size: 0.8rem;
-    margin: 0;
-}
+.footer-link:hover { color: var(--primary); text-decoration: none; }
+.copyright { color: var(--light-text); font-size: 0.82rem; margin: 0; }
 
 /* Animations */
 @keyframes slideInLeft {
-    from {
-        opacity: 0;
-        transform: translateX(-100px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateX(0);
-    }
+  from { opacity: 0; transform: translateX(-60px); }
+  to   { opacity: 1; transform: translateX(0); }
 }
-
 @keyframes slideInRight {
-    from {
-        opacity: 0;
-        transform: translateX(100px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateX(0);
-    }
+  from { opacity: 0; transform: translateX(60px); }
+  to   { opacity: 1; transform: translateX(0); }
 }
-
 @keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 /* Responsive Design */
 @media (max-width: 991.98px) {
-    .login-panel {
-        background: rgba(0, 0, 0, 0.3);
-        backdrop-filter: blur(10px);
-    }
-
-    .login-card {
-        background: rgba(255, 255, 255, 0.95);
-        backdrop-filter: blur(10px);
-    }
+  .login-panel {
+    background: rgba(2, 6, 23, 0.35);
+    backdrop-filter: blur(10px);
+  }
+  .login-card {
+    background: color-mix(in oklab, var(--surface), white 4%);
+    backdrop-filter: blur(8px);
+  }
 }
-
 @media (max-width: 767.98px) {
-    .login-card {
-        padding: 2rem;
-        margin: 1rem;
-    }
-
-    .footer-links {
-        gap: 1rem;
-    }
-
-    .feature-item {
-        justify-content: center;
-    }
+  .login-card { padding: 1.8rem; margin: 1rem; }
+  .footer-links { gap: 1rem; }
+  .feature-item { justify-content: center; }
 }
-
 @media (max-width: 575.98px) {
-    .login-card {
-        padding: 1.5rem;
-    }
-
-    .login-title {
-        font-size: 1.5rem;
-    }
-
-    .footer-links {
-        flex-direction: column;
-        gap: 0.5rem;
-    }
+  .login-card { padding: 1.4rem; }
+  .login-title { font-size: 1.45rem; }
+  .footer-links { flex-direction: column; gap: 0.5rem; }
 }

@@ -92,39 +92,224 @@ import { Router } from '@angular/router';
   </div>
   `,
   styles: [`
-    .container { max-width: 760px; margin: 1rem auto; padding: 1rem; background: #fff; border-radius: 8px; }
-    h2 { margin-bottom: 1rem; }
-    .form-group { margin-bottom: 1rem; display: flex; flex-direction: column; }
-    .otp-row .otp-controls { display: flex; gap: .5rem; align-items: center; }
-    input, textarea, button { font-size: 14px; }
-    input, textarea { padding: .5rem; border: 1px solid #ccc; border-radius: 4px; }
-    .actions { display: flex; gap: .5rem; }
-    button { padding: .5rem .9rem; border: none; border-radius: 4px; background: #1976d2; color: white; cursor: pointer; }
-    button.secondary { background: #666; }
-    button[disabled] { opacity: .6; cursor: not-allowed; }
-    .msg { padding: .5rem .75rem; border-radius: 4px; margin-bottom: .75rem; }
-    .msg.success { background: #e6f4ea; color: #167c2b; border: 1px solid #b7e2c0; }
-    .msg.error { background: #fdecea; color: #a12622; border: 1px solid #f5c6cb; }
-    .muted { color: #666; }
-    .small { font-size: 12px; }
+    .container {
+  max-width: 800px;
+  margin: 2rem auto;
+  padding: 2rem;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.08);
+  font-family: 'Inter', sans-serif;
+}
 
-    .dropzone {
-      border: 2px dashed #aaa; border-radius: 8px; padding: 1rem; text-align: center; background: #fafafa;
-    }
-    .dropzone.hover { border-color: #1976d2; background: #f0f7ff; }
-    .file-btn {
-      display: inline-block; margin-top: .5rem; background: #1976d2; color: #fff;
-      padding: .4rem .8rem; border-radius: 4px; cursor: pointer;
-    }
+h2 {
+  text-align: center;
+  margin-bottom: 2rem;
+  color: #D50032;
+  font-weight: 700;
+  font-size: 1.8rem;
+}
 
-    .selected { margin-top: .5rem; }
-    .selected .header { display: flex; align-items: center; gap: .5rem; }
-    .selected .header .link { background: transparent; color: #1976d2; border: none; cursor: pointer; padding: 0; }
-    .selected ul { list-style: none; padding: 0; margin: .25rem 0 0; }
-    .selected li { display: flex; align-items: center; gap: .5rem; padding: .25rem 0; }
-    .selected .name { flex: 1; }
-    .selected .size { color: #666; font-size: 12px; }
-    .selected .small { padding: .15rem .4rem; font-size: 12px; background: #eee; color: #333; border-radius: 3px; border: 1px solid #ddd; }
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+label {
+  font-weight: 600;
+  color: #333;
+}
+
+input, textarea, select, button {
+  font-family: 'Inter', sans-serif;
+}
+
+input, textarea, select {
+  padding: 0.75rem 1rem;
+  border: 1.5px solid #ccc;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  transition: all 0.3s ease;
+}
+
+input:focus, textarea:focus, select:focus {
+  border-color: #D50032;
+  box-shadow: 0 0 0 4px rgba(213, 0, 50, 0.1);
+  outline: none;
+}
+
+textarea {
+  resize: vertical;
+}
+
+button {
+  padding: 0.75rem 1.25rem;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.95rem;
+  transition: all 0.3s ease;
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+button[type="submit"] {
+  background: linear-gradient(135deg, #D50032 0%, #A50034 100%);
+  color: white;
+  flex: 1 1 auto;
+  min-width: 180px;
+}
+
+button.secondary {
+  background: #666;
+  color: white;
+  flex: 1 1 auto;
+  min-width: 180px;
+}
+
+.msg {
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  font-weight: 500;
+  text-align: center;
+}
+
+.msg.success {
+  background-color: #e6f4ea;
+  color: #167c2b;
+  border: 1px solid #b7e2c0;
+}
+
+.msg.error {
+  background-color: #fdecea;
+  color: #a12622;
+  border: 1px solid #f5c6cb;
+}
+
+.muted {
+  color: #666;
+}
+
+.small {
+  font-size: 12px;
+}
+
+.dropzone {
+  border: 2px dashed #ccc;
+  border-radius: 12px;
+  padding: 1.25rem;
+  text-align: center;
+  background: #fafafa;
+  transition: all 0.3s ease;
+}
+
+.dropzone.hover {
+  border-color: #D50032;
+  background: #fff0f1;
+}
+
+.file-btn {
+  display: inline-block;
+  margin-top: 0.5rem;
+  background: #D50032;
+  color: #fff;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.file-btn:hover {
+  background: #A50034;
+}
+
+.selected {
+  margin-top: 0.5rem;
+  background: #f7f7f7;
+  padding: 0.75rem;
+  border-radius: 8px;
+}
+
+.selected .header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+.selected ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.selected li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.25rem 0;
+}
+
+.selected .small {
+  padding: 0.25rem 0.5rem;
+  font-size: 12px;
+  background: #eee;
+  color: #333;
+  border-radius: 4px;
+}
+
+.otp-row .otp-controls {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.otp-row input {
+  flex: 1 1 150px;
+}
+
+.otp-row button {
+  flex: 0 0 auto;
+  background: #D50032;
+  color: white;
+}
+
+.otp-row button:hover {
+  background: #A50034;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .actions {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  button {
+    width: 100%;
+  }
+}
+
   `]
 })
 export class SalaryApplicationComponent {

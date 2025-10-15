@@ -1,7 +1,7 @@
 /* Sidebar */
 .sidebar {
     width: 280px;
-    background-color: #0769AD;
+    background: linear-gradient(135deg, #170a0c 0%, #A50034 100%);;
     color: white;
     transition: all 0.3s ease;
     /* position: sticky; */

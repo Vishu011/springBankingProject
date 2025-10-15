@@ -1,0 +1,136 @@
+<!-- Floating Chat Widget -->
+<div class="chatbot-widget" [class.open]="state.isOpen">
+  <!-- Chat Toggle Button -->
+  <button 
+    class="chatbot-toggle" 
+    (click)="toggleChatbot()"
+    [class.open]="state.isOpen"
+    aria-label="Toggle chatbot">
+    <i class="chatbot-icon" [class]="state.isOpen ? 'fas fa-times' : 'fas fa-comments'"></i>
+  </button>
+
+  <!-- Chat Container -->
+  <div class="chatbot-container" *ngIf="state.isOpen">
+    <!-- Chat Header -->
+    <div class="chatbot-header">
+      <div class="chatbot-title">
+        <i class="fas fa-robot"></i>
+        <span>Omni Assist</span>
+        <span class="chatbot-status-dot"></span>
+      </div>
+
+      <!-- <div class="chatbot-title">
+        <i class="fas fa-robot"></i>
+        <span>Omni Assist</span>
+      </div> -->
+      
+      <!-- <div class="chatbot-breadcrumb">
+        <i class="fas fa-map-marker-alt"></i>
+        <span>{{ state.currentBreadcrumb }}</span>
+      </div> -->
+      <div class="chatbot-actions">
+        <button class="chatbot-refresh" (click)="refreshContext()" [disabled]="isRefreshing" [attr.aria-busy]="isRefreshing" aria-label="Refresh data" [title]="isRefreshing ? 'Refreshing...' : 'Refresh data'">
+          <i class="fas" [ngClass]="{'fa-sync-alt': !isRefreshing, 'fa-spinner': isRefreshing, 'fa-spin': isRefreshing}"></i>
+        </button>
+        <button class="chatbot-close" (click)="toggleChatbot()" aria-label="Close chatbot">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Messages Container -->
+    <div class="chatbot-messages" #messagesContainer>
+      <div class="welcome-message" *ngIf="state.conversationHistory.length === 0">
+        <div class="welcome-content">
+          <i class="fas fa-hand-wave"></i>
+          <h3>Welcome to Omni-Bank!</h3>
+          <p>I'm your secure banking assistant. I can help you with:</p>
+          <ul>
+            <li>Account information and balances</li>
+            <li>Transfers and payments</li>
+            <li>Loans and credit cards</li>
+            <li>KYC verification</li>
+            <li>Statements and support</li>
+          </ul>
+          <p>How can I assist you today?</p>
+        </div>
+      </div>
+
+      <!-- Message List -->
+      <div 
+        *ngFor="let message of state.conversationHistory" 
+        class="message-wrapper"
+        [ngClass]="getMessageClass(message)">
+        <div class="message-bubble">
+          <div class="message-content" [innerHTML]="formatMessage(message.content)"></div>
+          <div class="message-timestamp">{{ formatTimestamp(message.timestamp) }}</div>
+        </div>
+        <div class="message-quick-actions" *ngIf="message.type === 'assistant' && message.quickActions?.length">
+          <button 
+            class="btn btn-sm btn-outline-primary me-2 mb-2 quick-action-btn" 
+            *ngFor="let action of message.quickActions" 
+            (click)="handleQuickAction(action)">
+            <i class="fas" [ngClass]="{'fa-arrow-right': action.type === 'navigate', 'fa-bolt': action.type === 'message'}"></i>
+            {{ action.label }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Typing Indicator -->
+      <div class="typing-indicator" *ngIf="isTyping">
+        <div class="typing-dots">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+        <span>Assistant is typing...</span>
+      </div>
+    </div>
+
+    <!-- Input Area -->
+    <div class="chatbot-input">
+      <div class="input-container">
+        <textarea
+          [(ngModel)]="userInput"
+          (keypress)="onKeyPress($event)"
+          placeholder="Type your message..."
+          class="message-input"
+          rows="1"
+          maxlength="500"
+          [disabled]="isLoading">
+        </textarea>
+        <button 
+          class="send-button" 
+          (click)="sendMessage()"
+          [disabled]="!userInput.trim() || isLoading"
+          aria-label="Send message">
+          <i class="fas" [class.fa-paper-plane]="!isLoading" [class.fa-spinner]="isLoading" [class.fa-spin]="isLoading"></i>
+        </button>
+      </div>
+      
+      <!-- Quick Actions -->
+      <div class="quick-actions">
+        <button class="quick-action-btn" (click)="sendMessage('Show my account balance')">
+          <i class="fas fa-wallet"></i>
+          Balance
+        </button>
+        <button class="quick-action-btn" (click)="sendMessage('Transfer money')">
+          <i class="fas fa-exchange-alt"></i>
+          Transfer
+        </button>
+        <button class="quick-action-btn" (click)="sendMessage('Show my cards')">
+          <i class="fas fa-credit-card"></i>
+          Cards
+        </button>
+        <button class="quick-action-btn" (click)="sendMessage('Show my loans status')">
+          <i class="fas fa-file-invoice-dollar"></i>
+          Loans
+        </button>
+        <button class="quick-action-btn" (click)="sendMessage('Show menu')">
+          <i class="fas fa-list"></i>
+          Menu
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

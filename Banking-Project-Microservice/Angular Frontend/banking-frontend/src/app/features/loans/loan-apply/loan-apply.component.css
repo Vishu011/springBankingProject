@@ -14,7 +14,7 @@
   left: -2px;
   right: -2px;
   bottom: -2px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+  background: linear-gradient(135deg, #D50032 0%, #A50034 50%, #F7C6C7 100%);
   border-radius: 26px;
   z-index: -1;
   opacity: 0;
@@ -79,7 +79,7 @@ button[type="submit"] {
 }
 
 .loading-text {
-  color: #667eea;
+  color: #A50034;
   font-weight: 500;
   font-size: 1.1rem;
 }
@@ -95,7 +95,7 @@ button[type="submit"] {
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+  background: linear-gradient(135deg, rgba(234, 102, 102, 0.05) 0%, rgba(162, 75, 75, 0.05) 100%);
   border-radius: 16px;
   opacity: 0;
   transition: opacity 0.3s ease;
@@ -113,7 +113,7 @@ button[type="submit"] {
   left: -4px;
   right: -4px;
   bottom: -4px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #D50032 0%, #A50034 100%);
   border-radius: 20px;
   z-index: -1;
   opacity: 0.1;
@@ -139,7 +139,7 @@ button[type="submit"] {
 }
 
 .mat-mdc-form-field.mat-form-field-invalid .mat-mdc-text-field-wrapper {
-  border-color: #ef4444 !important;
+  border-color: #ec2a2a !important;
   box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.15) !important;
 }
 

@@ -3,7 +3,7 @@
   margin: 0 auto;
   padding: 24px;
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #A50034 0%, #D50032 100%);
 }
 
 .header-section {
@@ -73,7 +73,7 @@
 .stat-number {
   font-size: 24px;
   font-weight: 700;
-  color: #1976d2;
+  color: #D50032;
   line-height: 1;
 }
 
@@ -90,13 +90,13 @@
   padding: 0 24px;
   height: 44px;
   font-weight: 600;
-  box-shadow: 0 4px 12px rgba(25, 118, 210, 0.3);
+  box-shadow: 0 4px 12px rgba(210, 25, 25, 0.3);
   transition: all 0.3s ease;
 }
 
 .refresh-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(25, 118, 210, 0.4);
+  box-shadow: 0 6px 20px rgba(210, 25, 25, 0.4);
 }
 
 .refresh-btn mat-icon {
@@ -130,7 +130,7 @@
   left: 0;
   right: 0;
   height: 2px;
-  background: linear-gradient(90deg, transparent, rgba(25, 118, 210, 0.3), transparent);
+  background: linear-gradient(90deg, transparent, rgba(210, 25, 25, 0.3), transparent);
   transform: translateX(-100%);
   transition: transform 0.6s ease;
 }
@@ -153,7 +153,7 @@
 }
 
 .loan-card.rejected {
-  border-left-color: #f44336;
+  border-left-color: #f63325;
 }
 
 .loan-card-header {
@@ -218,7 +218,7 @@
 
 .status-badge.rejected {
   background: rgba(244, 67, 54, 0.1);
-  color: #f44336;
+  color: #f12f21;
 }
 
 .status-icon {
@@ -248,7 +248,7 @@
 .amount-value {
   font-size: 28px;
   font-weight: 700;
-  color: #1976d2;
+  color: #A50034;
   line-height: 1;
 }
 
@@ -334,7 +334,7 @@
   padding: 0 32px;
   height: 48px;
   font-weight: 600;
-  box-shadow: 0 4px 12px rgba(25, 118, 210, 0.3);
+  box-shadow: 0 4px 12px rgba(210, 25, 25, 0.3);
 }
 
 .empty-action-btn mat-icon {

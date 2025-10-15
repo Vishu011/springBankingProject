@@ -1,10 +1,12 @@
 <div class="transfer-container">
   <h2>Transfer Funds</h2>
 
+  <!-- Messages -->
   <div *ngIf="loadingAccounts" class="loading-message">Loading your accounts...</div>
   <div *ngIf="errorMessage" class="message error-message">{{ errorMessage }}</div>
   <div *ngIf="successMessage" class="message success-message">{{ successMessage }}</div>
 
+  <!-- Transfer Form -->
   <div *ngIf="!loadingAccounts && accounts.length > 0" class="transfer-form-section">
     <form (ngSubmit)="onSubmit()" #formRef="ngForm">
       <div class="form-group">
@@ -30,20 +32,22 @@
           step="0.01">
       </div>
 
-      <div class="form-group">
+      <div class="form-group otp-group">
         <label for="otpCode">OTP:</label>
         <div class="otp-row">
-          <input type="text" id="otpCode" name="otpCode" maxlength="6" placeholder="Enter 6-digit OTP" [(ngModel)]="transferForm.otpCode" required>
-          <button type="button" class="generate-otp-button" (click)="generateOtp()">
-            Generate OTP
-          </button>
+          <input type="text" id="otpCode" name="otpCode" maxlength="6" placeholder="Enter 6-digit OTP"
+            [(ngModel)]="transferForm.otpCode" required>
+          <button type="button" class="generate-otp-button" (click)="generateOtp()">Generate OTP</button>
         </div>
       </div>
 
-      <button type="submit" [disabled]="!formRef.valid || !transferForm.otpCode" class="transfer-button">Transfer</button>
+      <button type="submit" [disabled]="!formRef.valid || !transferForm.otpCode" class="transfer-button">
+        Transfer
+      </button>
     </form>
   </div>
 
+  <!-- No Accounts Message -->
   <div *ngIf="!loadingAccounts && accounts.length === 0" class="no-accounts-message">
     <p>You need an active account to transfer funds from.</p>
     <a routerLink="/accounts" class="create-account-link">Go to Accounts</a>

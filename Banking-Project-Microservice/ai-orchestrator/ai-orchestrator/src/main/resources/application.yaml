@@ -1,0 +1,72 @@
+spring:
+  application:
+    name: ai-orchestrator
+  main:
+    web-application-type: servlet
+  jackson:
+    serialization:
+      INDENT_OUTPUT: true
+  security:
+    oauth2:
+      client:
+        registration:
+          orchestrator-client:
+            provider: keycloak
+            authorization-grant-type: client_credentials
+            client-id: admin-orchestrator
+            client-secret: 
+        provider:
+          keycloak:
+            token-uri: http://localhost:8080/realms/bank-realm/protocol/openid-connect/token
+
+server:
+  port: 9101
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,env,beans,threaddump,heapdump
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+# Security: allow running without external auth while developing.
+# In production, configure OAuth2 resource-server or API gateway in front.
+orchestrator:
+  agent:
+    enabled: false          # OFF by default
+    mode: OFF               # OFF | DRY_RUN | AUTO
+    workflows:
+      kyc: true
+      loans: true
+      salary: true
+      cards: true
+      selfService: true
+    polling:
+      enabled: true
+      intervalMs: 30000     # 30s
+  integrations:
+    gatewayBaseUrl: http://localhost:9010  # Point to running API Gateway
+    # Service base URLs if calling services directly (optional when using gateway)
+    userServiceBaseUrl: http://localhost:8081
+    accountServiceBaseUrl: http://localhost:8082
+    loanServiceBaseUrl: http://localhost:8083
+    creditCardServiceBaseUrl: http://localhost:8084
+    selfServiceBaseUrl: http://localhost:8085
+    notificationServiceBaseUrl: http://localhost:8086
+
+  ai:
+    provider: ollama     # noop | ollama
+    ollama:
+      baseUrl: http://localhost:11434
+      model: llama3.2:3b
+      temperature: 0.1
+      timeoutSec: 60
+
+logging:
+  level:
+    root: INFO
+    com.bank.aiorchestrator: DEBUG
+    org.springframework.security: INFO

@@ -6,6 +6,7 @@ import { RouterLink } from '@angular/router';
 import { KycStatus, UserRole } from '../../shared/models/user.model';
 import { AuthService } from '../../core/services/auth.service';
 import { environment } from '../../../environments/environment';
+import { AgentPanelComponent } from '../../core/components/agent-panel/agent-panel.component';
 
 interface UserProfile {
     userId: string;
@@ -20,7 +21,7 @@ interface UserProfile {
 @Component({
     selector: 'app-admin-dashboard',
     standalone: true,
-    imports: [CommonModule, RouterLink],
+    imports: [CommonModule, RouterLink, AgentPanelComponent],
     templateUrl: './admin-dashboard.component.html',
     styleUrls: ['./admin-dashboard.component.css']
 })
