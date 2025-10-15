@@ -204,7 +204,16 @@ cd "Banking-Project-Microservice/NotificationService"
 
 ## 💻 Demo & Walkthrough
 
-- <span style="background:yellow">**Demo Video Coming Soon!** Paste YouTube link here.</span> 🎥
+<p align="center">
+  <a href="https://drive.google.com/file/d/19MdNX1bbxcQ7I_mYzz6QM8lC1-KRQhmY/view?usp=sharing" target="_blank">
+    <img src="https://user-images.githubusercontent.com/7687238/270226696-e244f1b7-bada-4b7f-a364-7ec493b6f98c.png" alt="Demo Video" width="500"/>
+    <br/>
+    <b>▶️ Click to Watch Full Platform Demo (Google Drive, HD)</b>
+  </a>
+</p>
+<p align="center">
+  <i>You may need to sign in with Google or click "Open in new window" in Drive to play the video.</i>
+</p>
 
 ---
 
